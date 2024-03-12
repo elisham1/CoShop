@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Array for category options -->
+    <string-array name="category_options">
+        <item>Categories</item>
+        <item>Food</item>
+        <item>Option</item>
+        <!-- Add more items as needed -->
+    </string-array>
+
+    <string name="choose_category">Choose a category</string>
+    <string name="choose_location">Choose a category</string>
+
+
+
+    <string-array name="location_options">
+        <item>Location</item>
+        <item>New York</item>
+        <item>Tokyo</item>
+        <!-- Add more locations as needed -->
+    </string-array>
+</resources>

@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp"
+    tools:context=".FilterActivity">
+
+    <TextView
+        android:id="@+id/Filter_By"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Filter "
+        tools:layout_editor_absoluteX="246dp"
+        tools:layout_editor_absoluteY="163dp" />
+
+    <!-- Ritual type of location -->
+    <Spinner
+        android:id="@+id/spinnerRitualLocation"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:entries="@array/location_options"
+        android:prompt="@string/choose_category"/> <!-- Set a prompt for the Spinner -->
+
+    <!-- Dropdown list with options -->
+    <Spinner
+        android:id="@+id/spinnerCategory"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:entries="@array/category_options"
+        android:prompt="@string/choose_category"/>
+
+    <!-- Text box for inserting a link -->
+    <EditText
+        android:id="@+id/editTextText2"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:ems="10"
+        android:inputType="text"
+        android:hint="Enter URL" />
+
+    <!-- Text box for inserting a number -->
+    <EditText
+        android:id="@+id/numberBox"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:ems="10"
+        android:inputType="number"
+        android:hint="People" />
+
+    <!-- Button for another action -->
+
+    <TextView
+        android:id="@+id/textView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Type Of Order" />
+
+    <RadioButton
+        android:id="@+id/radioButton2"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Supplied" />
+
+    <TextView
+        android:id="@+id/textView2"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Bid" />
+
+    <com.google.android.material.slider.RangeSlider
+        android:id="@+id/rangeSlider"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:value="0,1000"
+        android:valueFrom="0"
+        android:valueTo="1000"
+        app:labelVisibilityMode="labeled"
+        app:thumbRadius="12dp"
+        app:thumbStrokeWidth="2dp"
+        app:trackHeight="4dp" />
+
+    <RadioButton
+        android:id="@+id/radioButton3"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Regular Order" />
+
+    <Button
+        android:id="@+id/ok_id"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Ok" />
+
+</LinearLayout>
