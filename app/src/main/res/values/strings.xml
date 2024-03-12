@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">CoShop</string>
+    <string name="login_activity_title">Login</string>
 </resources>
