@@ -12,7 +12,7 @@
         android:id="@+id/Filter_By"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Filter By"
+        android:text="Filter "
         tools:layout_editor_absoluteX="246dp"
         tools:layout_editor_absoluteY="163dp" />
 
