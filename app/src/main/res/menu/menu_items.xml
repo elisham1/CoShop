@@ -19,12 +19,12 @@
     <item
         android:id="@+id/Contact_Us"
         android:icon="@drawable/contact_us"
-        android:title="Contact Us" />
+        android:title="Contact Us"/>
 
     <item
         android:id="@+id/Log_Out"
         android:icon="@drawable/log_out"
-        android:title="Log Out" />
+        android:title="Log Out"/>
 
     <!-- New item with the custom icon, set to always show -->
     <item

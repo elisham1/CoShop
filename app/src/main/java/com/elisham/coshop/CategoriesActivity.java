@@ -3,8 +3,10 @@ package com.elisham.coshop;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.MenuItem;
+import android.view.View;
 
 public class CategoriesActivity extends AppCompatActivity {
 
@@ -31,6 +33,11 @@ public class CategoriesActivity extends AppCompatActivity {
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    public void doneCategory(View v) {
+        Intent toy = new Intent(CategoriesActivity.this, HomePageActivity.class);
+        startActivity(toy);
     }
 
 }
