@@ -33,7 +33,6 @@ public class SignupActivity extends AppCompatActivity{
             onBackPressed(); // Go back when the back arrow is clicked
             return true;
         }
-
         return super.onOptionsItemSelected(item);
     }
 

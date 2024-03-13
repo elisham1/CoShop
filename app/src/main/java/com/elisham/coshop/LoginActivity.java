@@ -38,9 +38,7 @@ public class LoginActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
-    public void clicktohome(View v) {
-//            Button loginButton = findViewById(R.id.loginButton);
-        // Start LoginActivity
+    public void clickToHome(View v) {
         Intent intent = new Intent(LoginActivity.this, HomePageActivity.class);
         startActivity(intent);
     }
