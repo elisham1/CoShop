@@ -6,4 +6,120 @@
     android:layout_height="match_parent"
     tools:context=".OpenNewOrderActivity">
 
+    <RelativeLayout
+        android:id="@+id/newOrder"
+        android:layout_width="350dp"
+        android:layout_height="wrap_content"
+        android:background="#CCCCCC"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <TextView
+            android:id="@+id/newOrderTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Open New Order"
+            android:textAlignment="center"
+            android:textColor="#000000"
+            android:textSize="30sp"
+            android:padding="10dp"/>
+
+
+        <EditText
+            android:id="@+id/url"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ems="10"
+            android:textSize="15sp"
+            android:inputType="textUri"
+            android:hint="Enter URL"
+            android:layout_below="@id/newOrderTitle"
+            android:layout_marginBottom="10dp"/>
+
+
+        <Spinner
+            android:id="@+id/category"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:entries="@array/category_options"
+            android:prompt="@string/choose_category"
+            android:layout_below="@id/url"
+            android:layout_marginBottom="10dp"/>
+
+
+        <EditText
+            android:id="@+id/address"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ems="10"
+            android:inputType="text"
+            android:hint="Enter shipping address"
+            android:textSize="15sp"
+            android:layout_below="@id/category"
+            android:layout_marginBottom="10dp"/>
+
+
+        <EditText
+            android:id="@+id/description"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ems="10"
+            android:inputType="text"
+            android:hint="Describe your order"
+            android:textSize="15sp"
+            android:layout_below="@id/address"
+            android:layout_marginBottom="10dp"/>
+
+        <EditText
+            android:id="@+id/time"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ems="10"
+            android:inputType="time"
+            android:hint="Enter a timer"
+            android:textSize="15sp"
+            android:layout_below="@id/description"
+            android:layout_marginBottom="10dp"/>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/time"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/textAboveSlider"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Max People in Order:"
+                android:textSize="18sp"
+                android:textColor="@color/black"
+                android:padding="5dp"/>
+
+            <com.google.android.material.slider.RangeSlider
+                android:id="@+id/rangeSlider"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:value="0,1000"
+                android:valueFrom="0"
+                android:valueTo="1000"
+                android:layout_below="@id/time"
+                app:labelVisibilityMode="labeled"
+                app:thumbRadius="12dp"
+                app:thumbStrokeWidth="2dp"
+                app:trackHeight="4dp" />
+        </LinearLayout>
+
+    </RelativeLayout>
+
+    <ImageButton
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toBottomOf="@id/newOrder"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:src="@drawable/outline_done_outline_50"
+        android:onClick="goToMyOrders"/>
+
 </androidx.constraintlayout.widget.ConstraintLayout>
