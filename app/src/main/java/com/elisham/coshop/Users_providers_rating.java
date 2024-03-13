@@ -1,42 +1,19 @@
 package com.elisham.coshop;
 
-import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.os.Bundle;
-
 import android.view.Menu;
-
 import android.view.MenuItem;
-import android.view.View;
-import android.content.Intent;
 import android.widget.Toast;
 
-public class HomePageActivity extends AppCompatActivity {
+public class Users_providers_rating extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_home_page);
-
-        // Enable the back button in the action bar
-        ActionBar actionBar = getSupportActionBar();
-        if (actionBar != null) {
-            actionBar.setDisplayHomeAsUpEnabled(true);
-        }
+        setContentView(R.layout.activity_users_providers_rating);
     }
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        int id = item.getItemId();
-        // Handle the back button click
-        if (id == android.R.id.home) {
-            onBackPressed(); // Go back when the back arrow is clicked
-            return true;
-        }
-        return super.onOptionsItemSelected(item);
-    }
-
-
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -71,16 +48,4 @@ public class HomePageActivity extends AppCompatActivity {
                 return super.onOptionsItemSelected(item);
         }
     }
-
-    public void gotofilter(View v) {
-        Intent toy = new Intent(HomePageActivity.this, FilterActivity.class);
-        startActivity(toy);
-    }
-
-    public void gotoneworder(View v) {
-        Intent toy = new Intent(HomePageActivity.this, OpenNewOrderActivity.class);
-        startActivity(toy);
-    }
-
-
 }
