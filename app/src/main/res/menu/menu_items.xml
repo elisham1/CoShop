@@ -1,0 +1,36 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item
+        android:id="@+id/Personal_info"
+        android:icon="@drawable/personal_information"
+        android:title="Personal Information" />
+
+    <item
+        android:id="@+id/My_Orders"
+        android:icon="@drawable/my_orders_list"
+        android:title="My Orders" />
+
+    <item
+        android:id="@+id/About_Us"
+        android:icon="@drawable/about_us"
+        android:title="About Us" />
+
+    <item
+        android:id="@+id/Contact_Us"
+        android:icon="@drawable/contact_us"
+        android:title="Contact Us" />
+
+    <item
+        android:id="@+id/Log_Out"
+        android:icon="@drawable/log_out"
+        android:title="Log Out" />
+
+    <!-- New item with the custom icon, set to always show -->
+    <item
+        android:id="@+id/list_icon"
+        android:icon="@drawable/baseline_shopping_cart_24"
+        android:title="List Icon"
+        app:showAsAction="always" />
+
+</menu>
