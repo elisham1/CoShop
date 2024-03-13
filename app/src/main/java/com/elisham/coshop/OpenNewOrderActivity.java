@@ -5,6 +5,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 
@@ -23,18 +24,71 @@ public class OpenNewOrderActivity extends AppCompatActivity {
     }
 
     @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_items, menu);
+        return true;
+    }
+
+    @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        int id = item.getItemId();
-        // Handle the back button click
-        if (id == android.R.id.home) {
-            onBackPressed(); // Go back when the back arrow is clicked
-            return true;
+        switch (item.getItemId()) {
+            case android.R.id.home:
+                onBackPressed(); // Go back when the back arrow is clicked
+                return true;
+            case R.id.Personal_info:
+                personalInfo();
+                return true;
+            case R.id.My_Orders:
+                myOrders();
+                return true;
+            case R.id.About_Us:
+                aboutUs();
+                return true;
+            case R.id.Contact_Us:
+                contactUs();
+                return true;
+            case R.id.Log_Out:
+                logOut();
+                return true;
+            case R.id.list_icon:
+                basket();
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
         }
-        return super.onOptionsItemSelected(item);
+    }
+
+    public void personalInfo() {
+        Intent toy = new Intent(OpenNewOrderActivity.this, UserDetailsActivity.class);
+        startActivity(toy);
+    }
+
+    public void myOrders() {
+        Intent toy = new Intent(OpenNewOrderActivity.this, MyOrdersActivity.class);
+        startActivity(toy);
+    }
+
+    public void aboutUs() {
+        Intent toy = new Intent(OpenNewOrderActivity.this, AboutActivity.class);
+        startActivity(toy);
+    }
+
+    public void contactUs() {
+        Intent toy = new Intent(OpenNewOrderActivity.this, ContactUsActivity.class);
+        startActivity(toy);
+    }
+
+    public void basket() {
+        Intent toy = new Intent(OpenNewOrderActivity.this, BasketActivity.class);
+        startActivity(toy);
+    }
+
+    public void logOut() {
+        Intent toy = new Intent(OpenNewOrderActivity.this, MainActivity.class);
+        startActivity(toy);
     }
 
     public void goToMyOrders(View v) {
-
         Intent intent = new Intent(OpenNewOrderActivity.this, MyOrdersActivity.class);
         startActivity(intent);
     }
