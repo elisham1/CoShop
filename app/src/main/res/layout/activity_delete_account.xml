@@ -6,7 +6,7 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:padding="16dp"
-    tools:context=".ContactUsActivity">
+    tools:context=".DeleteAccountActivity">
 
     <TextView
         android:id="@+id/textView4"
@@ -36,7 +36,8 @@
         android:id="@+id/deleteButton"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Delete Account" />
+        android:text="Delete Account"
+        android:onClick="delete"/>
 
 
 </LinearLayout>
