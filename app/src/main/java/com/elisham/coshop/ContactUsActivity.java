@@ -52,11 +52,18 @@ public class ContactUsActivity extends AppCompatActivity {
             case R.id.list_icon:
                 basket();
                 return true;
+            case R.id.home:
+                home();
+                return true;
             default:
                 return super.onOptionsItemSelected(item);
         }
     }
 
+    public void home() {
+        Intent toy = new Intent(ContactUsActivity.this, HomePageActivity.class);
+        startActivity(toy);
+    }
     public void personalInfo() {
         Intent toy = new Intent(ContactUsActivity.this, UserDetailsActivity.class);
         startActivity(toy);

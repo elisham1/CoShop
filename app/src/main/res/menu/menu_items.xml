@@ -27,11 +27,17 @@
         android:icon="@drawable/log_out"
         android:title="Log Out"/>
 
+    <item
+        android:id="@+id/home"
+        android:icon="@drawable/home_white_24"
+        android:title="Home"
+        app:showAsAction="always"/>
+
     <!-- New item with the custom icon, set to always show -->
     <item
         android:id="@+id/list_icon"
-        android:icon="@drawable/baseline_shopping_cart_24"
-        android:title="List Icon"
+        android:icon="@drawable/shopping_cart_white_24"
+        android:title="Cart"
         app:showAsAction="always" />
 
 
