@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 
 public class MyOrdersActivity extends AppCompatActivity {
 
@@ -94,4 +95,8 @@ public class MyOrdersActivity extends AppCompatActivity {
         startActivity(toy);
     }
 
+    public void openOrder(View v) {
+        Intent toy = new Intent(MyOrdersActivity.this, OrderDetailsActivity.class);
+        startActivity(toy);
+    }
 }
