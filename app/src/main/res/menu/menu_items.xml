@@ -1,6 +1,7 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
+
     <item
         android:id="@+id/Personal_info"
         android:icon="@drawable/personal_information"
@@ -38,5 +39,6 @@
         android:icon="@drawable/shopping_cart_white_24"
         android:title="Cart"
         app:showAsAction="always" />
+
 
 </menu>
