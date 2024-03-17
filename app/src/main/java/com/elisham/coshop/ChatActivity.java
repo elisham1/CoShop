@@ -53,9 +53,17 @@ public class ChatActivity extends AppCompatActivity {
             case R.id.list_icon:
                 basket();
                 return true;
+            case R.id.home:
+                home();
+                return true;
             default:
                 return super.onOptionsItemSelected(item);
         }
+    }
+
+    public void home() {
+        Intent toy = new Intent(ChatActivity.this, HomePageActivity.class);
+        startActivity(toy);
     }
 
     public void personalInfo() {

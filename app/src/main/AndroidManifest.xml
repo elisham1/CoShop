@@ -11,12 +11,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.CoShop"
         tools:targetApi="31" >
-        <activity
-            android:name=".YourActivity"
-            android:exported="false" />
-        <activity
-            android:name=".MainActivity2"
-            android:exported="false" />
+
         <activity
             android:name=".Users_providers_rating"
             android:exported="false" />
@@ -46,15 +41,13 @@
             android:exported="false" />
         <activity
             android:name=".HomePageActivity"
-            android:exported="false" />
+            android:exported="false"/>
+
         <activity
             android:name=".OpenNewOrderActivity"
             android:exported="false" />
         <activity
             android:name=".AboutActivity"
-            android:exported="false" />
-        <activity
-            android:name=".MenuActivity"
             android:exported="false" />
         <activity
             android:name=".ChatActivity"

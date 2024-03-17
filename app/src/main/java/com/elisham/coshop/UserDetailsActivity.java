@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 
 public class UserDetailsActivity extends AppCompatActivity {
 
@@ -52,9 +53,17 @@ public class UserDetailsActivity extends AppCompatActivity {
             case R.id.list_icon:
                 basket();
                 return true;
+            case R.id.home:
+                home();
+                return true;
             default:
                 return super.onOptionsItemSelected(item);
         }
+    }
+
+    public void home() {
+        Intent toy = new Intent(UserDetailsActivity.this, HomePageActivity.class);
+        startActivity(toy);
     }
 
     public void personalInfo() {
@@ -84,6 +93,11 @@ public class UserDetailsActivity extends AppCompatActivity {
 
     public void logOut() {
         Intent toy = new Intent(UserDetailsActivity.this, MainActivity.class);
+        startActivity(toy);
+    }
+
+    public void deleteAccount(View v) {
+        Intent toy = new Intent(UserDetailsActivity.this, DeleteAccountActivity.class);
         startActivity(toy);
     }
 
