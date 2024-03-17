@@ -40,7 +40,7 @@
         <Button
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="open"/>
+            android:text="open" />
     </LinearLayout>
 
     <!-- Second Order -->
@@ -60,7 +60,7 @@
         <Button
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="open"/>
+            android:text="open" />
 
 
     </LinearLayout>
@@ -89,7 +89,7 @@
         <Button
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="open"/>
+            android:text="open" />
     </LinearLayout>
 
     <!-- Second Order -->
@@ -109,7 +109,7 @@
         <Button
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="open"/>
+            android:text="open" />
 
 
     </LinearLayout>
