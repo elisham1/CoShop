@@ -21,6 +21,7 @@ public class HomePageActivity extends AppCompatActivity {
         ActionBar actionBar = getSupportActionBar();
         if (actionBar != null) {
             actionBar.setDisplayHomeAsUpEnabled(true);
+
         }
     }
 
@@ -54,6 +55,9 @@ public class HomePageActivity extends AppCompatActivity {
             case R.id.list_icon:
                basket();
                 return true;
+            case R.id.home:
+                home();
+                return true;
             default:
                 return super.onOptionsItemSelected(item);
         }
@@ -86,6 +90,11 @@ public class HomePageActivity extends AppCompatActivity {
 
     public void logOut() {
         Intent toy = new Intent(HomePageActivity.this, MainActivity.class);
+        startActivity(toy);
+    }
+
+    public void home() {
+        Intent toy = new Intent(HomePageActivity.this, HomePageActivity.class);
         startActivity(toy);
     }
     public void gotofilter(View v) {

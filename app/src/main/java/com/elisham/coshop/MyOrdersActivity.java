@@ -51,9 +51,17 @@ public class MyOrdersActivity extends AppCompatActivity {
             case R.id.list_icon:
                 basket();
                 return true;
+            case R.id.home:
+                home();
+                return true;
             default:
                 return super.onOptionsItemSelected(item);
         }
+    }
+
+    public void home() {
+        Intent toy = new Intent(MyOrdersActivity.this, HomePageActivity.class);
+        startActivity(toy);
     }
 
     public void personalInfo() {
