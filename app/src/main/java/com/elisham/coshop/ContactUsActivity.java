@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 
 public class ContactUsActivity extends AppCompatActivity {
 
@@ -91,6 +92,11 @@ public class ContactUsActivity extends AppCompatActivity {
 
     public void logOut() {
         Intent toy = new Intent(ContactUsActivity.this, MainActivity.class);
+        startActivity(toy);
+    }
+
+    public void goToHome(View v) {
+        Intent toy = new Intent(ContactUsActivity.this, HomePageActivity.class);
         startActivity(toy);
     }
 
