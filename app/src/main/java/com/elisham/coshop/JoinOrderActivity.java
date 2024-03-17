@@ -7,8 +7,22 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.Button;
 
 public class JoinOrderActivity extends AppCompatActivity {
+
+    public Button ok_id;
+
+    public void init() {
+        ok_id = (Button) findViewById(R.id.ok_id);
+        ok_id.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                Intent toy = new Intent(JoinOrderActivity.this, MyOrdersActivity.class);
+                startActivity(toy);
+            }
+        });
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -20,6 +34,8 @@ public class JoinOrderActivity extends AppCompatActivity {
         if (actionBar != null) {
             actionBar.setDisplayHomeAsUpEnabled(true);
         }
+        init();
+
     }
 
     @Override

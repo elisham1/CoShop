@@ -8,9 +8,30 @@ import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Button;
 import android.widget.Toast;
 
 public class HomePageActivity extends AppCompatActivity {
+
+    public Button button1;
+    public Button button3;
+    public void init() {
+        button1 = (Button) findViewById(R.id.button1);
+        button1.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                Intent toy = new Intent(HomePageActivity.this, OrderDetailsActivity.class);
+                startActivity(toy);
+            }
+        });
+
+        button3 = (Button) findViewById(R.id.button3);
+        button3.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                Intent toy = new Intent(HomePageActivity.this, JoinOrderActivity.class);
+                startActivity(toy);
+            }
+        });
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -23,6 +44,9 @@ public class HomePageActivity extends AppCompatActivity {
             actionBar.setDisplayHomeAsUpEnabled(true);
 
         }
+        init();
+
+
     }
 
     @Override

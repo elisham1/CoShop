@@ -7,8 +7,22 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.Button;
 
 public class OrderDetailsActivity extends AppCompatActivity {
+
+    public Button button5;
+
+    public void init() {
+        button5 = (Button) findViewById(R.id.button5);
+        button5.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                Intent toy = new Intent(OrderDetailsActivity.this, JoinOrderActivity.class);
+                startActivity(toy);
+            }
+        });
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -20,6 +34,7 @@ public class OrderDetailsActivity extends AppCompatActivity {
         if (actionBar != null) {
             actionBar.setDisplayHomeAsUpEnabled(true);
         }
+        init();
     }
 
     @Override

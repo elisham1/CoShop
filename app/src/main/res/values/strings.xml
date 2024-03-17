@@ -1,4 +1,5 @@
 <resources>
     <string name="app_name">CoShop</string>
     <string name="login_activity_title">Login</string>
+    <string name="title_activity_new_order">new_order</string>
 </resources>
