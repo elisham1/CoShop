@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "251326143292",
+    "project_id": "coshop-6fecd",
+    "storage_bucket": "coshop-6fecd.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:251326143292:android:c4a2c9b5a3ba628003dc39",
+        "android_client_info": {
+          "package_name": "com.elisham.coshop"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "251326143292-tsplqf060j3nmgojnca37hq9kolf49m0.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAzlpY61FQZM17OxuiPfXPiHX46JkCMh_A"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "251326143292-tsplqf060j3nmgojnca37hq9kolf49m0.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
