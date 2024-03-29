@@ -38,6 +38,10 @@ public class LoginActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
+    public void emailLogin(View v) {
+        Intent intent = new Intent(LoginActivity.this, EmailLoginActivity.class);
+        startActivity(intent);
+    }
     public void clickToHome(View v) {
         Intent intent = new Intent(LoginActivity.this, HomePageActivity.class);
         startActivity(intent);
