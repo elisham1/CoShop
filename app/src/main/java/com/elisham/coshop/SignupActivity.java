@@ -42,7 +42,7 @@ public class SignupActivity extends AppCompatActivity{
     }
 
     public void clickToMail(View v) {
-        Intent intent = new Intent(SignupActivity.this, EmailActivity.class);
+        Intent intent = new Intent(SignupActivity.this, EmailSignupActivity.class);
         startActivity(intent);
     }
 

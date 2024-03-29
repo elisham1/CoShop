@@ -14,24 +14,20 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
-import com.google.firebase.FirebaseApp;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
 
-public class EmailActivity extends AppCompatActivity {
+public class EmailLoginActivity extends AppCompatActivity {
 
     private EditText emailEditText, passwordEditText;
-    private Button signUpButton;
+    private Button loginButton;
 
     private FirebaseAuth mAuth;
-    //private DatabaseReference mDatabase;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_email);
+        setContentView(R.layout.activity_email_login);
 
         // Enable the back button in the action bar
         ActionBar actionBar = getSupportActionBar();
@@ -39,19 +35,16 @@ public class EmailActivity extends AppCompatActivity {
             actionBar.setDisplayHomeAsUpEnabled(true);
         }
 
-        // Initialize Firebase
-        FirebaseApp.initializeApp(this);
         mAuth = FirebaseAuth.getInstance();
-        //mDatabase = FirebaseDatabase.getInstance().getReference();
 
         emailEditText = findViewById(R.id.emailEditText);
         passwordEditText = findViewById(R.id.passwordEditText);
-        signUpButton = findViewById(R.id.signUpButton);
+        loginButton = findViewById(R.id.loginButton);
 
-        signUpButton.setOnClickListener(new View.OnClickListener() {
+        loginButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                signUpUser();
+                loginUser();
             }
         });
     }
@@ -71,26 +64,27 @@ public class EmailActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
-    private void signUpUser() {
+    private void loginUser() {
         String email = emailEditText.getText().toString().trim();
         String password = passwordEditText.getText().toString().trim();
 
-        mAuth.createUserWithEmailAndPassword(email, password)
+        mAuth.signInWithEmailAndPassword(email, password)
                 .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
                     @Override
                     public void onComplete(@NonNull Task<AuthResult> task) {
                         if (task.isSuccessful()) {
-                            // Sign in success, update UI with the signed-in user's information
-                            // You can add further actions here like navigating to another activity
-                            Intent intent = new Intent(EmailActivity.this, CategoriesActivity.class);
+                            // Login success
+                            Intent intent = new Intent(EmailLoginActivity.this, HomePageActivity.class);
                             startActivity(intent);
+                            // You can perform additional actions here like navigating to another activity
                         } else {
-                            // If sign in fails, display a message to the user.
-                            Intent intent = new Intent(EmailActivity.this, MainActivity.class);
+                            // Login failed
+                            Toast.makeText(EmailLoginActivity.this, "Login failed: " + task.getException().getMessage(),
+                                    Toast.LENGTH_SHORT).show();
+                            Intent intent = new Intent(EmailLoginActivity.this, MainActivity.class);
                             startActivity(intent);
                         }
                     }
                 });
     }
-
 }
