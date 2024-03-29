@@ -2,11 +2,14 @@ package com.elisham.coshop;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.view.MenuItem;
 import android.view.View;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.android.gms.tasks.OnCompleteListener;
@@ -14,48 +17,80 @@ import com.google.android.gms.tasks.Task;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 
 public class EmailActivity extends AppCompatActivity {
 
     private EditText emailEditText, passwordEditText;
+    private Button signUpButton;
+
     private FirebaseAuth mAuth;
+    //private DatabaseReference mDatabase;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_email);
 
-        // Initialize Firebase Auth
+        // Enable the back button in the action bar
+        ActionBar actionBar = getSupportActionBar();
+        if (actionBar != null) {
+            actionBar.setDisplayHomeAsUpEnabled(true);
+        }
+
+        // Initialize Firebase
         FirebaseApp.initializeApp(this);
         mAuth = FirebaseAuth.getInstance();
+        //mDatabase = FirebaseDatabase.getInstance().getReference();
 
         emailEditText = findViewById(R.id.emailEditText);
         passwordEditText = findViewById(R.id.passwordEditText);
+        signUpButton = findViewById(R.id.signUpButton);
+
+        signUpButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                signUpUser();
+            }
+        });
     }
 
-    public void signUp(View view) {
-        String email = emailEditText.getText().toString();
-        String password = passwordEditText.getText().toString();
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
+
+        // Handle the back button click
+        if (id == android.R.id.home) {
+            onBackPressed(); // Go back when the back arrow is clicked
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    private void signUpUser() {
+        String email = emailEditText.getText().toString().trim();
+        String password = passwordEditText.getText().toString().trim();
 
         mAuth.createUserWithEmailAndPassword(email, password)
                 .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
                     @Override
                     public void onComplete(@NonNull Task<AuthResult> task) {
                         if (task.isSuccessful()) {
-                            FirebaseUser user = mAuth.getCurrentUser();
-                            // Registration success, update UI or navigate to next activity
-                            Toast.makeText(EmailActivity.this, "Registration successful!", Toast.LENGTH_SHORT).show();
+                            // Sign in success, update UI with the signed-in user's information
+                            // You can add further actions here like navigating to another activity
+                            Intent intent = new Intent(EmailActivity.this, CategoriesActivity.class);
+                            startActivity(intent);
                         } else {
-                            // Registration failed
-                            Toast.makeText(EmailActivity.this, "Registration failed: " + task.getException().getMessage(), Toast.LENGTH_SHORT).show();
+                            // If sign in fails, display a message to the user.
+                            Intent intent = new Intent(EmailActivity.this, MainActivity.class);
+                            startActivity(intent);
                         }
                     }
                 });
     }
 
-    public void goToLogin(View view) {
-        Intent intent = new Intent(this, LoginActivity.class);
-        startActivity(intent);
-    }
 }
