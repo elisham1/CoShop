@@ -37,9 +37,12 @@ public class SignupActivity extends AppCompatActivity{
     }
 
     public void clicktocategories(View v) {
-//            Button loginButton = findViewById(R.id.loginButton);
-        // Start LoginActivity
         Intent intent = new Intent(SignupActivity.this, CategoriesActivity.class);
+        startActivity(intent);
+    }
+
+    public void clickToMail(View v) {
+        Intent intent = new Intent(SignupActivity.this, EmailActivity.class);
         startActivity(intent);
     }
 

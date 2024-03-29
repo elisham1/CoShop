@@ -43,8 +43,4 @@ public class LoginActivity extends AppCompatActivity {
         startActivity(intent);
     }
 
-    public void clickToMail(View v) {
-        Intent intent = new Intent(LoginActivity.this, EmailActivity.class);
-        startActivity(intent);
-    }
 }
