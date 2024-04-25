@@ -36,8 +36,8 @@
         android:id="@+id/deleteButton"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Users in Chat"
-        android:onClick="goToRating"/>
+        android:onClick="goToHome"
+        android:text="Users in Chat" />
 
 
 </LinearLayout>
