@@ -5,9 +5,27 @@
     android:padding="16dp">
 
     <EditText
+        android:id="@+id/nameEditText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Name"
+        android:inputType="text" />
+
+    <EditText
+        android:id="@+id/familyNameEditText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/nameEditText"
+        android:layout_marginTop="16dp"
+        android:hint="Family Name"
+        android:inputType="text" />
+
+    <EditText
         android:id="@+id/emailEditText"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_below="@id/familyNameEditText"
+        android:layout_marginTop="16dp"
         android:hint="Email"
         android:inputType="textEmailAddress" />
 
@@ -20,11 +38,50 @@
         android:hint="Password"
         android:inputType="textPassword" />
 
+    <EditText
+        android:id="@+id/confirmPasswordEditText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/passwordEditText"
+        android:layout_marginTop="16dp"
+        android:hint="Confirm Password"
+        android:inputType="textPassword" />
+
+    <EditText
+        android:id="@+id/addressEditText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/confirmPasswordEditText"
+        android:layout_marginTop="16dp"
+        android:hint="Address"
+        android:inputType="text" />
+
+    <LinearLayout
+        android:id="@+id/choiceLinearLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/addressEditText"
+        android:layout_marginTop="16dp"
+        android:orientation="horizontal">
+
+        <RadioButton
+            android:id="@+id/supplierRadioButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Supplier" />
+
+        <RadioButton
+            android:id="@+id/consumerRadioButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Consumer" />
+    </LinearLayout>
+
     <Button
         android:id="@+id/signUpButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@id/passwordEditText"
+        android:layout_below="@id/choiceLinearLayout"
         android:layout_marginTop="16dp"
         android:text="Sign Up" />
 
