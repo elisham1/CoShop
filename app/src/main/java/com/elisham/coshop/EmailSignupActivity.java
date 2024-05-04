@@ -6,6 +6,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
@@ -83,6 +84,8 @@ public class EmailSignupActivity extends AppCompatActivity {
                             startActivity(intent);
                         } else {
                             // If sign in fails, display a message to the user.
+                            Toast.makeText(EmailSignupActivity.this, "Signup failed: " + task.getException().getMessage(),
+                                    Toast.LENGTH_SHORT).show();
                             Intent intent = new Intent(EmailSignupActivity.this, MainActivity.class);
                             startActivity(intent);
                         }
