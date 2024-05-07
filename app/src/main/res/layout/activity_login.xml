@@ -30,17 +30,6 @@
         app:layout_constraintTop_toBottomOf="@id/textView" />
 
     <Button
-        android:id="@+id/button2"
-        android:layout_width="212dp"
-        android:layout_height="60dp"
-        android:layout_marginTop="16dp"
-        android:onClick="clickToHome"
-        android:text="apple"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/button1" />
-
-    <Button
         android:id="@+id/button3"
         android:layout_width="212dp"
         android:layout_height="60dp"
@@ -49,18 +38,6 @@
         android:text="google"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/button2" />
-
-    <Button
-        android:id="@+id/button4"
-        android:layout_width="212dp"
-        android:layout_height="60dp"
-        android:layout_marginTop="16dp"
-        android:onClick="clickToHome"
-        android:text="facebook"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/button3" />
-
+        app:layout_constraintTop_toBottomOf="@id/button1" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
