@@ -37,16 +37,25 @@
             android:layout_below="@id/newOrderTitle"
             android:layout_marginBottom="10dp"/>
 
+        <TextView
+            android:id="@+id/categoryLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/url"
+            android:layout_marginTop="-13dp"
+            android:text="Choose Category"
+            android:textSize="18sp" />
+
 
         <Spinner
             android:id="@+id/category"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:entries="@array/category_options"
-            android:prompt="@string/choose_category"
             android:layout_below="@id/url"
-            android:layout_marginBottom="10dp"/>
-
+            android:layout_marginTop="20dp"
+            android:layout_marginBottom="10dp"
+            android:entries="@array/category_options"
+            android:prompt="@string/choose_category" />
 
         <EditText
             android:id="@+id/address"
