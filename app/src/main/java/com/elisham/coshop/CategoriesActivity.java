@@ -7,13 +7,27 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.EditText;
+import android.widget.TextView;
 
 public class CategoriesActivity extends AppCompatActivity {
 
+    private String email, firstName, familyName;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_categories);
+
+        Intent intent = getIntent();
+        if(intent != null) {
+            email = intent.getStringExtra("email");
+            firstName = intent.getStringExtra("firstName");
+            familyName = intent.getStringExtra("familyName");
+
+            String helloUser = "Hello, " + firstName;
+            TextView userName = findViewById(R.id.userName);
+            userName.setText(helloUser);
+        }
 
         // Enable the back button in the action bar
         ActionBar actionBar = getSupportActionBar();
@@ -36,7 +50,10 @@ public class CategoriesActivity extends AppCompatActivity {
     }
 
     public void doneCategory(View v) {
-        Intent toy = new Intent(CategoriesActivity.this, HomePageActivity.class);
+        Intent toy = new Intent(CategoriesActivity.this, UserDetailsActivity.class);
+        toy.putExtra("email", email);
+        toy.putExtra("firstName", firstName);
+        toy.putExtra("familyName", familyName);
         startActivity(toy);
     }
 

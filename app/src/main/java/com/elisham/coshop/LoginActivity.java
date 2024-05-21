@@ -80,7 +80,7 @@ public class LoginActivity extends AppCompatActivity {
                         if (isNewUser) {
                             // If user is new, navigate to MainActivity for sign-up
                             Toast.makeText(LoginActivity.this, "You need to sign up.", Toast.LENGTH_SHORT).show();
-                            Intent intent = new Intent(LoginActivity.this, MainActivity.class);
+                            Intent intent = new Intent(LoginActivity.this, UserDetailsActivity.class);
                             startActivity(intent);
                             finish(); // Close this activity to prevent returning to it on back press
                         } else {
