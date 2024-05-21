@@ -3,6 +3,9 @@ package com.elisham.coshop;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.annotation.SuppressLint;
+import android.app.DatePickerDialog;
+import android.app.TimePickerDialog;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
@@ -10,51 +13,67 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ArrayAdapter;
-import android.widget.RelativeLayout;
+import android.widget.DatePicker;
+import android.widget.RadioGroup;
 import android.widget.Spinner;
 
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.DocumentSnapshot;
-import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.QuerySnapshot;
 
+
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
-import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.app.AppCompatActivity;
+import java.text.SimpleDateFormat;
+
 
 import android.content.DialogInterface;
-import android.content.Intent;
-import android.os.Bundle;
 import android.text.InputType;
-import android.util.Log;
-import android.view.Menu;
-import android.view.MenuItem;
-import android.view.View;
 import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.EditText;
-import android.widget.Spinner;
+import android.widget.TimePicker;
 import android.widget.Toast;
-
-import com.google.firebase.firestore.DocumentSnapshot;
-import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.FieldValue;
+import com.google.firebase.firestore.GeoPoint;
 
-import java.util.List;
 import java.util.Map;
 
-import android.widget.ImageButton;
-public class OpenNewOrderActivity extends AppCompatActivity {
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+import java.util.Calendar;
+
+import android.Manifest;
+import android.content.pm.PackageManager;
+import android.location.Address;
+import android.location.Geocoder;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
+import java.util.Locale;
+
+public class OpenNewOrderActivity extends AppCompatActivity implements LocationListener {
+
+    private static final int LOCATION_PERMISSION_REQUEST_CODE = 100;
     FirebaseFirestore db;
     Spinner categorySpinner;
     private EditText urlEditText;
     private EditText descriptionEditText;
 
+    private EditText addressEditText;
+
+    private Calendar selectedTime = null;
+    LocationManager locationManager;
     String saveNewCategorieName;
 
+    private double latitude ;
+    private double longitude ;
 
+    private int max_people_in_order;
+    private RadioGroup maxPeopleRadioGroup;
+    private EditText maxPeopleEditText;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -64,6 +83,7 @@ public class OpenNewOrderActivity extends AppCompatActivity {
         // Get references to the EditText fields
         urlEditText = findViewById(R.id.url);
         descriptionEditText = findViewById(R.id.description);
+        addressEditText = findViewById(R.id.address);
         // Initialize Spinner
         categorySpinner = findViewById(R.id.category);
         // Read categories from Firestore and populate Spinner
@@ -74,10 +94,107 @@ public class OpenNewOrderActivity extends AppCompatActivity {
         if (actionBar != null) {
             actionBar.setDisplayHomeAsUpEnabled(true);
         }
+        // Get reference to the EditText
+        addressEditText = findViewById(R.id.address);
+
+        // Add a click listener to the EditText
+        addressEditText.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // Check location permission when clicked
+                checkLocationPermission();
+            }
+        });
 
 
+        // Initialize views
+        maxPeopleRadioGroup = findViewById(R.id.maxPeopleRadioGroup);
+        maxPeopleEditText = findViewById(R.id.maxPeopleEditText);
+
+        // Set up RadioGroup listener
+        maxPeopleRadioGroup.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(RadioGroup group, int checkedId) {
+                if (checkedId == R.id.noLimitOption) {
+                    maxPeopleEditText.setEnabled(false);
+                    maxPeopleEditText.setText(""); // Clear text when disabled
+                } else if (checkedId == R.id.limitOption) {
+                    maxPeopleEditText.setEnabled(true);
+                }
+            }
+        });
     }
 
+    // Function to get the number of people
+    public int maxPeople() {
+        String maxPeopleStr = maxPeopleEditText.getText().toString();
+        if (maxPeopleStr.isEmpty()) {
+            return 0; // Return 0 if no limit or no number is entered
+        }
+        return Integer.parseInt(maxPeopleStr);
+    }
+
+    // Function that gets called when the EditText is clicked
+    public void onMaxPeopleEditTextClick(View view) {
+        // Do something when EditText is clicked
+        // For demonstration, let's print the max people value
+        int numberOfPeople = maxPeople();
+        Log.d("gggggggggggggg", "Max People: " + numberOfPeople);
+        max_people_in_order=0;
+        max_people_in_order=numberOfPeople;
+    }
+
+    private void checkLocationPermission() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, LOCATION_PERMISSION_REQUEST_CODE);
+        } else {
+            getLocation();
+        }
+    }
+
+    @SuppressLint("MissingPermission")
+    private void getLocation() {
+        locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
+        if (locationManager != null) {
+            locationManager.requestSingleUpdate(LocationManager.GPS_PROVIDER, this, null);
+        }
+    }
+
+    @Override
+    public void onLocationChanged(Location location) {
+        if (location != null) {
+            latitude = location.getLatitude();
+            longitude = location.getLongitude();
+            Toast.makeText(this, "Latitude: " + latitude + ", Longitude: " + longitude, Toast.LENGTH_SHORT).show();
+            Log.d("Location Info", "Latitude: " + latitude + ", Longitude: " + longitude);
+
+            try {
+                Geocoder geocoder = new Geocoder(this, Locale.getDefault());
+                List<Address> addresses = geocoder.getFromLocation(latitude, longitude, 1);
+                if (addresses != null && !addresses.isEmpty()) {
+                    String address = addresses.get(0).getAddressLine(0);
+                    Log.d("Location Address", address);
+
+                    // Set the address text to the address EditText
+                    addressEditText.setText(address);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                getLocation();
+            } else {
+                Toast.makeText(this, "Permission denied", Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
     public void readCategoriesFromFireStore() {
         db.collection("categories").document("jQ4hXL6kr1AbKwPvEdXl")
                 .get()
@@ -310,6 +427,8 @@ public class OpenNewOrderActivity extends AppCompatActivity {
         Intent intent = new Intent(OpenNewOrderActivity.this, MyOrdersActivity.class);
         startActivity(intent);
     }
+
+
     public void addCategorieToDataBase(){
         Log.d("MyTag", "yomadeit");
         String lowercaseCategory = saveNewCategorieName.toLowerCase();
@@ -322,17 +441,17 @@ public class OpenNewOrderActivity extends AppCompatActivity {
                     if (categoriesList != null) {
                         if (!containsIgnoreCase(categoriesList, lowercaseCategory)) {
                             // Category doesn't exist, add it
-                                    db.collection("categories").document("jQ4hXL6kr1AbKwPvEdXl")
-                                            .update("categories", FieldValue.arrayUnion(saveNewCategorieName))
-                                            .addOnSuccessListener(aVoid -> {
-                                                // Category added successfully
-                                                Toast.makeText(OpenNewOrderActivity.this, "New category added successfully", Toast.LENGTH_SHORT).show();
-                                            })
-                                            .addOnFailureListener(e -> {
-                                                // Error adding category
-                                                Log.e("Firestore", "Error adding category: " + e.getMessage());
-                                                Toast.makeText(OpenNewOrderActivity.this, "Failed to add category", Toast.LENGTH_SHORT).show();
-                                            });
+                            db.collection("categories").document("jQ4hXL6kr1AbKwPvEdXl")
+                                    .update("categories", FieldValue.arrayUnion(saveNewCategorieName))
+                                    .addOnSuccessListener(aVoid -> {
+                                        // Category added successfully
+                                        Toast.makeText(OpenNewOrderActivity.this, "New category added successfully", Toast.LENGTH_SHORT).show();
+                                    })
+                                    .addOnFailureListener(e -> {
+                                        // Error adding category
+                                        Log.e("Firestore", "Error adding category: " + e.getMessage());
+                                        Toast.makeText(OpenNewOrderActivity.this, "Failed to add category", Toast.LENGTH_SHORT).show();
+                                    });
                         }
                     }
                 })
@@ -346,8 +465,20 @@ public class OpenNewOrderActivity extends AppCompatActivity {
         String url = urlEditText.getText().toString().trim();
         String description = descriptionEditText.getText().toString().trim();
 
-        if (url.isEmpty() || description.isEmpty()||saveNewCategorieName.isEmpty()) {
+        if (url.isEmpty() || description.isEmpty() || saveNewCategorieName.isEmpty()) {
             Toast.makeText(this, "Please fill out all fields", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // Get the current user's email
+        FirebaseAuth mAuth = FirebaseAuth.getInstance();
+        FirebaseUser currentUser = mAuth.getCurrentUser();
+        String userEmail = null;
+        if (currentUser != null) {
+            userEmail = currentUser.getEmail();
+        } else {
+            // Handle case when user is not logged in
+            Toast.makeText(this, "User not logged in", Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -355,7 +486,23 @@ public class OpenNewOrderActivity extends AppCompatActivity {
         Map<String, Object> order = new HashMap<>();
         order.put("URL", url);
         order.put("description", description);
-        order.put("categorie",saveNewCategorieName);
+        order.put("categorie", saveNewCategorieName);
+        order.put("user_email", userEmail); // Add user's email to the order
+        order.put("max_people",max_people_in_order);
+
+        // Create a GeoPoint for the location
+        GeoPoint geoPoint = new GeoPoint(latitude, longitude);
+
+        // Add the GeoPoint to the order map
+        order.put("location", geoPoint);
+
+        // Check if selectedTime is not null and set
+        if (selectedTime != null) {
+            Date selectedDate = selectedTime.getTime();
+            order.put("time", selectedDate);
+        } else {
+            order.put("time", null); // Set time to null if not selected
+        }
 
         // Add a new document with a generated ID
         db.collection("orders")
@@ -368,5 +515,53 @@ public class OpenNewOrderActivity extends AppCompatActivity {
                     Toast.makeText(OpenNewOrderActivity.this, "Failed to add order", Toast.LENGTH_SHORT).show();
                 });
     }
+
+    public void showTimePickerDialog(View view) {
+        // פותחים את ה-DatePickerDialog
+        Calendar calendar = Calendar.getInstance();
+        DatePickerDialog datePickerDialog = new DatePickerDialog(OpenNewOrderActivity.this, new DatePickerDialog.OnDateSetListener() {
+            @Override
+            public void onDateSet(DatePicker view, int year, int month, int dayOfMonth) {
+                // בודקים אם התאריך שנבחר גדול מהתאריך הנוכחי
+                Calendar currentDate = Calendar.getInstance();
+                currentDate.set(Calendar.YEAR, year);
+                currentDate.set(Calendar.MONTH, month);
+                currentDate.set(Calendar.DAY_OF_MONTH, dayOfMonth);
+
+                if (currentDate.before(Calendar.getInstance())) {
+                    // התאריך שנבחר הוא תאריך עתידי
+                    Toast.makeText(OpenNewOrderActivity.this, "You can't choose last day", Toast.LENGTH_SHORT).show();
+                } else {
+                    // לאחר בחירת תאריך, פותחים את ה-TimePickerDialog
+                    Calendar selectedDate = Calendar.getInstance();
+                    selectedDate.set(year, month, dayOfMonth);
+
+                    TimePickerDialog timePickerDialog = new TimePickerDialog(OpenNewOrderActivity.this, new TimePickerDialog.OnTimeSetListener() {
+                        @Override
+                        public void onTimeSet(TimePicker view, int hourOfDay, int minute) {
+                            selectedDate.set(Calendar.HOUR_OF_DAY, hourOfDay);
+                            selectedDate.set(Calendar.MINUTE, minute);
+
+                            if (selectedDate.before(Calendar.getInstance())) {
+                                // השעה שנבחרה כבר עברה
+                                Toast.makeText(OpenNewOrderActivity.this, "You cannot select a past time", Toast.LENGTH_SHORT).show();
+                            } else {
+                                selectedTime = selectedDate; // Update the selectedTime variable
+                                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault());
+                                String dateTime = sdf.format(selectedDate.getTime());
+
+                                EditText timeEditText = findViewById(R.id.time);
+                                timeEditText.setText(dateTime);
+                            }
+                        }
+                    }, calendar.get(Calendar.HOUR_OF_DAY), calendar.get(Calendar.MINUTE), true);
+                    timePickerDialog.show();
+                }
+            }
+        }, calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH));
+        datePickerDialog.show();
+    }
+
+
 
 }

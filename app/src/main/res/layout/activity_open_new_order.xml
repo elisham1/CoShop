@@ -25,7 +25,6 @@
             android:textSize="30sp"
             android:padding="10dp"/>
 
-
         <EditText
             android:id="@+id/url"
             android:layout_width="match_parent"
@@ -36,7 +35,6 @@
             android:hint="Enter URL"
             android:layout_below="@id/newOrderTitle"
             android:layout_marginBottom="10dp"/>
-
 
         <Spinner
             android:id="@+id/category"
@@ -57,8 +55,8 @@
             android:hint="Enter shipping address"
             android:textSize="15sp"
             android:layout_below="@id/category"
-            android:layout_marginBottom="10dp"/>
-
+            android:layout_marginBottom="10dp"
+            android:drawableEnd="@drawable/location"/>
 
         <EditText
             android:id="@+id/description"
@@ -76,40 +74,56 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:ems="10"
-            android:inputType="time"
+            android:inputType="text"
+            android:drawableRight="@drawable/ic_baseline_access_time_24"
             android:hint="Enter a timer"
             android:textSize="15sp"
             android:layout_below="@id/description"
-            android:layout_marginBottom="10dp"/>
+            android:layout_marginTop="8dp"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp"
+            android:onClick="showTimePickerDialog"/>
 
-        <LinearLayout
+        <!-- הוספת תיבת רדיו עם האפשרויות "No limit" ו-"Limit" -->
+        <RadioGroup
+            android:id="@+id/maxPeopleRadioGroup"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_below="@id/time"
+            android:layout_marginTop="8dp"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp"
             android:orientation="vertical">
 
-            <TextView
-                android:id="@+id/textAboveSlider"
-                android:layout_width="match_parent"
+            <RadioButton
+                android:id="@+id/noLimitOption"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Max People in Order:"
-                android:textSize="18sp"
-                android:textColor="@color/black"
-                android:padding="5dp"/>
+                android:text="No limit"
+                android:checked="true"/>
 
-            <com.google.android.material.slider.RangeSlider
-                android:id="@+id/rangeSlider"
-                android:layout_width="match_parent"
+            <RadioButton
+                android:id="@+id/limitOption"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:value="0,1000"
-                android:valueFrom="0"
-                android:valueTo="1000"
-                android:layout_below="@id/time"
-                app:labelVisibilityMode="labeled"
-                app:thumbRadius="12dp"
-                app:thumbStrokeWidth="2dp"
-                app:trackHeight="4dp" />
-        </LinearLayout>
+                android:text="Limit"/>
+
+        </RadioGroup>
+
+        <EditText
+            android:id="@+id/maxPeopleEditText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ems="10"
+            android:inputType="number"
+            android:hint="Maximum people"
+            android:textSize="15sp"
+            android:layout_below="@id/maxPeopleRadioGroup"
+            android:layout_marginTop="8dp"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp"
+            android:enabled="false"
+            android:onClick="onMaxPeopleEditTextClick"/> <!-- הוספת מאזין לחץ -->
 
     </RelativeLayout>
 
@@ -121,5 +135,4 @@
         app:layout_constraintEnd_toEndOf="parent"
         android:src="@drawable/outline_done_outline_50"
         android:onClick="goToMyOrders"/>
-
 </androidx.constraintlayout.widget.ConstraintLayout>
