@@ -28,6 +28,7 @@
             android:orientation="horizontal">
 
             <TextView
+                android:id="@+id/fullName"
                 android:layout_width="241dp"
                 android:layout_height="wrap_content"
                 android:layout_marginEnd="8dp"
@@ -55,40 +56,78 @@
         </androidx.cardview.widget.CardView>
     </LinearLayout>
     <!-- Email Section -->
-    <TextView
-        android:layout_width="wrap_content"
+    <EditText
+        android:id="@+id/emailText"
+        android:layout_width="200dp"
         android:layout_height="wrap_content"
-        android:text="Email"
+        android:hint="Email"
         android:layout_marginTop="16dp"
-        android:textSize="16sp"
-        android:textColor="#333333" />
-
-    <!-- Password Change Section -->
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Password Change"
-        android:layout_marginTop="16dp"
-        android:textSize="16sp"
-        android:textColor="#333333" />
+        android:textSize="16sp" />
 
     <!-- Address Section -->
-    <TextView
-        android:layout_width="wrap_content"
+    <EditText
+        android:id="@+id/addressText"
+        android:layout_width="200dp"
         android:layout_height="wrap_content"
-        android:text="Address"
+        android:hint="Address"
         android:layout_marginTop="16dp"
         android:textSize="16sp"
-        android:textColor="#333333" />
+        android:inputType="text" />
+
+
+    <RadioGroup
+        android:id="@+id/choiceLinearLayout"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:orientation="horizontal">
+
+        <RadioButton
+            android:id="@+id/supplierRadioButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Supplier" />
+
+        <RadioButton
+            android:id="@+id/consumerRadioButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Consumer" />
+    </RadioGroup>
+
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+    <!-- change password Section -->
+    <Button
+        android:id="@+id/changePasswordText"
+        android:layout_height="wrap_content"
+        android:layout_width="0dp"
+        android:text="change password"
+        android:layout_marginTop="16dp"
+        android:textSize="14sp"
+        android:onClick="changePassword"
+        android:layout_weight="1"/>
 
     <!-- Account Deletion Section -->
-    <TextView
-        android:layout_width="wrap_content"
+    <Button
         android:layout_height="wrap_content"
+        android:layout_width="0dp"
         android:text="Account Deletion"
         android:layout_marginTop="16dp"
-        android:textSize="16sp"
-        android:textColor="#333333"
-        android:onClick="deleteAccount"/>
+        android:textSize="14sp"
+        android:onClick="deleteAccount"
+        android:layout_weight="1"/>
+    </LinearLayout>
+
+    <Button
+        android:id="@+id/button4"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:onClick="editUserDetails"
+        android:text="done" />
 
 </LinearLayout>
