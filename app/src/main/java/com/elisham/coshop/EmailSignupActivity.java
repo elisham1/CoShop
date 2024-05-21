@@ -20,8 +20,7 @@ import com.google.firebase.auth.FirebaseAuth;
 
 public class EmailSignupActivity extends AppCompatActivity {
 
-    private EditText emailEditText, passwordEditText;
-    private Button signUpButton;
+    private EditText emailEditText, passwordEditText,firstNameEditText, familyNameEditText;
 
     private FirebaseAuth mAuth;
     //private DatabaseReference mDatabase;
@@ -43,8 +42,10 @@ public class EmailSignupActivity extends AppCompatActivity {
         //mDatabase = FirebaseDatabase.getInstance().getReference();
 
         emailEditText = findViewById(R.id.emailEditText);
+        firstNameEditText = findViewById(R.id.nameEditText);
+        familyNameEditText = findViewById(R.id.familyNameEditText);
         passwordEditText = findViewById(R.id.passwordEditText);
-        signUpButton = findViewById(R.id.signUpButton);
+        Button signUpButton = findViewById(R.id.signUpButton);
 
         signUpButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -72,6 +73,8 @@ public class EmailSignupActivity extends AppCompatActivity {
     private void signUpUser() {
         String email = emailEditText.getText().toString().trim();
         String password = passwordEditText.getText().toString().trim();
+        String firstName = firstNameEditText.getText().toString().trim();
+        String familyName = familyNameEditText.getText().toString().trim();
 
         mAuth.createUserWithEmailAndPassword(email, password)
                 .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
@@ -81,6 +84,9 @@ public class EmailSignupActivity extends AppCompatActivity {
                             // Sign in success, update UI with the signed-in user's information
                             // You can add further actions here like navigating to another activity
                             Intent intent = new Intent(EmailSignupActivity.this, CategoriesActivity.class);
+                            intent.putExtra("email", email);
+                            intent.putExtra("firstName", firstName);
+                            intent.putExtra("familyName", familyName);
                             startActivity(intent);
                         } else {
                             // If sign in fails, display a message to the user.

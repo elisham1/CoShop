@@ -7,17 +7,30 @@
     tools:context=".CategoriesActivity">
 
     <TextView
+        android:id="@+id/userName"
+        android:layout_width="300dp"
+        android:layout_height="wrap_content"
+        android:textSize="30sp"
+        android:layout_marginTop="16dp"
+        android:textAlignment="center"
+        android:text="TextView"
+        tools:layout_editor_absoluteX="173dp"
+        tools:layout_editor_absoluteY="31dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
         android:id="@+id/categoriesTitle"
         android:layout_width="257dp"
         android:layout_height="33dp"
-        android:layout_marginTop="90dp"
         android:layout_marginBottom="604dp"
         android:text="What Are You Looking For?"
         android:textAlignment="center"
         android:textSize="20sp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toBottomOf="@id/userName" />
 
     <ImageButton
         android:id="@+id/imageButton1"
@@ -159,5 +172,6 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/imageButton11"
         android:onClick="doneCategory"/>
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>

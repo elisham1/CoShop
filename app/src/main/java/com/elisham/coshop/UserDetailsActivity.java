@@ -5,22 +5,65 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.EditText;
+import android.widget.TextView;
+import android.widget.Toast;
+import android.widget.RadioButton;
+import android.widget.RadioGroup;
+
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.FirebaseFirestore;
+
+import org.w3c.dom.Text;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class UserDetailsActivity extends AppCompatActivity {
 
+    private EditText addressEditText;
+    private String email, firstName, familyName;
+    private RadioGroup choiceRadioGroup;
+    private RadioButton supplierRadioButton, consumerRadioButton;
+
+
+    FirebaseFirestore db;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_user_details);
+
+        db = FirebaseFirestore.getInstance();
+
+        Intent intent = getIntent();
+        if(intent != null) {
+            email = intent.getStringExtra("email");
+            firstName = intent.getStringExtra("firstName");
+            familyName = intent.getStringExtra("familyName");
+            String fullName = firstName + " " + familyName;
+
+            EditText emailTextView = findViewById(R.id.emailText);
+            emailTextView.setText(email);
+            TextView fullNameTextView = findViewById(R.id.fullName);
+            fullNameTextView.setText(fullName);
+            addressEditText = findViewById(R.id.addressText);
+
+            choiceRadioGroup = findViewById(R.id.choiceLinearLayout);
+            supplierRadioButton = findViewById(R.id.supplierRadioButton);
+            consumerRadioButton = findViewById(R.id.consumerRadioButton);
+        }
 
         // Enable the back button in the action bar
         ActionBar actionBar = getSupportActionBar();
         if (actionBar != null) {
             actionBar.setDisplayHomeAsUpEnabled(true);
         }
+
+
     }
 
     @Override
@@ -28,6 +71,51 @@ public class UserDetailsActivity extends AppCompatActivity {
         getMenuInflater().inflate(R.menu.menu_items, menu);
         return true;
     }
+
+    public void editUserDetails(View view) {
+        String address = addressEditText.getText().toString().trim();
+
+        Map<String, Object> userDetails = new HashMap<>();
+        userDetails.put("email", email);
+        userDetails.put("first name", firstName);
+        userDetails.put("family name", familyName);
+        userDetails.put("address", address);
+        choiceRadioGroup.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(RadioGroup group, int checkedId) {
+                RadioButton checkedRadioButton = findViewById(checkedId);
+                if (checkedRadioButton != null) {
+                    Toast.makeText(UserDetailsActivity.this, "Selected: " + checkedRadioButton.getText(), Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+
+
+
+        int selectedId = choiceRadioGroup.getCheckedRadioButtonId();
+        RadioButton selectedRadioButton = findViewById(selectedId);
+
+        if (selectedRadioButton != null) {
+            String selectedChoice = selectedRadioButton.getText().toString();
+            userDetails.put("type of user", selectedChoice);
+        } else {
+            Toast.makeText(UserDetailsActivity.this, "No choice selected", Toast.LENGTH_SHORT).show();
+        }
+
+
+        // Add a new document with a generated ID
+        db.collection("users")
+                .add(userDetails)
+                .addOnSuccessListener(documentReference -> {
+                    Toast.makeText(UserDetailsActivity.this, "user details updated successfully", Toast.LENGTH_SHORT).show();
+                    home();
+                })
+                .addOnFailureListener(e -> {
+                    Log.e("Firestore", "Error adding user details: " + e.getMessage());
+                    Toast.makeText(UserDetailsActivity.this, "Failed to update user detail", Toast.LENGTH_SHORT).show();
+                });
+    }
+
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
@@ -98,6 +186,11 @@ public class UserDetailsActivity extends AppCompatActivity {
 
     public void deleteAccount(View v) {
         Intent toy = new Intent(UserDetailsActivity.this, DeleteAccountActivity.class);
+        startActivity(toy);
+    }
+
+    public void changePassword(View v) {
+        Intent toy = new Intent(UserDetailsActivity.this, ChangePasswordActivity.class);
         startActivity(toy);
     }
 
