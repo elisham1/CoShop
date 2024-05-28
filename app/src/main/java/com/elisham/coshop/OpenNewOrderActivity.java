@@ -8,6 +8,7 @@ import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
 import android.content.Intent;
 import android.os.Bundle;
+import android.text.Editable;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -23,6 +24,7 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.DocumentSnapshot;
 
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -53,6 +55,7 @@ import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import java.util.Locale;
+import android.text.TextWatcher;
 
 public class OpenNewOrderActivity extends AppCompatActivity implements LocationListener {
 
@@ -123,6 +126,26 @@ public class OpenNewOrderActivity extends AppCompatActivity implements LocationL
                 }
             }
         });
+
+        maxPeopleEditText = findViewById(R.id.maxPeopleEditText);
+        maxPeopleEditText.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+                // No action needed before text is changed
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                // No action needed on text change
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                int numberOfPeople = maxPeople();
+                max_people_in_order = numberOfPeople;
+                Log.d("Max People", "Updated max_people_in_order: " + max_people_in_order);
+            }
+        });
     }
 
     // Function to get the number of people
@@ -131,7 +154,11 @@ public class OpenNewOrderActivity extends AppCompatActivity implements LocationL
         if (maxPeopleStr.isEmpty()) {
             return 0; // Return 0 if no limit or no number is entered
         }
-        return Integer.parseInt(maxPeopleStr);
+        try {
+            return Integer.parseInt(maxPeopleStr);
+        } catch (NumberFormatException e) {
+            return 0; // Return 0 if the entered text is not a valid number
+        }
     }
 
     // Function that gets called when the EditText is clicked
@@ -488,7 +515,7 @@ public class OpenNewOrderActivity extends AppCompatActivity implements LocationL
         order.put("description", description);
         order.put("categorie", saveNewCategorieName);
         order.put("user_email", userEmail); // Add user's email to the order
-        order.put("max_people",max_people_in_order);
+        order.put("max_people", max_people_in_order);
 
         // Create a GeoPoint for the location
         GeoPoint geoPoint = new GeoPoint(latitude, longitude);
@@ -504,6 +531,13 @@ public class OpenNewOrderActivity extends AppCompatActivity implements LocationL
             order.put("time", null); // Set time to null if not selected
         }
 
+        // Create an ArrayList to store the user's email
+        ArrayList<String> listPeopleInOrder = new ArrayList<>();
+        listPeopleInOrder.add(userEmail); // Add the user's email to the list
+
+        // Add the list to the order map
+        order.put("listPeopleInOrder", listPeopleInOrder);
+
         // Add a new document with a generated ID
         db.collection("orders")
                 .add(order)
@@ -515,6 +549,7 @@ public class OpenNewOrderActivity extends AppCompatActivity implements LocationL
                     Toast.makeText(OpenNewOrderActivity.this, "Failed to add order", Toast.LENGTH_SHORT).show();
                 });
     }
+
 
     public void showTimePickerDialog(View view) {
         // פותחים את ה-DatePickerDialog

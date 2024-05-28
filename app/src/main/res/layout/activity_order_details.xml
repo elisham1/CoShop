@@ -17,8 +17,6 @@
         android:text="Details Of The Order" />
 
     <!-- Box containing order details -->
-
-
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -26,42 +24,45 @@
 
         <!-- Description Of Client -->
         <TextView
+            android:id="@+id/descriptionTextView"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Description Of Client" />
 
         <!-- Site -->
         <TextView
+            android:id="@+id/siteTextView"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Site" />
 
         <!-- Category -->
         <TextView
+            android:id="@+id/categoryTextView"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Category" />
 
         <!-- Address -->
         <TextView
+            android:id="@+id/addressTextView"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Address" />
 
-        <!-- People in Order: 5 -->
-        <LinearLayout
+        <!-- People in Order -->
+        <TextView
+            android:id="@+id/peopleTextView"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical">
+            android:text="People in Order" />
 
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="People in Order: 2" />
-
-
-
-        </LinearLayout>
+        <!-- Time -->
+        <TextView
+            android:id="@+id/timeTextView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Time" />
     </LinearLayout>
 
     <!-- First User Box -->
@@ -176,11 +177,10 @@
         android:layout_height="wrap_content"
         android:text="Description of suppliers" />
 
-    <Button
-        android:id="@+id/button5"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Join" />
-
+<!--    <Button-->
+<!--        android:id="@+id/button5"-->
+<!--        android:layout_width="match_parent"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        android:text="Join" />-->
 
 </LinearLayout>
