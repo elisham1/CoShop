@@ -1,177 +1,146 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp"
     tools:context=".CategoriesActivity">
 
     <TextView
         android:id="@+id/userName"
-        android:layout_width="300dp"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:textSize="30sp"
         android:layout_marginTop="16dp"
         android:textAlignment="center"
-        android:text="TextView"
-        tools:layout_editor_absoluteX="173dp"
-        tools:layout_editor_absoluteY="31dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        android:text="TextView" />
 
     <TextView
         android:id="@+id/categoriesTitle"
-        android:layout_width="257dp"
-        android:layout_height="33dp"
-        android:layout_marginBottom="604dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
         android:text="What Are You Looking For?"
         android:textAlignment="center"
-        android:textSize="20sp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/userName" />
+        android:textSize="20sp" />
 
-    <ImageButton
-        android:id="@+id/imageButton1"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:contentDescription="category1"
-        app:layout_constraintEnd_toStartOf="@id/imageButton2"
-        app:layout_constraintHorizontal_weight="1"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/categoriesTitle"
-        app:srcCompat="@drawable/ic_launcher_foreground" />
+    <GridLayout
+        android:id="@+id/categoryGrid"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:alignmentMode="alignMargins"
+        android:columnCount="3"
+        android:rowCount="4"
+        android:padding="16dp">
 
-    <ImageButton
-        android:id="@+id/imageButton2"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:contentDescription="category2"
-        app:layout_constraintEnd_toStartOf="@id/imageButton3"
-        app:layout_constraintHorizontal_weight="1"
-        app:layout_constraintStart_toEndOf="@id/imageButton1"
-        app:layout_constraintTop_toTopOf="@id/imageButton1"
-        app:srcCompat="@drawable/ic_launcher_foreground" />
+        <!-- Buttons for categories -->
+        <Button
+            android:id="@+id/button1"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_columnWeight="1"
+            android:layout_rowWeight="1"
+            android:text="Category1" />
 
-    <ImageButton
-        android:id="@+id/imageButton3"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:contentDescription="category3"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_weight="1"
-        app:layout_constraintStart_toEndOf="@id/imageButton2"
-        app:layout_constraintTop_toTopOf="@id/imageButton2"
-        app:srcCompat="@drawable/ic_launcher_foreground" />
+        <Button
+            android:id="@+id/button2"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_columnWeight="1"
+            android:layout_rowWeight="1"
+            android:text="Category2" />
 
-    <ImageButton
-        android:id="@+id/imageButton4"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:contentDescription="category4"
-        app:srcCompat="@drawable/ic_launcher_foreground"
-        app:layout_constraintTop_toBottomOf="@id/imageButton1"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toStartOf="@id/imageButton5"
-        app:layout_constraintHorizontal_weight="1" />
+        <Button
+            android:id="@+id/button3"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_columnWeight="1"
+            android:layout_rowWeight="1"
+            android:text="Category3" />
 
-    <ImageButton
-        android:id="@+id/imageButton5"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:contentDescription="category5"
-        app:srcCompat="@drawable/ic_launcher_foreground"
-        app:layout_constraintTop_toTopOf="@id/imageButton4"
-        app:layout_constraintStart_toEndOf="@id/imageButton4"
-        app:layout_constraintEnd_toStartOf="@id/imageButton6"
-        app:layout_constraintHorizontal_weight="1" />
+        <Button
+            android:id="@+id/button4"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_columnWeight="1"
+            android:layout_rowWeight="1"
+            android:text="Category4" />
 
-    <ImageButton
-        android:id="@+id/imageButton6"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:contentDescription="category6"
-        app:srcCompat="@drawable/ic_launcher_foreground"
-        app:layout_constraintTop_toTopOf="@id/imageButton5"
-        app:layout_constraintStart_toEndOf="@id/imageButton5"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_weight="1" />
+        <Button
+            android:id="@+id/button5"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_columnWeight="1"
+            android:layout_rowWeight="1"
+            android:text="Category5" />
 
-    <ImageButton
-        android:id="@+id/imageButton7"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:contentDescription="category7"
-        app:srcCompat="@drawable/ic_launcher_foreground"
-        app:layout_constraintTop_toBottomOf="@id/imageButton4"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toStartOf="@id/imageButton8"
-        app:layout_constraintHorizontal_weight="1" />
+        <Button
+            android:id="@+id/button6"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_columnWeight="1"
+            android:layout_rowWeight="1"
+            android:text="Category6" />
 
-    <ImageButton
-        android:id="@+id/imageButton8"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:contentDescription="category8"
-        app:srcCompat="@drawable/ic_launcher_foreground"
-        app:layout_constraintTop_toTopOf="@id/imageButton7"
-        app:layout_constraintStart_toEndOf="@id/imageButton7"
-        app:layout_constraintEnd_toStartOf="@id/imageButton9"
-        app:layout_constraintHorizontal_weight="1" />
+        <Button
+            android:id="@+id/button7"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_columnWeight="1"
+            android:layout_rowWeight="1"
+            android:text="Category7" />
 
-    <ImageButton
-        android:id="@+id/imageButton9"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:contentDescription="category9"
-        app:srcCompat="@drawable/ic_launcher_foreground"
-        app:layout_constraintTop_toTopOf="@id/imageButton8"
-        app:layout_constraintStart_toEndOf="@id/imageButton8"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_weight="1" />
+        <Button
+            android:id="@+id/button8"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_columnWeight="1"
+            android:layout_rowWeight="1"
+            android:text="Category8" />
 
-    <ImageButton
-        android:id="@+id/imageButton10"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:contentDescription="category10"
-        app:srcCompat="@drawable/ic_launcher_foreground"
-        app:layout_constraintTop_toBottomOf="@id/imageButton7"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toStartOf="@id/imageButton11"
-        app:layout_constraintHorizontal_weight="1" />
+        <Button
+            android:id="@+id/button9"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_columnWeight="1"
+            android:layout_rowWeight="1"
+            android:text="Category9" />
 
-    <ImageButton
-        android:id="@+id/imageButton11"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:contentDescription="category11"
-        app:srcCompat="@drawable/ic_launcher_foreground"
-        app:layout_constraintTop_toTopOf="@id/imageButton10"
-        app:layout_constraintStart_toEndOf="@id/imageButton10"
-        app:layout_constraintEnd_toStartOf="@id/imageButton12"
-        app:layout_constraintHorizontal_weight="1" />
+        <Button
+            android:id="@+id/button10"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_columnWeight="1"
+            android:layout_rowWeight="1"
+            android:text="Category10" />
 
-    <ImageButton
-        android:id="@+id/imageButton12"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:contentDescription="category12"
-        app:srcCompat="@drawable/ic_launcher_foreground"
-        app:layout_constraintTop_toTopOf="@id/imageButton11"
-        app:layout_constraintStart_toEndOf="@id/imageButton11"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_weight="1" />
+        <Button
+            android:id="@+id/button11"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_columnWeight="1"
+            android:layout_rowWeight="1"
+            android:text="Category11" />
+
+        <Button
+            android:id="@+id/button12"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_columnWeight="1"
+            android:layout_rowWeight="1"
+            android:text="Category12" />
+
+    </GridLayout>
 
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:onClick="doneCategory"
         android:text="DONE"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/imageButton11"
-        android:onClick="doneCategory"/>
+        android:layout_gravity="center" />
 
-
-</androidx.constraintlayout.widget.ConstraintLayout>
+</LinearLayout>
