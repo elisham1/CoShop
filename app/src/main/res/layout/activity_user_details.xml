@@ -50,9 +50,9 @@
             <ImageView
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:src="@drawable/yael"
+                android:src="@drawable/android"
                 android:scaleType="centerCrop"
-                android:contentDescription="Yael's Photo" />
+                android:contentDescription="Photo" />
         </androidx.cardview.widget.CardView>
     </LinearLayout>
     <!-- Email Section -->
