@@ -8,12 +8,12 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.LinearLayout;
-import android.widget.RelativeLayout;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.Timestamp;
@@ -22,19 +22,7 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
-import android.content.Intent;
-import android.os.Bundle;
-import android.view.Menu;
-import android.view.MenuItem;
-import android.view.View;
-import android.widget.RelativeLayout;
-import android.widget.TextView;
-import android.widget.Toast;
-
-import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.DocumentSnapshot;
-import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.firestore.GeoPoint;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
@@ -45,6 +33,7 @@ import java.util.Date;
 
 public class MyOrdersActivity extends AppCompatActivity {
     private FirebaseFirestore db;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -59,6 +48,7 @@ public class MyOrdersActivity extends AppCompatActivity {
 
         readUserOrders();
     }
+
     private void readUserOrders() {
         // Get a reference to the collection of orders
         CollectionReference ordersRef = db.collection("orders");
@@ -68,18 +58,18 @@ public class MyOrdersActivity extends AppCompatActivity {
         FirebaseUser currentUser = mAuth.getCurrentUser();
         String userEmail = currentUser.getEmail();
 
-        // Query orders where the user_email field equals the user's email
+        // Query orders where the user_email field equals the user's email (Orders I Open)
         Query userOrdersQuery = ordersRef.whereEqualTo("user_email", userEmail);
 
-        // Execute the query
+        // Execute the query for orders I open
         userOrdersQuery.get().addOnSuccessListener(new OnSuccessListener<QuerySnapshot>() {
             @Override
             public void onSuccess(QuerySnapshot queryDocumentSnapshots) {
                 // Get the context
                 Context context = MyOrdersActivity.this;
 
-                // Get the mainLayout
-                LinearLayout mainLayout = findViewById(R.id.mainLayout);
+                // Get the openedOrdersLayout
+                LinearLayout openedOrdersLayout = findViewById(R.id.openedOrdersLayout);
 
                 // Iterate through each document snapshot
                 for (QueryDocumentSnapshot documentSnapshot : queryDocumentSnapshots) {
@@ -90,21 +80,33 @@ public class MyOrdersActivity extends AppCompatActivity {
                     GeoPoint geoPoint = documentSnapshot.getGeoPoint("location");
                     double latitude = geoPoint.getLatitude(); // Extracting latitude
                     double longitude = geoPoint.getLongitude(); // Extracting longitude
-                    Timestamp timestamp = documentSnapshot.getTimestamp("time");
+                    String time = "";
+                    // Check if "time" field exists and is of type string
+                    if (documentSnapshot.contains("time") && documentSnapshot.get("time") instanceof String) {
+                        // Get the time string
+                        time = documentSnapshot.getString("time");
 
-                    // Convert timestamp to Date object
-                    Date date = timestamp.toDate();
-                    SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm");
-                    String formattedTime = sdf.format(date);
+                        // Perform any further operations with the time string
+                    } else {
+                        // Handle the case where the "time" field either doesn't exist or is not of type string
+                        if (documentSnapshot.contains("time")) {
+                            Timestamp timestamp = documentSnapshot.getTimestamp("time");
+                            if (timestamp != null) {
+                                Date date = timestamp.toDate();
+                                SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm");
+                                time = sdf.format(date);
+                            }
+                        }
+                    }
+
+                    String url = documentSnapshot.getString("URL");
 
                     // Create a new LinearLayout for order details
                     LinearLayout orderLayout = new LinearLayout(context);
                     orderLayout.setOrientation(LinearLayout.VERTICAL);
 
                     // Add order details to the layout
-                    TextView orderIdTextView = new TextView(context);
-                    orderIdTextView.setText("Order ID: " + orderId);
-                    orderLayout.addView(orderIdTextView);
+
 
                     TextView categoryTextView = new TextView(context);
                     categoryTextView.setText("Categorie: " + categorie);
@@ -118,9 +120,19 @@ public class MyOrdersActivity extends AppCompatActivity {
                     locationTextView.setText("Location: " + latitude + ", " + longitude);
                     orderLayout.addView(locationTextView);
 
-                    TextView timeTextView = new TextView(context);
-                    timeTextView.setText("Time: " + formattedTime);
-                    orderLayout.addView(timeTextView);
+                    // Add time if it's not empty
+                    if (!time.isEmpty()) {
+                        TextView timeTextView = new TextView(context);
+                        timeTextView.setText("Time: " + time);
+                        orderLayout.addView(timeTextView);
+                    }
+
+                    // Add URL if it's not empty
+                    if (url != null && !url.isEmpty()) {
+                        TextView urlTextView = new TextView(context);
+                        urlTextView.setText("URL: " + url);
+                        orderLayout.addView(urlTextView);
+                    }
 
                     // Create a new CardView
                     CardView cardView = new CardView(context);
@@ -150,12 +162,121 @@ public class MyOrdersActivity extends AppCompatActivity {
                         }
                     });
 
-                    // Add the CardView to the main layout
-                    mainLayout.addView(cardView);
+                    // Add the CardView to the openedOrdersLayout
+                    openedOrdersLayout.addView(cardView);
+                }
+            }
+        });
+
+        // Query all orders where the user's email is in the listPeopleInOrder array (Orders I Joined)
+        Query joinedOrdersQuery = ordersRef.whereArrayContains("listPeopleInOrder", userEmail);
+
+        // Execute the query for orders I joined
+        joinedOrdersQuery.get().addOnSuccessListener(new OnSuccessListener<QuerySnapshot>() {
+            @Override
+            public void onSuccess(QuerySnapshot queryDocumentSnapshots) {
+                // Get the context
+                Context context = MyOrdersActivity.this;
+
+                // Get the joinedOrdersLayout
+                LinearLayout joinedOrdersLayout = findViewById(R.id.joinedOrdersLayout);
+
+                // Iterate through each document snapshot
+                for (QueryDocumentSnapshot documentSnapshot : queryDocumentSnapshots) {
+                    // Get the user_email of the order
+                    String orderUserEmail = documentSnapshot.getString("user_email");
+
+                    // Skip orders where the current user's email is the same as the order user_email
+                    if (userEmail.equals(orderUserEmail)) {
+                        continue;
+                    }
+
+                    // Get order details from each document snapshot
+                    String orderId = documentSnapshot.getId();
+                    String categorie = documentSnapshot.getString("categorie");
+                    String description = documentSnapshot.getString("description");
+                    GeoPoint geoPoint = documentSnapshot.getGeoPoint("location");
+                    double latitude = geoPoint.getLatitude(); // Extracting latitude
+                    double longitude = geoPoint.getLongitude(); // Extracting longitude
+                    String time = "";
+                    if (documentSnapshot.contains("time")) {
+                        Timestamp timestamp = documentSnapshot.getTimestamp("time");
+                        if (timestamp != null) {
+                            Date date = timestamp.toDate();
+                            SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm");
+                            time = sdf.format(date);
+                        }
+                    }
+                    String url = documentSnapshot.getString("URL");
+
+                    // Create a new LinearLayout for order details
+                    LinearLayout orderLayout = new LinearLayout(context);
+                    orderLayout.setOrientation(LinearLayout.VERTICAL);
+
+                    // Add order details to the layout
+
+
+                    TextView categoryTextView = new TextView(context);
+                    categoryTextView.setText("Categorie: " + categorie);
+                    orderLayout.addView(categoryTextView);
+
+                    TextView descriptionTextView = new TextView(context);
+                    descriptionTextView.setText("Description: " + description);
+                    orderLayout.addView(descriptionTextView);
+
+                    TextView locationTextView = new TextView(context);
+                    locationTextView.setText("Location: " + latitude + ", " + longitude);
+                    orderLayout.addView(locationTextView);
+
+                    // Add time if it's not empty
+                    if (!time.isEmpty()) {
+                        TextView timeTextView = new TextView(context);
+                        timeTextView.setText("Time: " + time);
+                        orderLayout.addView(timeTextView);
+                    }
+
+                    // Add URL if it's not empty
+                    if (url != null && !url.isEmpty()) {
+                        TextView urlTextView = new TextView(context);
+                        urlTextView.setText("URL: " + url);
+                        orderLayout.addView(urlTextView);
+                    }
+
+                    // Create a new CardView
+                    CardView cardView = new CardView(context);
+                    LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
+                            LinearLayout.LayoutParams.MATCH_PARENT,
+                            LinearLayout.LayoutParams.WRAP_CONTENT
+                    );
+                    layoutParams.setMargins(0, 0, 0, 16); // Add margin between CardViews
+                    cardView.setLayoutParams(layoutParams);
+                    cardView.setRadius(10); // Rounded corners for the CardView
+                    cardView.setCardElevation(8); // Shadow for the CardView
+                    cardView.setCardBackgroundColor(Color.WHITE); // Background color of the CardView
+
+                    // Set padding for views inside the CardView
+                    cardView.setPadding(16, 16, 16, 16);
+
+                    // Add order details layout to the CardView
+                    cardView.addView(orderLayout);
+
+                    // Add an OnClickListener to the CardView
+                    cardView.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            Intent intent = new Intent(MyOrdersActivity.this, OrderDetailsActivity.class);
+                            intent.putExtra("orderId", orderId);
+                            startActivity(intent);
+                        }
+                    });
+
+                    // Add the CardView to the joinedOrdersLayout
+                    joinedOrdersLayout.addView(cardView);
                 }
             }
         });
     }
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_items, menu);

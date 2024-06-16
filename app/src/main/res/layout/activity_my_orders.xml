@@ -22,11 +22,37 @@
         android:textSize="30sp"
         android:text="Orders I Open:" />
 
-    <!-- Main layout for all orders -->
-    <LinearLayout
-        android:id="@+id/mainLayout"
+    <!-- Scroll view for orders I opened -->
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:contentDescription="Scrollable area for orders I opened">
+        <LinearLayout
+            android:id="@+id/openedOrdersLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical" />
+    </ScrollView>
+
+    <TextView
+        android:id="@+id/textView6"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical">
-    </LinearLayout>
+        android:textSize="30sp"
+        android:text="Orders I Joined:" />
+
+    <!-- Scroll view for orders I joined -->
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:contentDescription="Scrollable area for orders I joined">
+        <LinearLayout
+            android:id="@+id/joinedOrdersLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical" />
+    </ScrollView>
+
 </LinearLayout>
