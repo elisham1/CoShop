@@ -23,14 +23,12 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.DocumentSnapshot;
 
-
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import androidx.appcompat.app.AlertDialog;
 import java.text.SimpleDateFormat;
-
 
 import android.content.DialogInterface;
 import android.text.InputType;
@@ -48,6 +46,7 @@ import androidx.core.content.ContextCompat;
 import java.util.Calendar;
 
 import android.Manifest;
+import android.content.Context;
 import android.content.pm.PackageManager;
 import android.location.Address;
 import android.location.Geocoder;
@@ -56,6 +55,7 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import java.util.Locale;
 import android.text.TextWatcher;
+import android.view.MotionEvent;
 
 public class OpenNewOrderActivity extends AppCompatActivity implements LocationListener {
 
@@ -64,19 +64,18 @@ public class OpenNewOrderActivity extends AppCompatActivity implements LocationL
     Spinner categorySpinner;
     private EditText urlEditText;
     private EditText descriptionEditText;
-
     private EditText addressEditText;
-
     private Calendar selectedTime = null;
     LocationManager locationManager;
     String saveNewCategorieName;
-
-    private double latitude ;
-    private double longitude ;
-
+    private double latitude;
+    private double longitude;
     private int max_people_in_order;
     private RadioGroup maxPeopleRadioGroup;
     private EditText maxPeopleEditText;
+    private boolean isAddressManuallyEdited = false; // Flag to track manual edits
+    private long lastClickTime = 0; // Variable to store the time of the last click
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -97,18 +96,42 @@ public class OpenNewOrderActivity extends AppCompatActivity implements LocationL
         if (actionBar != null) {
             actionBar.setDisplayHomeAsUpEnabled(true);
         }
-        // Get reference to the EditText
-        addressEditText = findViewById(R.id.address);
 
-        // Add a click listener to the EditText
-        addressEditText.setOnClickListener(new View.OnClickListener() {
+        // Add a click listener to the address EditText
+        addressEditText.setOnTouchListener(new View.OnTouchListener() {
             @Override
-            public void onClick(View v) {
-                // Check location permission when clicked
-                checkLocationPermission();
+            public boolean onTouch(View v, MotionEvent event) {
+                if (event.getAction() == MotionEvent.ACTION_DOWN) {
+                    long clickTime = System.currentTimeMillis();
+                    if (clickTime - lastClickTime < 500) { // Double click detected
+                        isAddressManuallyEdited = false;
+                        checkLocationPermission();
+                    } else {
+                        isAddressManuallyEdited = true;
+                    }
+                    lastClickTime = clickTime;
+                }
+                return false;
             }
         });
 
+        // Track manual edits to the address field
+        addressEditText.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+                // No action needed before text is changed
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                isAddressManuallyEdited = true; // User manually edited the address
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                // No action needed after text is changed
+            }
+        });
 
         // Initialize views
         maxPeopleRadioGroup = findViewById(R.id.maxPeopleRadioGroup);
@@ -127,7 +150,6 @@ public class OpenNewOrderActivity extends AppCompatActivity implements LocationL
             }
         });
 
-        maxPeopleEditText = findViewById(R.id.maxPeopleEditText);
         maxPeopleEditText.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
@@ -148,7 +170,6 @@ public class OpenNewOrderActivity extends AppCompatActivity implements LocationL
         });
     }
 
-    // Function to get the number of people
     public int maxPeople() {
         String maxPeopleStr = maxPeopleEditText.getText().toString();
         if (maxPeopleStr.isEmpty()) {
@@ -161,14 +182,10 @@ public class OpenNewOrderActivity extends AppCompatActivity implements LocationL
         }
     }
 
-    // Function that gets called when the EditText is clicked
     public void onMaxPeopleEditTextClick(View view) {
-        // Do something when EditText is clicked
-        // For demonstration, let's print the max people value
         int numberOfPeople = maxPeople();
-        Log.d("gggggggggggggg", "Max People: " + numberOfPeople);
-        max_people_in_order=0;
-        max_people_in_order=numberOfPeople;
+        Log.d("Max People", "Max People: " + numberOfPeople);
+        max_people_in_order = numberOfPeople;
     }
 
     private void checkLocationPermission() {
@@ -181,15 +198,21 @@ public class OpenNewOrderActivity extends AppCompatActivity implements LocationL
 
     @SuppressLint("MissingPermission")
     private void getLocation() {
-        locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
+        locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
         if (locationManager != null) {
-            locationManager.requestSingleUpdate(LocationManager.GPS_PROVIDER, this, null);
+            if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER) || locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)) {
+                locationManager.requestSingleUpdate(LocationManager.GPS_PROVIDER, this, null);
+                locationManager.requestSingleUpdate(LocationManager.NETWORK_PROVIDER, this, null);
+            } else {
+                Toast.makeText(this, "Please enable location services", Toast.LENGTH_SHORT).show();
+                startActivity(new Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS));
+            }
         }
     }
 
     @Override
     public void onLocationChanged(Location location) {
-        if (location != null) {
+        if (location != null && !isAddressManuallyEdited) { // Only update if not manually edited
             latitude = location.getLatitude();
             longitude = location.getLongitude();
             Toast.makeText(this, "Latitude: " + latitude + ", Longitude: " + longitude, Toast.LENGTH_SHORT).show();
@@ -201,8 +224,6 @@ public class OpenNewOrderActivity extends AppCompatActivity implements LocationL
                 if (addresses != null && !addresses.isEmpty()) {
                     String address = addresses.get(0).getAddressLine(0);
                     Log.d("Location Address", address);
-
-                    // Set the address text to the address EditText
                     addressEditText.setText(address);
                 }
             } catch (Exception e) {
@@ -222,6 +243,7 @@ public class OpenNewOrderActivity extends AppCompatActivity implements LocationL
             }
         }
     }
+
     public void readCategoriesFromFireStore() {
         db.collection("categories").document("jQ4hXL6kr1AbKwPvEdXl")
                 .get()
@@ -230,11 +252,9 @@ public class OpenNewOrderActivity extends AppCompatActivity implements LocationL
                         DocumentSnapshot document = task.getResult();
                         if (document.exists()) {
                             List<String> categoriesList = (List<String>) document.get("categories");
-
                             if (categoriesList != null) {
-                                // Call function to add "Other" category and handle new category input
                                 int numberOfItemsInList = categoriesList.size();
-                                addOtherCategory(categoriesList,numberOfItemsInList);
+                                addOtherCategory(categoriesList, numberOfItemsInList);
                             }
                         }
                     } else {
@@ -243,65 +263,49 @@ public class OpenNewOrderActivity extends AppCompatActivity implements LocationL
                 });
     }
 
-    public void addOtherCategory(List<String> categoriesList,int numberOfItemsInList) {
-
-        // Add "Other" category to the list
+    public void addOtherCategory(List<String> categoriesList, int numberOfItemsInList) {
         categoriesList.add("Other");
-
-        // Create adapter and set it to the Spinner
         ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, categoriesList);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         categorySpinner.setAdapter(adapter);
 
-        // Handle selection of "Other" category
         categorySpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> adapterView, View view, int position, long id) {
                 String selectedCategory = (String) adapterView.getItemAtPosition(position);
-                saveNewCategorieName="";
-                saveNewCategorieName=selectedCategory;
-                Log.d("MyTag",saveNewCategorieName);
+                saveNewCategorieName = selectedCategory;
+                Log.d("Selected Category", saveNewCategorieName);
                 if (selectedCategory.equals("Other")) {
-                    // Show dialog for entering new category
-                    showNewCategoryDialog(categoriesList,numberOfItemsInList);
+                    showNewCategoryDialog(categoriesList, numberOfItemsInList);
                 }
             }
 
             @Override
             public void onNothingSelected(AdapterView<?> adapterView) {
-                // Do nothing
             }
         });
-
     }
 
-    public void showNewCategoryDialog(List<String> categoriesList,int numberOfItemsInList) {
+    public void showNewCategoryDialog(List<String> categoriesList, int numberOfItemsInList) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("Enter New Category");
 
-        // Set up the input field
         final EditText input = new EditText(this);
         input.setInputType(InputType.TYPE_CLASS_TEXT);
         builder.setView(input);
 
-        // Set up the buttons
         builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 String newCategory = input.getText().toString();
-                saveNewCategorieName="";
-                saveNewCategorieName=newCategory;
-                Log.d("MyTag",saveNewCategorieName);
-                // Add new category to Firestore
-                if(!newCategory.equalsIgnoreCase("Other") && !newCategory.trim().isEmpty()){
-                    addCategoryToFirestore(newCategory,categoriesList,numberOfItemsInList);
+                saveNewCategorieName = newCategory;
+                Log.d("New Category", saveNewCategorieName);
+                if (!newCategory.equalsIgnoreCase("Other") && !newCategory.trim().isEmpty()) {
+                    addCategoryToFirestore(newCategory, categoriesList, numberOfItemsInList);
+                } else {
+                    showNewCategoryDialog(categoriesList, numberOfItemsInList);
+                    Toast.makeText(OpenNewOrderActivity.this, "You cannot enter that! Enter again.", Toast.LENGTH_SHORT).show();
                 }
-                else{
-                    showNewCategoryDialog(categoriesList,numberOfItemsInList);
-                    Toast.makeText(OpenNewOrderActivity.this, "You can not enter that! enter again.", Toast.LENGTH_SHORT).show();
-
-                }
-
             }
         });
         builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
@@ -315,34 +319,25 @@ public class OpenNewOrderActivity extends AppCompatActivity implements LocationL
         builder.show();
     }
 
-    public void addCategoryToFirestore(String newCategory,List<String> categoriesList,int numberOfItemsInList) {
-        // Convert the new category to lowercase for case-insensitive comparison
-        String saveCategory=newCategory;
+    public void addCategoryToFirestore(String newCategory, List<String> categoriesList, int numberOfItemsInList) {
+        String saveCategory = newCategory;
         String lowercaseCategory = newCategory.toLowerCase();
 
-
-        // Add new category to Firestore
         db.collection("categories").document("jQ4hXL6kr1AbKwPvEdXl")
                 .get()
                 .addOnSuccessListener(documentSnapshot -> {
-//                    List<String> categoriesList = (List<String>) documentSnapshot.get("categories");
                     if (categoriesList != null) {
                         if (!containsIgnoreCase(categoriesList, lowercaseCategory)) {
-                            Toast.makeText(OpenNewOrderActivity.this, "hi", Toast.LENGTH_SHORT).show();
-                            Log.d("MyTag", String.valueOf(numberOfItemsInList));
-                            Log.d("MyTag", String.valueOf(categoriesList.size()));
+                            Log.d("Category Size", String.valueOf(numberOfItemsInList));
+                            Log.d("Category List Size", String.valueOf(categoriesList.size()));
 
-                            if((numberOfItemsInList+1)<categoriesList.size()){//the user add categories but regret so delete the last one to add the new
+                            if ((numberOfItemsInList + 1) < categoriesList.size()) {
                                 categoriesList.remove(categoriesList.size() - 1);
                             }
                             categoriesList.add(saveCategory);
-                            // Do whatever else you need to do with the new category locally
                             categorySpinner.setSelection(categoriesList.indexOf(saveCategory));
                         } else {
-                            // Category already exists
                             Toast.makeText(OpenNewOrderActivity.this, "Category already exists", Toast.LENGTH_SHORT).show();
-                            // Update Spinner with existing category
-                            // Find the correct casing of the new category in the categories list
                             String correctCasedCategory = null;
                             for (String category : categoriesList) {
                                 if (category.equalsIgnoreCase(newCategory)) {
@@ -350,21 +345,15 @@ public class OpenNewOrderActivity extends AppCompatActivity implements LocationL
                                     break;
                                 }
                             }
-
                             categorySpinner.setSelection(categoriesList.indexOf(correctCasedCategory));
-
-                            //categorySpinner.setSelection(categoriesList.indexOf(newCategory));
-
                         }
                     }
                 })
                 .addOnFailureListener(e -> {
-                    // Error retrieving categories
                     Log.e("Firestore", "Error getting categories: " + e.getMessage());
                 });
     }
 
-    // Helper function to check if a list contains a string (case-insensitive)
     private boolean containsIgnoreCase(List<String> list, String str) {
         for (String s : list) {
             if (s.equalsIgnoreCase(str)) {
@@ -384,7 +373,7 @@ public class OpenNewOrderActivity extends AppCompatActivity implements LocationL
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case android.R.id.home:
-                onBackPressed(); // Go back when the back arrow is clicked
+                onBackPressed();
                 return true;
             case R.id.Personal_info:
                 personalInfo();
@@ -413,69 +402,108 @@ public class OpenNewOrderActivity extends AppCompatActivity implements LocationL
     }
 
     public void home() {
-        Intent toy = new Intent(OpenNewOrderActivity.this, HomePageActivity.class);
-        startActivity(toy);
+        Intent intent = new Intent(OpenNewOrderActivity.this, HomePageActivity.class);
+        startActivity(intent);
     }
 
     public void personalInfo() {
-        Intent toy = new Intent(OpenNewOrderActivity.this, UserDetailsActivity.class);
-        startActivity(toy);
+        Intent intent = new Intent(OpenNewOrderActivity.this, UserDetailsActivity.class);
+        startActivity(intent);
     }
 
     public void myOrders() {
-
-        Intent toy = new Intent(OpenNewOrderActivity.this, MyOrdersActivity.class);
-        startActivity(toy);
-    }
-
-    public void aboutUs() {
-        Intent toy = new Intent(OpenNewOrderActivity.this, AboutActivity.class);
-        startActivity(toy);
-    }
-
-    public void contactUs() {
-        Intent toy = new Intent(OpenNewOrderActivity.this, ContactUsActivity.class);
-        startActivity(toy);
-    }
-
-    public void basket() {
-        Intent toy = new Intent(OpenNewOrderActivity.this, BasketActivity.class);
-        startActivity(toy);
-    }
-
-    public void logOut() {
-        Intent toy = new Intent(OpenNewOrderActivity.this, MainActivity.class);
-        startActivity(toy);
-    }
-
-    public void goToMyOrders(View v) {
-        addCategorieToDataBase();
-        saveOrder();
         Intent intent = new Intent(OpenNewOrderActivity.this, MyOrdersActivity.class);
         startActivity(intent);
     }
 
+    public void aboutUs() {
+        Intent intent = new Intent(OpenNewOrderActivity.this, AboutActivity.class);
+        startActivity(intent);
+    }
 
-    public void addCategorieToDataBase(){
-        Log.d("MyTag", "yomadeit");
+    public void contactUs() {
+        Intent intent = new Intent(OpenNewOrderActivity.this, ContactUsActivity.class);
+        startActivity(intent);
+    }
+
+    public void basket() {
+        Intent intent = new Intent(OpenNewOrderActivity.this, BasketActivity.class);
+        startActivity(intent);
+    }
+
+    public void logOut() {
+        Intent intent = new Intent(OpenNewOrderActivity.this, MainActivity.class);
+        startActivity(intent);
+    }
+
+    public void goToMyOrders(View v) {
+        String url = urlEditText.getText().toString().trim();
+        String description = descriptionEditText.getText().toString().trim();
+
+        if (url.isEmpty()) {
+            url = "";
+        } else if (!url.contains("://")) {
+            Toast.makeText(this, "Invalid URL. Please enter a valid URL", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        if (saveNewCategorieName.isEmpty() || saveNewCategorieName.equals("Choose Categorie")) {
+            Toast.makeText(this, "Category is required", Toast.LENGTH_SHORT).show();
+        } else if (latitude == 0.0 && longitude == 0.0) {
+            Toast.makeText(this, "Location is required", Toast.LENGTH_SHORT).show();
+        } else if (description.isEmpty()) {
+            Toast.makeText(this, "Description is required", Toast.LENGTH_SHORT).show();
+        } else {
+            addCategorieToDataBase();
+            saveOrder(url, description);
+            Intent intent = new Intent(OpenNewOrderActivity.this, MyOrdersActivity.class);
+            startActivity(intent);
+        }
+    }
+
+    private boolean validateFields() {
+        Log.d("Validate Fields", "Start");
+        String url = urlEditText.getText().toString().trim();
+        String description = descriptionEditText.getText().toString().trim();
+        String category = saveNewCategorieName;
+        String address = addressEditText.getText().toString().trim();
+        boolean valid = true;
+
+        if (description.isEmpty()) {
+            descriptionEditText.setError("Description is required");
+            valid = false;
+        }
+
+        if (category.isEmpty() || category.equals("Other") || category.equals("Choose Categorie")) {
+            Toast.makeText(this, "Please select a valid category", Toast.LENGTH_SHORT).show();
+            valid = false;
+        }
+
+        if (address.isEmpty()) {
+            addressEditText.setError("Address is required");
+            valid = false;
+        }
+
+        Log.d("Validate Fields", "End with valid = " + valid);
+        return valid;
+    }
+
+    public void addCategorieToDataBase() {
+        Log.d("Add Category", "Start");
         String lowercaseCategory = saveNewCategorieName.toLowerCase();
 
-        // Add new category to Firestore
         db.collection("categories").document("jQ4hXL6kr1AbKwPvEdXl")
                 .get()
                 .addOnSuccessListener(documentSnapshot -> {
                     List<String> categoriesList = (List<String>) documentSnapshot.get("categories");
                     if (categoriesList != null) {
                         if (!containsIgnoreCase(categoriesList, lowercaseCategory)) {
-                            // Category doesn't exist, add it
                             db.collection("categories").document("jQ4hXL6kr1AbKwPvEdXl")
                                     .update("categories", FieldValue.arrayUnion(saveNewCategorieName))
                                     .addOnSuccessListener(aVoid -> {
-                                        // Category added successfully
                                         Toast.makeText(OpenNewOrderActivity.this, "New category added successfully", Toast.LENGTH_SHORT).show();
                                     })
                                     .addOnFailureListener(e -> {
-                                        // Error adding category
                                         Log.e("Firestore", "Error adding category: " + e.getMessage());
                                         Toast.makeText(OpenNewOrderActivity.this, "Failed to add category", Toast.LENGTH_SHORT).show();
                                     });
@@ -483,91 +511,96 @@ public class OpenNewOrderActivity extends AppCompatActivity implements LocationL
                     }
                 })
                 .addOnFailureListener(e -> {
-                    // Error retrieving categories
                     Log.e("Firestore", "Error getting categories: " + e.getMessage());
                 });
     }
 
-    private void saveOrder() {
-        String url = urlEditText.getText().toString().trim();
-        String description = descriptionEditText.getText().toString().trim();
-
-        if (url.isEmpty() || description.isEmpty() || saveNewCategorieName.isEmpty()) {
-            Toast.makeText(this, "Please fill out all fields", Toast.LENGTH_SHORT).show();
-            return;
+    private void saveOrder(String url, String description) {
+        if (url.isEmpty()) {
+            url = "";
+        } else if (!url.contains("://")) {
+            urlEditText.setError("Invalid URL. Please enter a valid URL");
         }
 
-        // Get the current user's email
         FirebaseAuth mAuth = FirebaseAuth.getInstance();
         FirebaseUser currentUser = mAuth.getCurrentUser();
         String userEmail = null;
         if (currentUser != null) {
             userEmail = currentUser.getEmail();
         } else {
-            // Handle case when user is not logged in
             Toast.makeText(this, "User not logged in", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        // Create a new order object
-        Map<String, Object> order = new HashMap<>();
-        order.put("URL", url);
-        order.put("description", description);
-        order.put("categorie", saveNewCategorieName);
-        order.put("user_email", userEmail); // Add user's email to the order
-        order.put("max_people", max_people_in_order);
+        // שמירת המשתנים כ- final או effectively final
+        String finalUserEmail = userEmail;
+        String finalUrl = url;
+        String finalDescription = description;
 
-        // Create a GeoPoint for the location
-        GeoPoint geoPoint = new GeoPoint(latitude, longitude);
+        // קריאה ל-Firestore כדי לקבל את ה-type of user
+        db.collection("users").document(finalUserEmail)
+                .get()
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        DocumentSnapshot document = task.getResult();
+                        if (document.exists()) {
+                            String userType = document.getString("type of user");
 
-        // Add the GeoPoint to the order map
-        order.put("location", geoPoint);
+                            // המשך הוספת ההזמנה לאחר קבלת ה-type of user
+                            Map<String, Object> order = new HashMap<>();
+                            order.put("URL", finalUrl);
+                            order.put("description", finalDescription);
+                            order.put("categorie", saveNewCategorieName);
+                            order.put("user_email", finalUserEmail);
+                            order.put("max_people", max_people_in_order);
+                            order.put("type_of_order", userType); // הוספת ה-type of user להזמנה
 
-        // Check if selectedTime is not null and set
-        if (selectedTime != null) {
-            Date selectedDate = selectedTime.getTime();
-            order.put("time", selectedDate);
-        } else {
-            order.put("time", null); // Set time to null if not selected
-        }
+                            GeoPoint geoPoint = new GeoPoint(latitude, longitude);
+                            order.put("location", geoPoint);
 
-        // Create an ArrayList to store the user's email
-        ArrayList<String> listPeopleInOrder = new ArrayList<>();
-        listPeopleInOrder.add(userEmail); // Add the user's email to the list
+                            if (selectedTime != null) {
+                                Date selectedDate = selectedTime.getTime();
+                                order.put("time", selectedDate);
+                            } else {
+                                order.put("time", "");
+                            }
 
-        // Add the list to the order map
-        order.put("listPeopleInOrder", listPeopleInOrder);
+                            ArrayList<String> listPeopleInOrder = new ArrayList<>();
+                            listPeopleInOrder.add(finalUserEmail);
+                            order.put("listPeopleInOrder", listPeopleInOrder);
 
-        // Add a new document with a generated ID
-        db.collection("orders")
-                .add(order)
-                .addOnSuccessListener(documentReference -> {
-                    Toast.makeText(OpenNewOrderActivity.this, "Order added successfully", Toast.LENGTH_SHORT).show();
-                })
-                .addOnFailureListener(e -> {
-                    Log.e("Firestore", "Error adding order: " + e.getMessage());
-                    Toast.makeText(OpenNewOrderActivity.this, "Failed to add order", Toast.LENGTH_SHORT).show();
+                            db.collection("orders")
+                                    .add(order)
+                                    .addOnSuccessListener(documentReference -> {
+                                        Toast.makeText(OpenNewOrderActivity.this, "Order added successfully", Toast.LENGTH_SHORT).show();
+                                    })
+                                    .addOnFailureListener(e -> {
+                                        Log.e("Firestore", "Error adding order: " + e.getMessage());
+                                        Toast.makeText(OpenNewOrderActivity.this, "Failed to add order", Toast.LENGTH_SHORT).show();
+                                    });
+                        } else {
+                            Log.d("Firestore", "No such document");
+                        }
+                    } else {
+                        Log.d("Firestore", "get failed with ", task.getException());
+                    }
                 });
     }
 
 
     public void showTimePickerDialog(View view) {
-        // פותחים את ה-DatePickerDialog
         Calendar calendar = Calendar.getInstance();
         DatePickerDialog datePickerDialog = new DatePickerDialog(OpenNewOrderActivity.this, new DatePickerDialog.OnDateSetListener() {
             @Override
             public void onDateSet(DatePicker view, int year, int month, int dayOfMonth) {
-                // בודקים אם התאריך שנבחר גדול מהתאריך הנוכחי
                 Calendar currentDate = Calendar.getInstance();
                 currentDate.set(Calendar.YEAR, year);
                 currentDate.set(Calendar.MONTH, month);
                 currentDate.set(Calendar.DAY_OF_MONTH, dayOfMonth);
 
                 if (currentDate.before(Calendar.getInstance())) {
-                    // התאריך שנבחר הוא תאריך עתידי
-                    Toast.makeText(OpenNewOrderActivity.this, "You can't choose last day", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(OpenNewOrderActivity.this, "You can't choose a past date", Toast.LENGTH_SHORT).show();
                 } else {
-                    // לאחר בחירת תאריך, פותחים את ה-TimePickerDialog
                     Calendar selectedDate = Calendar.getInstance();
                     selectedDate.set(year, month, dayOfMonth);
 
@@ -578,10 +611,9 @@ public class OpenNewOrderActivity extends AppCompatActivity implements LocationL
                             selectedDate.set(Calendar.MINUTE, minute);
 
                             if (selectedDate.before(Calendar.getInstance())) {
-                                // השעה שנבחרה כבר עברה
                                 Toast.makeText(OpenNewOrderActivity.this, "You cannot select a past time", Toast.LENGTH_SHORT).show();
                             } else {
-                                selectedTime = selectedDate; // Update the selectedTime variable
+                                selectedTime = selectedDate;
                                 SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault());
                                 String dateTime = sdf.format(selectedDate.getTime());
 
@@ -596,7 +628,4 @@ public class OpenNewOrderActivity extends AppCompatActivity implements LocationL
         }, calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH));
         datePickerDialog.show();
     }
-
-
-
 }

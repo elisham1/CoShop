@@ -9,12 +9,11 @@
 
     <RelativeLayout
         android:id="@+id/searchBar"
-        android:layout_width="330dp"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_margin="8dp"
         android:background="#CCCCCC"
         android:orientation="horizontal"
-        app:layout_constraintBottom_toTopOf="@id/firstOrder"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
@@ -50,7 +49,6 @@
             android:layout_height="wrap_content"
             android:layout_toEndOf="@id/searchBarText">
 
-
             <ImageButton
                 android:id="@+id/searchButton"
                 android:layout_width="50dp"
@@ -61,95 +59,25 @@
 
         </RelativeLayout>
 
-
     </RelativeLayout>
 
-    <RelativeLayout
-        android:id="@+id/firstOrder"
-        android:layout_width="330dp"
-        android:layout_height="wrap_content"
-        android:background="#CCCCCC"
-        android:padding="16dp"
-        app:layout_constraintBottom_toTopOf="@id/addNewOrder"
+    <ScrollView
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_margin="8dp"
+        app:layout_constraintTop_toBottomOf="@id/searchBar"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent">
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/addNewOrder">
 
-        <TextView
-            android:id="@+id/order1"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Order 1"
-            android:textColor="#000000"
-            android:textSize="20sp" />
-
-        <TextView
-            android:id="@+id/textSiteCategory1"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_below="@id/order1"
-            android:text="Site/Category: YourSite"
-            android:textColor="#000000"
-            android:textSize="16sp" />
-
-        <TextView
-            android:id="@+id/textAddress1"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_below="@id/textSiteCategory1"
-            android:layout_marginTop="8dp"
-            android:text="Address: YourAddress"
-            android:textColor="#000000"
-            android:textSize="16sp" />
-
-        <TextView
-            android:id="@+id/textPeopleInOrder1"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_below="@id/textAddress1"
-            android:layout_marginTop="8dp"
-            android:text="People in Order: 5"
-            android:textColor="#000000"
-            android:textSize="16sp" />
-
-        <TextView
-            android:id="@+id/textTimeToEnd1"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_below="@id/textPeopleInOrder1"
-            android:layout_marginTop="8dp"
-            android:text="05:08 Time to End"
-            android:textColor="#000000"
-            android:textSize="16sp" />
-
-        <!-- Buttons inside Order 1 box -->
         <LinearLayout
-            android:layout_width="wrap_content"
+            android:id="@+id/ordersContainer"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_alignParentEnd="true"
-            android:orientation="vertical">
+            android:orientation="vertical"
+            android:padding="8dp" />
 
-            <Button
-                android:id="@+id/button1"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Open"
-                android:layout_marginTop="8dp" />
-
-            <Button
-                android:id="@+id/button2"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Share"
-                android:layout_marginTop="8dp" />
-
-            <Button
-                android:id="@+id/button3"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Join"
-                android:layout_marginTop="8dp" />
-        </LinearLayout>
-    </RelativeLayout>
+    </ScrollView>
 
     <RelativeLayout
         android:id="@+id/addNewOrder"
@@ -158,9 +86,9 @@
         android:layout_margin="8dp"
         android:background="#CCCCCC"
         android:orientation="horizontal"
-        app:layout_constraintTop_toBottomOf="@id/firstOrder"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
         android:onClick="gotoneworder">
 
         <RelativeLayout
@@ -169,7 +97,6 @@
             android:layout_height="50dp"
             android:orientation="vertical"
             android:onClick="gotoneworder">
-
 
             <TextView
                 android:id="@+id/newOrderText2"
@@ -190,7 +117,6 @@
             android:onClick="gotoneworder"
             tools:ignore="DuplicateClickableBoundsCheck">
 
-
             <ImageButton
                 android:id="@+id/newOrderButton"
                 android:layout_width="50dp"
@@ -201,6 +127,5 @@
 
         </RelativeLayout>
     </RelativeLayout>
-
 
 </androidx.constraintlayout.widget.ConstraintLayout>
