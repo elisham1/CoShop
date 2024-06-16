@@ -16,43 +16,49 @@
         tools:layout_editor_absoluteX="246dp"
         tools:layout_editor_absoluteY="163dp" />
 
-    <!-- Ritual type of location -->
-    <Spinner
-        android:id="@+id/spinnerRitualLocation"
+    <EditText
+        android:id="@+id/address"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:entries="@array/location_options"
-        android:prompt="@string/choose_category"/> <!-- Set a prompt for the Spinner -->
+        android:ems="10"
+        android:inputType="text"
+        android:hint="Enter shipping address"
+        android:textSize="15sp"
+        android:layout_below="@id/category"
+        android:layout_marginBottom="10dp"
+        android:drawableEnd="@drawable/location"
+        android:minHeight="48dp"
+        android:padding="12dp"/>
 
-    <!-- Dropdown list with options -->
-    <Spinner
-        android:id="@+id/spinnerCategory"
+    <ListView
+        android:id="@+id/category_list"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:entries="@array/category_options"
-        android:prompt="@string/choose_category"/>
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:choiceMode="multipleChoice"
+        android:listSelector="@android:color/transparent"
+        android:fadingEdge="vertical"
+        android:fadingEdgeLength="50dp"
+        android:scrollbars="vertical"
+        android:requiresFadingEdge="vertical" />
 
-    <!-- Text box for inserting a link -->
     <EditText
         android:id="@+id/editTextText2"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:ems="10"
         android:inputType="text"
-        android:hint="Enter URL" />
+        android:hint="Enter URL"
+        android:minHeight="48dp"/>
 
-    <!-- Text box for inserting a number -->
     <EditText
         android:id="@+id/numberBox"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:ems="10"
         android:inputType="number"
-        android:hint="People" />
-
-    <!-- Button for another action -->
+        android:hint="People"
+        android:minHeight="48dp"/>
 
     <TextView
         android:id="@+id/textView"
@@ -64,32 +70,34 @@
         android:id="@+id/radioButton2"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Supplied" />
-
-    <TextView
-        android:id="@+id/textView2"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Bid" />
-
-    <com.google.android.material.slider.RangeSlider
-        android:id="@+id/rangeSlider"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:value="0,1000"
-        android:valueFrom="0"
-        android:valueTo="1000"
-        app:labelVisibilityMode="labeled"
-        app:thumbRadius="12dp"
-        app:thumbStrokeWidth="2dp"
-        app:trackHeight="4dp" />
+        android:text="Supplied"
+        android:minHeight="48dp" />
 
     <RadioButton
         android:id="@+id/radioButton3"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Regular Order" />
+        android:minHeight="48dp"
+        android:text="Consumer" />
+
+    <TextView
+        android:id="@+id/textView2"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Max people in order" />
+
+    <com.google.android.material.slider.RangeSlider
+        android:id="@+id/rangeSliderPeople"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:valueFrom="2"
+        android:valueTo="100"
+        app:labelVisibilityMode="labeled"
+        app:thumbRadius="12dp"
+        app:thumbStrokeWidth="2dp"
+        app:trackHeight="4dp"
+        android:contentDescription="Max people range slider"/>
 
     <Button
         android:id="@+id/ok_id"
