@@ -5,34 +5,107 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.EditText;
+import android.widget.Button;
 import android.widget.TextView;
+
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class CategoriesActivity extends AppCompatActivity {
 
+    private FirebaseFirestore db;
+    private FirebaseAuth mAuth;
+    private FirebaseUser currentUser;
     private String email, firstName, familyName;
+    private List<String> selectedCategories;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_categories);
 
-        Intent intent = getIntent();
-        if(intent != null) {
+        db = FirebaseFirestore.getInstance();
+        mAuth = FirebaseAuth.getInstance();
+//        currentUser = mAuth.getCurrentUser();
+        selectedCategories = new ArrayList<>();
+
+
+//        if (currentUser != null) {
+//            email = currentUser.getEmail();
+//            firstName = currentUser.getDisplayName();
+
+            Intent intent = getIntent();
+            if (intent != null) {
             email = intent.getStringExtra("email");
             firstName = intent.getStringExtra("firstName");
-            familyName = intent.getStringExtra("familyName");
+                familyName = intent.getStringExtra("familyName");
 
-            String helloUser = "Hello, " + firstName;
-            TextView userName = findViewById(R.id.userName);
-            userName.setText(helloUser);
-        }
+                String helloUser = "Hello, " + firstName;
+                TextView userName = findViewById(R.id.userName);
+                userName.setText(helloUser);
+            }
+//        }
+
+        displayCategories();
 
         // Enable the back button in the action bar
         ActionBar actionBar = getSupportActionBar();
         if (actionBar != null) {
             actionBar.setDisplayHomeAsUpEnabled(true);
+        }
+    }
+
+    public void displayCategories() {
+        db.collection("categories").document("jQ4hXL6kr1AbKwPvEdXl")
+                .get()
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        DocumentSnapshot document = task.getResult();
+                        if (document.exists()) {
+                            List<String> categoriesList = (List<String>) document.get("categories");
+
+                            if (categoriesList != null) {
+                                // Call function to add "Other" category and handle new category input
+                                int numberOfItemsInList = categoriesList.size();
+
+                                for (int i = 1; i <= 12; i++) {
+                                    String categoryName = i < numberOfItemsInList ? categoriesList.get(i) : "Other";
+                                    int buttonId = getResources().getIdentifier("button" + (i), "id", getPackageName());
+
+                                    Button button = findViewById(buttonId);
+
+                                    if (button != null) {
+                                        button.setText(categoryName);
+                                        button.setOnClickListener(this::onCategoryButtonClick);
+                                    }
+                                }
+
+                            }
+                        }
+                    } else {
+                        Log.d("Firestore", "Error getting categories: ", task.getException());
+                    }
+                });
+    }
+
+
+    public void onCategoryButtonClick(View view) {
+        Button button = (Button) view;
+        String category = button.getText().toString();
+        if (selectedCategories.contains(category)) {
+            selectedCategories.remove(category);
+            button.setSelected(false);
+        } else {
+            selectedCategories.add(category);
+            button.setSelected(true);
         }
     }
 
@@ -50,11 +123,22 @@ public class CategoriesActivity extends AppCompatActivity {
     }
 
     public void doneCategory(View v) {
+//        saveSelectedCategories();
         Intent toy = new Intent(CategoriesActivity.this, UserDetailsActivity.class);
         toy.putExtra("email", email);
         toy.putExtra("firstName", firstName);
         toy.putExtra("familyName", familyName);
+        toy.putStringArrayListExtra("selectedCategories", new ArrayList<>(selectedCategories));
         startActivity(toy);
     }
+
+//    private void saveSelectedCategories() {
+//        if (email != null) {
+//            db.collection("users").document(email)
+//                    .update("selectedCategories", selectedCategories)
+//                    .addOnSuccessListener(aVoid -> Log.d("Firestore", "Categories successfully updated!"))
+//                    .addOnFailureListener(e -> Log.w("Firestore", "Error updating categories", e));
+//        }
+//    }
 
 }
