@@ -65,13 +65,14 @@ public class OpenNewOrderActivity extends AppCompatActivity implements LocationL
     private EditText urlEditText;
     private EditText descriptionEditText;
     private EditText addressEditText;
+    private EditText titleEditText;
+    private EditText timeEditText;
     private Calendar selectedTime = null;
     LocationManager locationManager;
     String saveNewCategorieName;
     private double latitude;
     private double longitude;
     private int max_people_in_order;
-    private RadioGroup maxPeopleRadioGroup;
     private EditText maxPeopleEditText;
     private boolean isAddressManuallyEdited = false; // Flag to track manual edits
     private long lastClickTime = 0; // Variable to store the time of the last click
@@ -86,6 +87,8 @@ public class OpenNewOrderActivity extends AppCompatActivity implements LocationL
         urlEditText = findViewById(R.id.url);
         descriptionEditText = findViewById(R.id.description);
         addressEditText = findViewById(R.id.address);
+        titleEditText = findViewById(R.id.title);
+        timeEditText = findViewById(R.id.time);
         // Initialize Spinner
         categorySpinner = findViewById(R.id.category);
         // Read categories from Firestore and populate Spinner
@@ -134,21 +137,7 @@ public class OpenNewOrderActivity extends AppCompatActivity implements LocationL
         });
 
         // Initialize views
-        maxPeopleRadioGroup = findViewById(R.id.maxPeopleRadioGroup);
         maxPeopleEditText = findViewById(R.id.maxPeopleEditText);
-
-        // Set up RadioGroup listener
-        maxPeopleRadioGroup.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(RadioGroup group, int checkedId) {
-                if (checkedId == R.id.noLimitOption) {
-                    maxPeopleEditText.setEnabled(false);
-                    maxPeopleEditText.setText(""); // Clear text when disabled
-                } else if (checkedId == R.id.limitOption) {
-                    maxPeopleEditText.setEnabled(true);
-                }
-            }
-        });
 
         maxPeopleEditText.addTextChangedListener(new TextWatcher() {
             @Override
@@ -166,6 +155,26 @@ public class OpenNewOrderActivity extends AppCompatActivity implements LocationL
                 int numberOfPeople = maxPeople();
                 max_people_in_order = numberOfPeople;
                 Log.d("Max People", "Updated max_people_in_order: " + max_people_in_order);
+            }
+        });
+
+        titleEditText.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+                // No action needed before text is changed
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                // No action needed on text change
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                if (s.length() > 25) {
+                    s.delete(25, s.length());
+                    Toast.makeText(OpenNewOrderActivity.this, "Title cannot exceed 25 characters", Toast.LENGTH_SHORT).show();
+                }
             }
         });
     }
@@ -439,6 +448,10 @@ public class OpenNewOrderActivity extends AppCompatActivity implements LocationL
     public void goToMyOrders(View v) {
         String url = urlEditText.getText().toString().trim();
         String description = descriptionEditText.getText().toString().trim();
+        String title = titleEditText.getText().toString().trim();
+        String time = timeEditText.getText().toString().trim();
+        String address = addressEditText.getText().toString().trim();
+        int maxPeople = maxPeople();
 
         if (url.isEmpty()) {
             url = "";
@@ -447,18 +460,40 @@ public class OpenNewOrderActivity extends AppCompatActivity implements LocationL
             return;
         }
 
+        if (title.isEmpty()) {
+            Toast.makeText(this, "Title is required", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         if (saveNewCategorieName.isEmpty() || saveNewCategorieName.equals("Choose Categorie")) {
             Toast.makeText(this, "Category is required", Toast.LENGTH_SHORT).show();
-        } else if (latitude == 0.0 && longitude == 0.0) {
-            Toast.makeText(this, "Location is required", Toast.LENGTH_SHORT).show();
-        } else if (description.isEmpty()) {
-            Toast.makeText(this, "Description is required", Toast.LENGTH_SHORT).show();
-        } else {
-            addCategorieToDataBase();
-            saveOrder(url, description);
-            Intent intent = new Intent(OpenNewOrderActivity.this, MyOrdersActivity.class);
-            startActivity(intent);
+            return;
         }
+
+        if (latitude == 0.0 && longitude == 0.0) {
+            Toast.makeText(this, "Location is required", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        if (description.isEmpty()) {
+            Toast.makeText(this, "Description is required", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        if (time.isEmpty()) {
+            Toast.makeText(this, "Time is required", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        if (maxPeople == 0) {
+            Toast.makeText(this, "Maximum people is required", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        addCategorieToDataBase();
+        saveOrder(url, description, title, time, address, maxPeople);
+        Intent intent = new Intent(OpenNewOrderActivity.this, MyOrdersActivity.class);
+        startActivity(intent);
     }
 
     private boolean validateFields() {
@@ -467,10 +502,16 @@ public class OpenNewOrderActivity extends AppCompatActivity implements LocationL
         String description = descriptionEditText.getText().toString().trim();
         String category = saveNewCategorieName;
         String address = addressEditText.getText().toString().trim();
+        String title = titleEditText.getText().toString().trim();
         boolean valid = true;
 
         if (description.isEmpty()) {
             descriptionEditText.setError("Description is required");
+            valid = false;
+        }
+
+        if (title.isEmpty()) {
+            titleEditText.setError("Title is required");
             valid = false;
         }
 
@@ -515,7 +556,7 @@ public class OpenNewOrderActivity extends AppCompatActivity implements LocationL
                 });
     }
 
-    private void saveOrder(String url, String description) {
+    private void saveOrder(String url, String description, String title, String time, String address, int maxPeople) {
         if (url.isEmpty()) {
             url = "";
         } else if (!url.contains("://")) {
@@ -536,6 +577,9 @@ public class OpenNewOrderActivity extends AppCompatActivity implements LocationL
         String finalUserEmail = userEmail;
         String finalUrl = url;
         String finalDescription = description;
+        String finalTitle = title;
+        String finalTime = time;
+        String finalAddress = address;
 
         // קריאה ל-Firestore כדי לקבל את ה-type of user
         db.collection("users").document(finalUserEmail)
@@ -554,16 +598,13 @@ public class OpenNewOrderActivity extends AppCompatActivity implements LocationL
                             order.put("user_email", finalUserEmail);
                             order.put("max_people", max_people_in_order);
                             order.put("type_of_order", userType); // הוספת ה-type of user להזמנה
+                            order.put("titleOfOrder", finalTitle);
+                            order.put("time", finalTime);
+                            order.put("address", finalAddress);
+                            order.put("NumberOfPeopleInOrder",1);
 
                             GeoPoint geoPoint = new GeoPoint(latitude, longitude);
                             order.put("location", geoPoint);
-
-                            if (selectedTime != null) {
-                                Date selectedDate = selectedTime.getTime();
-                                order.put("time", selectedDate);
-                            } else {
-                                order.put("time", "");
-                            }
 
                             ArrayList<String> listPeopleInOrder = new ArrayList<>();
                             listPeopleInOrder.add(finalUserEmail);
@@ -586,7 +627,6 @@ public class OpenNewOrderActivity extends AppCompatActivity implements LocationL
                     }
                 });
     }
-
 
     public void showTimePickerDialog(View view) {
         Calendar calendar = Calendar.getInstance();
@@ -617,7 +657,6 @@ public class OpenNewOrderActivity extends AppCompatActivity implements LocationL
                                 SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault());
                                 String dateTime = sdf.format(selectedDate.getTime());
 
-                                EditText timeEditText = findViewById(R.id.time);
                                 timeEditText.setText(dateTime);
                             }
                         }
