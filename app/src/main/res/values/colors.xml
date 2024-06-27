@@ -10,4 +10,6 @@
     <color name="custom_button_color">#cccccccc</color>
     <color name="background_color">#454242</color>
     <color name="text_color">#F6F0F0</color>
+    <color name="selected_color">#80C4E9</color>
+    <color name="default_color">#cccccccc</color>
 </resources>

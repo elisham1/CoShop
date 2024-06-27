@@ -67,7 +67,7 @@ public class ChatActivity extends AppCompatActivity {
     }
 
     public void personalInfo() {
-        Intent toy = new Intent(ChatActivity.this, UserDetailsActivity.class);
+        Intent toy = new Intent(ChatActivity.this, UpdateUserDetailsActivity.class);
         startActivity(toy);
     }
 
