@@ -23,7 +23,6 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
         // Initialize Firebase
         FirebaseApp.initializeApp(this);
         // Initialize Firebase Auth
@@ -71,7 +70,6 @@ public class MainActivity extends AppCompatActivity {
             // Initialize your views and other logic for MainActivity
         }
     }
-
 
     public void loginclick(View v) {
         Intent intent = new Intent(MainActivity.this, LoginActivity.class);

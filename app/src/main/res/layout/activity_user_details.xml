@@ -104,7 +104,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal">
-    <!-- change password Section -->
+        <!-- change password Section -->
         <Button
             android:id="@+id/changePasswordText"
             android:layout_width="0dp"
@@ -115,7 +115,7 @@
             android:text="change password"
             android:textSize="14sp" />
 
-    <!-- Account Deletion Section -->
+        <!-- Account Deletion Section -->
         <Button
             android:id="@+id/deleteButton"
             android:layout_width="0dp"

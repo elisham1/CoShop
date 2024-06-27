@@ -59,6 +59,7 @@ public class LoginActivity extends AppCompatActivity {
             setResult(RESULT_OK);
             finish(); // Finish EmailSignupActivity if result is OK
         }
+
         if (requestCode == RC_SIGN_IN) {
             Task<GoogleSignInAccount> task = GoogleSignIn.getSignedInAccountFromIntent(data);
             try {

@@ -69,7 +69,11 @@ public class OrderDetailsActivity extends AppCompatActivity {
         String orderId = intent.getStringExtra("orderId");
         Log.d("orderId",orderId);
         fetchOrderDetails(orderId);
-
+        // Enable the back button in the action bar
+        ActionBar actionBar = getSupportActionBar();
+        if (actionBar != null) {
+            actionBar.setDisplayHomeAsUpEnabled(true);
+        }
 //        init();
     }
     private void fetchOrderDetails(String orderId) {
@@ -155,7 +159,7 @@ public class OrderDetailsActivity extends AppCompatActivity {
     }
 
     public void personalInfo() {
-        Intent toy = new Intent(OrderDetailsActivity.this, UpdateUserDetailsActivity.class);
+        Intent toy = new Intent(OrderDetailsActivity.this, UserDetailsActivity.class);
         startActivity(toy);
     }
 

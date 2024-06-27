@@ -44,8 +44,13 @@ public class EmailSignupActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_email_signup);
 
-        mAuth = FirebaseAuth.getInstance();
+        // Enable the back button in the action bar
+        ActionBar actionBar = getSupportActionBar();
+        if (actionBar != null) {
+            actionBar.setDisplayHomeAsUpEnabled(true);
+        }
 
+        mAuth = FirebaseAuth.getInstance();
 
         emailEditText = findViewById(R.id.emailEditText);
         firstNameEditText = findViewById(R.id.nameEditText);
@@ -56,8 +61,8 @@ public class EmailSignupActivity extends AppCompatActivity {
         toggleConfirmPasswordVisibility = findViewById(R.id.toggleConfirmPasswordVisibility);
 
         togglePassword();
-
         Button signUpButton = findViewById(R.id.signUpButton);
+
         signUpButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -99,7 +104,6 @@ public class EmailSignupActivity extends AppCompatActivity {
             }
         });
     }
-
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         // Handle action bar item clicks here. The action bar will
@@ -107,6 +111,11 @@ public class EmailSignupActivity extends AppCompatActivity {
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
 
+        // Handle the back button click
+        if (id == android.R.id.home) {
+            onBackPressed(); // Go back when the back arrow is clicked
+            return true;
+        }
         return super.onOptionsItemSelected(item);
     }
 
@@ -159,7 +168,6 @@ public class EmailSignupActivity extends AppCompatActivity {
         // Clear the activity stack and start HomePageActivity as a new task
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
         startActivity(intent);
-
         // Finish UserDetailsActivity
         finish();
     }
@@ -185,6 +193,5 @@ public class EmailSignupActivity extends AppCompatActivity {
             finish();
         }
     }
-
 
 }
