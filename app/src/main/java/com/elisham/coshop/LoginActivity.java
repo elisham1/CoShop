@@ -43,12 +43,8 @@ public class LoginActivity extends AppCompatActivity {
 
         // Call signIn method when the Google Sign-In button is clicked
         findViewById(R.id.button3).setOnClickListener(view -> signIn());
+        findViewById(R.id.button1).setOnClickListener(view -> emailLogin());
 
-        // Enable the back button in the action bar
-        ActionBar actionBar = getSupportActionBar();
-        if (actionBar != null) {
-            actionBar.setDisplayHomeAsUpEnabled(true);
-        }
     }
     private void signIn() {
         Intent signInIntent = mGoogleSignInClient.getSignInIntent();
@@ -59,6 +55,10 @@ public class LoginActivity extends AppCompatActivity {
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
+        if (resultCode == RESULT_OK) {
+            setResult(RESULT_OK);
+            finish(); // Finish EmailSignupActivity if result is OK
+        }
         if (requestCode == RC_SIGN_IN) {
             Task<GoogleSignInAccount> task = GoogleSignIn.getSignedInAccountFromIntent(data);
             try {
@@ -107,18 +107,12 @@ public class LoginActivity extends AppCompatActivity {
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
 
-        // Handle the back button click
-        if (id == android.R.id.home) {
-            onBackPressed(); // Go back when the back arrow is clicked
-            return true;
-        }
-
         return super.onOptionsItemSelected(item);
     }
 
-    public void emailLogin(View v) {
+    public void emailLogin() {
         Intent intent = new Intent(LoginActivity.this, EmailLoginActivity.class);
-        startActivity(intent);
+        startActivityForResult(intent, 1);
     }
     public void clickToHome(View v) {
         Intent intent = new Intent(LoginActivity.this, HomePageActivity.class);

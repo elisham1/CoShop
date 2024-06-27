@@ -2,4 +2,10 @@
     <string name="app_name">CoShop</string>
     <string name="login_activity_title">Login</string>
     <string name="title_activity_new_order">new_order</string>
+    <string name="change_password">change password</string>
+    <string name="toggle_password_visibility">Toggle password visibility</string>
+    <string name="old_password">Old Password</string>
+    <string name="confirm_new_password">Confirm New Password</string>
+    <string name="new_password">New Password</string>
+    <string name="done">Done</string>
 </resources>
