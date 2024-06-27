@@ -42,6 +42,7 @@ import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.android.material.snackbar.Snackbar;
+import com.google.firebase.firestore.GeoPoint;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
@@ -65,7 +66,8 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
     private TextView typeOfUserTextView;
     private ImageView profileImageView;
 
-    private String email, firstName, familyName, address, userType, picUrl;
+    private String email, firstName, familyName, userType, picUrl;
+    private GeoPoint address;
     private String newFirstName, newFamilyName;
     private FirebaseAuth mAuth;
     private FirebaseUser currentUser;
@@ -325,7 +327,7 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
                                     // Get the name and family name fields
                                     firstName = document.getString("first name");
                                     familyName = document.getString("family name");
-                                    address = document.getString("address");
+//                                    address = document.getString("address");
                                     userType = document.getString("type of user");
                                     picUrl = document.getString("profileImageUrl");
 
@@ -333,7 +335,7 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
                                     String typeText = "User Type: " + userType;
                                     emailTextView.setText(email);
                                     fullNameTextView.setText(fullName);
-                                    addressEditText.setText(address);
+//                                    addressEditText.setText(address);
                                     typeOfUserTextView.setText(typeText);
                                     if (picUrl != null && !picUrl.isEmpty()) {
                                         Glide.with(UpdateUserDetailsActivity.this)
