@@ -32,35 +32,24 @@ public class CategoriesActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_categories);
 
+
         db = FirebaseFirestore.getInstance();
         mAuth = FirebaseAuth.getInstance();
-//        currentUser = mAuth.getCurrentUser();
         selectedCategories = new ArrayList<>();
 
-
-//        if (currentUser != null) {
-//            email = currentUser.getEmail();
-//            firstName = currentUser.getDisplayName();
-
-            Intent intent = getIntent();
-            if (intent != null) {
+        Intent intent = getIntent();
+        if (intent != null) {
             email = intent.getStringExtra("email");
             firstName = intent.getStringExtra("firstName");
-                familyName = intent.getStringExtra("familyName");
+            familyName = intent.getStringExtra("familyName");
 
-                String helloUser = "Hello, " + firstName;
-                TextView userName = findViewById(R.id.userName);
-                userName.setText(helloUser);
-            }
-//        }
+            String helloUser = "Hello, " + firstName;
+            TextView userName = findViewById(R.id.userName);
+            userName.setText(helloUser);
+        }
 
         displayCategories();
 
-        // Enable the back button in the action bar
-        ActionBar actionBar = getSupportActionBar();
-        if (actionBar != null) {
-            actionBar.setDisplayHomeAsUpEnabled(true);
-        }
     }
 
     public void displayCategories() {
@@ -123,22 +112,21 @@ public class CategoriesActivity extends AppCompatActivity {
     }
 
     public void doneCategory(View v) {
-//        saveSelectedCategories();
         Intent toy = new Intent(CategoriesActivity.this, UserDetailsActivity.class);
         toy.putExtra("email", email);
         toy.putExtra("firstName", firstName);
         toy.putExtra("familyName", familyName);
         toy.putStringArrayListExtra("selectedCategories", new ArrayList<>(selectedCategories));
-        startActivity(toy);
+        startActivityForResult(toy, 1);
     }
 
-//    private void saveSelectedCategories() {
-//        if (email != null) {
-//            db.collection("users").document(email)
-//                    .update("selectedCategories", selectedCategories)
-//                    .addOnSuccessListener(aVoid -> Log.d("Firestore", "Categories successfully updated!"))
-//                    .addOnFailureListener(e -> Log.w("Firestore", "Error updating categories", e));
-//        }
-//    }
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == 1 && resultCode == RESULT_OK) {
+            setResult(RESULT_OK);
+            finish();
+        }
+    }
 
 }
