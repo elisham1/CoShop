@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "251326143292-4lefv90v00p54vqdtdlc886j1ln119ca.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.elisham.coshop",
+            "certificate_hash": "495ed6eaeaf96f6989ced608aece8728bc843279"
+          }
+        },
+        {
           "client_id": "251326143292-tsplqf060j3nmgojnca37hq9kolf49m0.apps.googleusercontent.com",
           "client_type": 3
         }
