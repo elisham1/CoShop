@@ -35,6 +35,7 @@ import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.GeoPoint;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
@@ -51,7 +52,8 @@ public class UserDetailsActivity extends AppCompatActivity {
 
     private EditText addressEditText, emailEditText;
     private TextView fullNameTextView;
-    private String email, firstName, familyName, address, picUrl;
+    private String email, firstName, familyName, picUrl;
+    private GeoPoint address;
     private ArrayList<String> selectedCategories;
     private RadioGroup choiceRadioGroup;
     private FirebaseAuth mAuth;
@@ -220,11 +222,11 @@ public class UserDetailsActivity extends AppCompatActivity {
     public void editUserDetails(View view) {
         Map<String, Object> userDetails = new HashMap<>();
 
-        address = addressEditText.getText().toString().trim();
-        if (address.equals("")) {
-            showAlertDialog("Please enter your address");
-            return;
-        }
+//        address = addressEditText.getText().toString().trim();
+//        if (address.equals("")) {
+//            showAlertDialog("Please enter your address");
+//            return;
+//        }
 
         choiceRadioGroup.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
             @Override
