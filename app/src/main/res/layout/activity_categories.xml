@@ -43,7 +43,8 @@
             android:layout_height="0dp"
             android:layout_columnWeight="1"
             android:layout_rowWeight="1"
-            android:text="Category1" />
+            android:text="Category1"
+            android:background="@drawable/button_background"/>
 
         <Button
             android:id="@+id/button2"
@@ -51,7 +52,8 @@
             android:layout_height="0dp"
             android:layout_columnWeight="1"
             android:layout_rowWeight="1"
-            android:text="Category2" />
+            android:text="Category2"
+            android:background="@drawable/button_background"/>
 
         <Button
             android:id="@+id/button3"
@@ -59,7 +61,8 @@
             android:layout_height="0dp"
             android:layout_columnWeight="1"
             android:layout_rowWeight="1"
-            android:text="Category3" />
+            android:text="Category3"
+            android:background="@drawable/button_background"/>
 
         <Button
             android:id="@+id/button4"
@@ -67,7 +70,8 @@
             android:layout_height="0dp"
             android:layout_columnWeight="1"
             android:layout_rowWeight="1"
-            android:text="Category4" />
+            android:text="Category4"
+            android:background="@drawable/button_background"/>
 
         <Button
             android:id="@+id/button5"
@@ -75,7 +79,8 @@
             android:layout_height="0dp"
             android:layout_columnWeight="1"
             android:layout_rowWeight="1"
-            android:text="Category5" />
+            android:text="Category5"
+            android:background="@drawable/button_background"/>
 
         <Button
             android:id="@+id/button6"
@@ -83,7 +88,8 @@
             android:layout_height="0dp"
             android:layout_columnWeight="1"
             android:layout_rowWeight="1"
-            android:text="Category6" />
+            android:text="Category6"
+            android:background="@drawable/button_background"/>
 
         <Button
             android:id="@+id/button7"
@@ -91,7 +97,8 @@
             android:layout_height="0dp"
             android:layout_columnWeight="1"
             android:layout_rowWeight="1"
-            android:text="Category7" />
+            android:text="Category7"
+            android:background="@drawable/button_background"/>
 
         <Button
             android:id="@+id/button8"
@@ -99,7 +106,8 @@
             android:layout_height="0dp"
             android:layout_columnWeight="1"
             android:layout_rowWeight="1"
-            android:text="Category8" />
+            android:text="Category8"
+            android:background="@drawable/button_background"/>
 
         <Button
             android:id="@+id/button9"
@@ -107,7 +115,8 @@
             android:layout_height="0dp"
             android:layout_columnWeight="1"
             android:layout_rowWeight="1"
-            android:text="Category9" />
+            android:text="Category9"
+            android:background="@drawable/button_background"/>
 
         <Button
             android:id="@+id/button10"
@@ -115,7 +124,8 @@
             android:layout_height="0dp"
             android:layout_columnWeight="1"
             android:layout_rowWeight="1"
-            android:text="Category10" />
+            android:text="Category10"
+            android:background="@drawable/button_background"/>
 
         <Button
             android:id="@+id/button11"
@@ -123,7 +133,8 @@
             android:layout_height="0dp"
             android:layout_columnWeight="1"
             android:layout_rowWeight="1"
-            android:text="Category11" />
+            android:text="Category11"
+            android:background="@drawable/button_background"/>
 
         <Button
             android:id="@+id/button12"
@@ -131,7 +142,8 @@
             android:layout_height="0dp"
             android:layout_columnWeight="1"
             android:layout_rowWeight="1"
-            android:text="Category12" />
+            android:text="Category12"
+            android:background="@drawable/button_background"/>
 
     </GridLayout>
 
