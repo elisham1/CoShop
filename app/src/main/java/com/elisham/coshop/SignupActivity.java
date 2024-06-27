@@ -44,12 +44,8 @@ public class SignupActivity extends AppCompatActivity {
 
         // Call signIn method when the Google Sign-In button is clicked
         findViewById(R.id.button3).setOnClickListener(view -> signUp());
+        findViewById(R.id.button1).setOnClickListener(view -> clickToMail());
 
-        // Enable the back button in the action bar
-        ActionBar actionBar = getSupportActionBar();
-        if (actionBar != null) {
-            actionBar.setDisplayHomeAsUpEnabled(true);
-        }
     }
 
     private void signUp() {
@@ -60,6 +56,11 @@ public class SignupActivity extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == 1 && resultCode == RESULT_OK) {
+            setResult(RESULT_OK);
+            finish();
+        }
 
         if (requestCode == RC_SIGN_IN) {
             Task<GoogleSignInAccount> task = GoogleSignIn.getSignedInAccountFromIntent(data);
@@ -135,8 +136,7 @@ public class SignupActivity extends AppCompatActivity {
         startActivity(intent);
     }
 
-    public void clickToMail(View v) {
+    public void clickToMail() {
         Intent intent = new Intent(SignupActivity.this, EmailSignupActivity.class);
-        startActivity(intent);
-    }
+        startActivityForResult(intent, 1);    }
 }

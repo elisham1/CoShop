@@ -16,11 +16,6 @@ public class Users_providers_rating extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_users_providers_rating);
 
-        // Enable the back button in the action bar
-        ActionBar actionBar = getSupportActionBar();
-        if (actionBar != null) {
-            actionBar.setDisplayHomeAsUpEnabled(true);
-        }
     }
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -66,7 +61,7 @@ public class Users_providers_rating extends AppCompatActivity {
     }
 
     public void personalInfo() {
-        Intent toy = new Intent(Users_providers_rating.this, UserDetailsActivity.class);
+        Intent toy = new Intent(Users_providers_rating.this, UpdateUserDetailsActivity.class);
         startActivity(toy);
     }
 

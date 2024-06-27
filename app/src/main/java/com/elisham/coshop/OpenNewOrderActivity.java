@@ -91,11 +91,6 @@ public class OpenNewOrderActivity extends AppCompatActivity implements LocationL
         // Read categories from Firestore and populate Spinner
         readCategoriesFromFireStore();
 
-        // Enable the back button in the action bar
-        ActionBar actionBar = getSupportActionBar();
-        if (actionBar != null) {
-            actionBar.setDisplayHomeAsUpEnabled(true);
-        }
 
         // Add a click listener to the address EditText
         addressEditText.setOnTouchListener(new View.OnTouchListener() {
@@ -407,7 +402,7 @@ public class OpenNewOrderActivity extends AppCompatActivity implements LocationL
     }
 
     public void personalInfo() {
-        Intent intent = new Intent(OpenNewOrderActivity.this, UserDetailsActivity.class);
+        Intent intent = new Intent(OpenNewOrderActivity.this, UpdateUserDetailsActivity.class);
         startActivity(intent);
     }
 

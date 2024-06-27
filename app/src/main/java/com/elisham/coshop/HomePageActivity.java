@@ -39,11 +39,6 @@ public class HomePageActivity extends AppCompatActivity {
         // Initialize the orders container
         ordersContainer = findViewById(R.id.ordersContainer);
 
-        // Enable the back button in the action bar
-        ActionBar actionBar = getSupportActionBar();
-        if (actionBar != null) {
-            actionBar.setDisplayHomeAsUpEnabled(true);
-        }
 
         // Fetch and display orders
         fetchOrders();
@@ -238,7 +233,7 @@ public class HomePageActivity extends AppCompatActivity {
     }
 
     public void personalInfo() {
-        Intent toy = new Intent(HomePageActivity.this, UserDetailsActivity.class);
+        Intent toy = new Intent(HomePageActivity.this, UpdateUserDetailsActivity.class);
         startActivity(toy);
     }
 

@@ -40,12 +40,6 @@ public class MyOrdersActivity extends AppCompatActivity {
         setContentView(R.layout.activity_my_orders);
         db = FirebaseFirestore.getInstance();
 
-        // Enable the back button in the action bar
-        ActionBar actionBar = getSupportActionBar();
-        if (actionBar != null) {
-            actionBar.setDisplayHomeAsUpEnabled(true);
-        }
-
         readUserOrders();
     }
 
@@ -321,7 +315,7 @@ public class MyOrdersActivity extends AppCompatActivity {
     }
 
     public void personalInfo() {
-        Intent toy = new Intent(MyOrdersActivity.this, UserDetailsActivity.class);
+        Intent toy = new Intent(MyOrdersActivity.this, UpdateUserDetailsActivity.class);
         startActivity(toy);
     }
 

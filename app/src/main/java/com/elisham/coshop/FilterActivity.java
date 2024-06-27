@@ -68,12 +68,6 @@ public class FilterActivity extends AppCompatActivity implements LocationListene
         // Read categories from Firestore and populate ListView
         readCategoriesFromFireStore();
 
-        // Enable the back button in the action bar
-        ActionBar actionBar = getSupportActionBar();
-        if (actionBar != null) {
-            actionBar.setDisplayHomeAsUpEnabled(true);
-        }
-
         // Add a click listener to the address EditText
         addressEditText.setOnTouchListener(new View.OnTouchListener() {
             @Override
@@ -232,7 +226,7 @@ public class FilterActivity extends AppCompatActivity implements LocationListene
     }
 
     public void personalInfo() {
-        Intent toy = new Intent(FilterActivity.this, UserDetailsActivity.class);
+        Intent toy = new Intent(FilterActivity.this, UpdateUserDetailsActivity.class);
         startActivity(toy);
     }
 

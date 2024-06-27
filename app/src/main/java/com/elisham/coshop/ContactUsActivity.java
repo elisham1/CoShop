@@ -16,11 +16,6 @@ public class ContactUsActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_contact_us);
 
-        // Enable the back button in the action bar
-        ActionBar actionBar = getSupportActionBar();
-        if (actionBar != null) {
-            actionBar.setDisplayHomeAsUpEnabled(true);
-        }
     }
 
     @Override
@@ -66,7 +61,7 @@ public class ContactUsActivity extends AppCompatActivity {
         startActivity(toy);
     }
     public void personalInfo() {
-        Intent toy = new Intent(ContactUsActivity.this, UserDetailsActivity.class);
+        Intent toy = new Intent(ContactUsActivity.this, UpdateUserDetailsActivity.class);
         startActivity(toy);
     }
 
