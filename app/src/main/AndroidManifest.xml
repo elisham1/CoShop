@@ -64,6 +64,15 @@
         <activity
             android:name=".CategoriesActivity"
             android:exported="false" />
+
+        <activity
+            android:name=".LocationWindow"
+            android:theme="@style/AppTheme.Dialog.NoTitle">
+        </activity>
+
+
+
+
         <activity
             android:name=".MainActivity"
             android:exported="true" >

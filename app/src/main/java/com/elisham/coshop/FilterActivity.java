@@ -1,173 +1,230 @@
 package com.elisham.coshop;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 
-import android.Manifest;
-import android.annotation.SuppressLint;
-import android.content.Context;
-import android.content.DialogInterface;
+import android.app.DatePickerDialog;
+import android.app.TimePickerDialog;
 import android.content.Intent;
-import android.content.pm.PackageManager;
-import android.location.Address;
-import android.location.Geocoder;
-import android.location.Location;
-import android.location.LocationListener;
-import android.location.LocationManager;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
+import android.util.SparseBooleanArray;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.MotionEvent;
 import android.view.View;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
+import android.widget.CheckBox;
+import android.widget.DatePicker;
 import android.widget.EditText;
+import android.widget.ImageButton;
+import android.widget.LinearLayout;
 import android.widget.ListView;
+import android.widget.TextView;
+import android.widget.TimePicker;
 import android.widget.Toast;
 
-import androidx.appcompat.app.AlertDialog;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
-
+import com.google.android.material.slider.RangeSlider;
+import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.GeoPoint;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
 
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
+public class FilterActivity extends AppCompatActivity {
+    private ActivityResultLauncher<Intent> locationWindowLauncher;
+    private TextView searchAddressText;
+    private ListView categoryListView;
+    private FirebaseFirestore db;
+    private ArrayAdapter<String> adapter;
+    private EditText timeEditText;
+    private Calendar selectedTime;
 
-public class FilterActivity extends AppCompatActivity implements LocationListener {
-    private static final int LOCATION_PERMISSION_REQUEST_CODE = 100;
+    private RangeSlider rangeSlider;
+    private EditText unlimitEditText;
 
-    ListView categoryListView;
-    FirebaseFirestore db;
-    ArrayAdapter<String> adapter;
-    private EditText addressEditText;
-    private LocationManager locationManager;
-    private boolean isAddressManuallyEdited = false; // Flag to track manual edits
-    private long lastClickTime = 0; // Variable to store the time of the last click
-    private double latitude;
-    private double longitude;
+    private CheckBox checkBoxLimit;
+    private CheckBox checkBoxUnlimited;
+
+    private String lastAddress;
+    private double lastLatitude;
+    private double lastLongitude;
+    private int lastDistance;
+
+    private ImageButton searchAddressButton;
+    private ImageButton editAddressButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_filter);
 
-        // Initialize Firestore
-        db = FirebaseFirestore.getInstance();
+        timeEditText = findViewById(R.id.time);
+        timeEditText.setOnClickListener(v -> showTimePickerDialog(v));
 
-        // Initialize ListView
+        LinearLayout searchRow = findViewById(R.id.search_row);
+        searchRow.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(FilterActivity.this, LocationWindow.class);
+                if (lastAddress != null && !lastAddress.isEmpty() && lastDistance > 0) {
+                    intent.putExtra("address", lastAddress);
+                    intent.putExtra("distance", lastDistance);
+                }
+                locationWindowLauncher.launch(intent);
+            }
+        });
+        locationWindowLauncher = registerForActivityResult(
+                new ActivityResultContracts.StartActivityForResult(),
+                result -> {
+                    if (result.getResultCode() == RESULT_OK && result.getData() != null) {
+                        lastAddress = result.getData().getStringExtra("address");
+                        lastDistance = result.getData().getIntExtra("distance", 0);
+                        lastLatitude = result.getData().getDoubleExtra("latitude", 0);
+                        lastLongitude = result.getData().getDoubleExtra("longitude", 0);
+
+                        if (lastAddress != null) {
+                            String displayText = String.format(Locale.getDefault(), "%s, %d KM", lastAddress, lastDistance);
+                            searchAddressText.setText(displayText);
+                            searchAddressButton.setVisibility(View.VISIBLE);
+                            searchAddressButton.setTag("clear");
+                            searchAddressButton.setImageResource(R.drawable.clear);
+                            editAddressButton.setVisibility(View.VISIBLE);
+                        }
+                    }
+                }
+        );
+
+        ImageButton closeButton = findViewById(R.id.close_button);
+        closeButton.setOnClickListener(v -> finish());
+
+        searchAddressText = findViewById(R.id.search_address_text);
+        searchAddressButton = findViewById(R.id.search_address_button);
+        editAddressButton = findViewById(R.id.edit_address_button);
+
+        searchAddressButton.setOnClickListener(v -> {
+            if (searchAddressButton.getTag() != null && searchAddressButton.getTag().equals("clear")) {
+                searchAddressText.setText("");
+                searchAddressButton.setTag("search");
+                searchAddressButton.setImageResource(R.drawable.baseline_search_24);
+                editAddressButton.setVisibility(View.GONE);
+
+                // איפוס הערכים האחרונים
+                lastAddress = null;
+                lastDistance = 0;
+                lastLatitude = 0;
+                lastLongitude = 0;
+            }
+        });
+
+        searchAddressText.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                toggleSearchClearIcon();
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {}
+        });
+
+        db = FirebaseFirestore.getInstance();
         categoryListView = findViewById(R.id.category_list);
 
-        // Get references to the EditText fields
-        addressEditText = findViewById(R.id.address);
+        rangeSlider = findViewById(R.id.rangeSliderPeople);
+        unlimitEditText = findViewById(R.id.unlimit_value);
 
-        // Read categories from Firestore and populate ListView
+        checkBoxLimit = findViewById(R.id.checkBoxLimit);
+        checkBoxUnlimited = findViewById(R.id.checkBoxUnlimited);
+
+        checkBoxLimit.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (isChecked) {
+                checkBoxUnlimited.setChecked(false);
+                rangeSlider.setEnabled(true);
+                unlimitEditText.setEnabled(true);
+            } else {
+                rangeSlider.setEnabled(false);
+                unlimitEditText.setEnabled(false);
+            }
+        });
+
+        checkBoxUnlimited.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (isChecked) {
+                checkBoxLimit.setChecked(false);
+                rangeSlider.setEnabled(false);
+                unlimitEditText.setEnabled(false);
+            }
+        });
+
+        rangeSlider.setValueFrom(2);
+        rangeSlider.setValueTo(1000);
+
+        rangeSlider.setLabelFormatter(value -> String.valueOf((int) value));
+
+        rangeSlider.addOnChangeListener((slider, value, fromUser) -> {
+            if (fromUser) {
+                unlimitEditText.setText(String.valueOf((int) value));
+            }
+        });
+
         readCategoriesFromFireStore();
 
-        // Enable the back button in the action bar
-        ActionBar actionBar = getSupportActionBar();
-        if (actionBar != null) {
-            actionBar.setDisplayHomeAsUpEnabled(true);
-        }
+        locationWindowLauncher = registerForActivityResult(
+                new ActivityResultContracts.StartActivityForResult(),
+                result -> {
+                    if (result.getResultCode() == RESULT_OK && result.getData() != null) {
+                        lastAddress = result.getData().getStringExtra("address");
+                        lastDistance = result.getData().getIntExtra("distance", 0);
+                        lastLatitude = result.getData().getDoubleExtra("latitude", 0);
+                        lastLongitude = result.getData().getDoubleExtra("longitude", 0);
 
-        // Add a click listener to the address EditText
-        addressEditText.setOnTouchListener(new View.OnTouchListener() {
-            @Override
-            public boolean onTouch(View v, MotionEvent event) {
-                if (event.getAction() == MotionEvent.ACTION_DOWN) {
-                    long clickTime = System.currentTimeMillis();
-                    if (clickTime - lastClickTime < 500) { // Double click detected
-                        isAddressManuallyEdited = false;
-                        checkLocationPermission();
-                    } else {
-                        isAddressManuallyEdited = true;
+                        if (lastAddress != null) {
+                            String displayText = String.format(Locale.getDefault(), "%s, %d KM", lastAddress, lastDistance);
+                            searchAddressText.setText(displayText);
+                            searchAddressButton.setVisibility(View.VISIBLE);
+                            searchAddressButton.setTag("clear");
+                            searchAddressButton.setImageResource(R.drawable.clear);
+                            editAddressButton.setVisibility(View.VISIBLE);
+                        }
                     }
-                    lastClickTime = clickTime;
                 }
-                return false;
+        );
+
+        editAddressButton.setOnClickListener(v -> {
+            Intent intent = new Intent(FilterActivity.this, LocationWindow.class);
+            if (lastAddress != null && !lastAddress.isEmpty() && lastDistance > 0) {
+                intent.putExtra("address", lastAddress);
+                intent.putExtra("distance", lastDistance);
             }
-        });
-
-        // Track manual edits to the address field
-        addressEditText.addTextChangedListener(new TextWatcher() {
-
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-                // No action needed before text is changed
-            }
-
-
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
-                isAddressManuallyEdited = true; // User manually edited the address
-            }
-
-
-            public void afterTextChanged(Editable s) {
-                // No action needed after text is changed
-            }
+            locationWindowLauncher.launch(intent);
         });
     }
 
-    private void checkLocationPermission() {
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, LOCATION_PERMISSION_REQUEST_CODE);
+    private void toggleSearchClearIcon() {
+        String address = searchAddressText.getText().toString();
+        if (!address.isEmpty() && lastDistance > 0) {
+            searchAddressButton.setTag("clear");
+            searchAddressButton.setImageResource(R.drawable.clear);
+            editAddressButton.setVisibility(View.VISIBLE);
         } else {
-            getLocation();
+            searchAddressButton.setTag("search");
+            searchAddressButton.setImageResource(R.drawable.baseline_search_24);
+            editAddressButton.setVisibility(View.GONE);
         }
     }
 
-    @SuppressLint("MissingPermission")
-    private void getLocation() {
-        locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-        if (locationManager != null) {
-            if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER) || locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)) {
-                locationManager.requestSingleUpdate(LocationManager.GPS_PROVIDER, this, null);
-                locationManager.requestSingleUpdate(LocationManager.NETWORK_PROVIDER, this, null);
-            } else {
-                Toast.makeText(this, "Please enable location services", Toast.LENGTH_SHORT).show();
-                startActivity(new Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS));
-            }
-        }
-    }
-
-    @Override
-    public void onLocationChanged(Location location) {
-        if (location != null && !isAddressManuallyEdited) { // Only update if not manually edited
-            latitude = location.getLatitude();
-            longitude = location.getLongitude();
-            Toast.makeText(this, "Latitude: " + latitude + ", Longitude: " + longitude, Toast.LENGTH_SHORT).show();
-            Log.d("Location Info", "Latitude: " + latitude + ", Longitude: " + longitude);
-
-            try {
-                Geocoder geocoder = new Geocoder(this, Locale.getDefault());
-                List<Address> addresses = geocoder.getFromLocation(latitude, longitude, 1);
-                if (addresses != null && !addresses.isEmpty()) {
-                    String address = addresses.get(0).getAddressLine(0);
-                    Log.d("Location Address", address);
-                    addressEditText.setText(address);
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
-            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                getLocation();
-            } else {
-                Toast.makeText(this, "Permission denied", Toast.LENGTH_SHORT).show();
-            }
-        }
-    }
-
-    public void readCategoriesFromFireStore() {
+    private void readCategoriesFromFireStore() {
         db.collection("categories").document("jQ4hXL6kr1AbKwPvEdXl")
                 .get()
                 .addOnCompleteListener(task -> {
@@ -176,7 +233,6 @@ public class FilterActivity extends AppCompatActivity implements LocationListene
                         if (document.exists()) {
                             List<String> categoriesList = (List<String>) document.get("categories");
                             if (categoriesList != null && categoriesList.size() > 1) {
-                                // Skip the first category
                                 List<String> subList = categoriesList.subList(1, categoriesList.size());
                                 adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_multiple_choice, subList);
                                 categoryListView.setAdapter(adapter);
@@ -186,6 +242,170 @@ public class FilterActivity extends AppCompatActivity implements LocationListene
                         Log.d("Firestore", "Error getting categories: ", task.getException());
                     }
                 });
+    }
+
+    public void OrderFiltering(View v) {
+        String address = searchAddressText.getText().toString();
+        List<String> selectedCategories = getSelectedCategories();
+
+        boolean filterByLocation = !address.isEmpty() || lastAddress != null;
+        boolean filterByCategory = selectedCategories != null && !selectedCategories.isEmpty();
+        boolean filterByConsumer = ((CheckBox) findViewById(R.id.checkBoxConsumer)).isChecked();
+        boolean filterBySupplied = ((CheckBox) findViewById(R.id.checkBoxSupplied)).isChecked();
+        boolean filterByPeopleLimit = checkBoxLimit.isChecked();
+        boolean filterByUnlimitedPeople = checkBoxUnlimited.isChecked();
+        int peopleLimit = 0;
+
+        if (filterByPeopleLimit) {
+            String peopleLimitStr = unlimitEditText.getText().toString().trim();
+            if (!peopleLimitStr.isEmpty()) {
+                peopleLimit = Integer.parseInt(peopleLimitStr);
+            } else {
+                filterByPeopleLimit = false;
+            }
+        }
+
+        if (!filterByLocation && !filterByCategory && !filterByConsumer && !filterBySupplied && !filterByPeopleLimit && !filterByUnlimitedPeople) {
+            Toast.makeText(this, "Select minimum in one filter", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        if (filterByLocation) {
+            if (address.isEmpty()) {
+                address = lastAddress;
+            }
+
+            double userLat = lastLatitude;
+            double userLon = lastLongitude;
+
+            fetchOrders(userLat, userLon, lastDistance, selectedCategories, filterByCategory, filterByConsumer, filterBySupplied, filterByPeopleLimit, peopleLimit, filterByUnlimitedPeople);
+        } else {
+            fetchOrders(0, 0, 0, selectedCategories, filterByCategory, filterByConsumer, filterBySupplied, filterByPeopleLimit, peopleLimit, filterByUnlimitedPeople);
+        }
+    }
+
+    public void resetFilters(View v) {
+        // Reset address field
+        searchAddressText.setText(""); // Reset the TextView to its initial state
+
+        // Reset CheckBoxes
+        CheckBox checkBoxSupplied = findViewById(R.id.checkBoxSupplied);
+        checkBoxSupplied.setChecked(false);
+
+        CheckBox checkBoxConsumer = findViewById(R.id.checkBoxConsumer);
+        checkBoxConsumer.setChecked(false);
+
+        CheckBox checkBoxLimit = findViewById(R.id.checkBoxLimit);
+        checkBoxLimit.setChecked(false);
+
+        CheckBox checkBoxUnlimited = findViewById(R.id.checkBoxUnlimited);
+        checkBoxUnlimited.setChecked(false);
+
+        // Reset RangeSlider and EditText for people limit
+        RangeSlider rangeSlider = findViewById(R.id.rangeSliderPeople);
+        rangeSlider.setValues(2f);
+
+        EditText unlimitEditText = findViewById(R.id.unlimit_value);
+        unlimitEditText.setText("1000");
+        rangeSlider.setEnabled(false);
+        unlimitEditText.setEnabled(false);
+
+        // Reset category ListView
+        ListView categoryListView = findViewById(R.id.category_list);
+        for (int i = 0; i < categoryListView.getCount(); i++) {
+            categoryListView.setItemChecked(i, false);
+        }
+
+        // Reset the saved address and distance values
+        lastAddress = null;
+        lastLatitude = 0;
+        lastLongitude = 0;
+        lastDistance = 0;
+    }
+
+    private void fetchOrders(double userLat, double userLon, int distance, List<String> selectedCategories, boolean filterByCategory, boolean filterByConsumer, boolean filterBySupplied, boolean filterByPeopleLimit, int peopleLimit, boolean filterByUnlimitedPeople) {
+        CollectionReference ordersRef = db.collection("orders");
+        ordersRef.get().addOnCompleteListener(task -> {
+            if (task.isSuccessful()) {
+                StringBuilder results = new StringBuilder();
+                for (QueryDocumentSnapshot documentSnapshot : task.getResult()) {
+                    boolean matchesCategory = true;
+                    if (filterByCategory) {
+                        String categorie = documentSnapshot.getString("categorie");
+                        matchesCategory = selectedCategories.contains(categorie);
+                    }
+
+                    boolean matchesLocation = true;
+                    double distanceInKm = 0;
+                    if (distance > 0) {
+                        GeoPoint geoPoint = documentSnapshot.getGeoPoint("location");
+                        if (geoPoint != null) {
+                            double orderLat = geoPoint.getLatitude();
+                            double orderLon = geoPoint.getLongitude();
+
+                            float[] resultsArray = new float[1];
+                            android.location.Location.distanceBetween(userLat, userLon, orderLat, orderLon, resultsArray);
+                            float distanceInMeters = resultsArray[0];
+                            distanceInKm = distanceInMeters / 1000;
+
+                            matchesLocation = distanceInKm <= distance;
+                        } else {
+                            matchesLocation = false;
+                        }
+                    }
+
+                    boolean matchesTypeOfOrder = true;
+                    if (filterByConsumer || filterBySupplied) {
+                        String typeOfOrder = documentSnapshot.getString("type_of_order");
+
+                        matchesTypeOfOrder = (filterByConsumer && "Consumer".equals(typeOfOrder)) ||
+                                (filterBySupplied && "Supplier".equals(typeOfOrder));
+                    }
+
+                    boolean matchesPeopleLimit = true;
+                    if (filterByPeopleLimit || filterByUnlimitedPeople) {
+                        Long maxPeople = documentSnapshot.getLong("max_people");
+                        if (filterByUnlimitedPeople) {
+                            matchesPeopleLimit = maxPeople != null && maxPeople == 0;
+                        } else if (filterByPeopleLimit) {
+                            matchesPeopleLimit = maxPeople != null && maxPeople >= 2 && maxPeople <= peopleLimit && maxPeople != 0;
+                        }
+                    }
+
+                    if (matchesCategory && matchesLocation && matchesTypeOfOrder && matchesPeopleLimit) {
+                        results.append(documentSnapshot.getId()).append(";")
+                                .append(documentSnapshot.getString("titleOfOrder")).append(";")
+                                .append(documentSnapshot.getGeoPoint("location").getLatitude()).append(",").append(documentSnapshot.getGeoPoint("location").getLongitude()).append(";")
+                                .append(documentSnapshot.getLong("NumberOfPeopleInOrder")).append(";")
+                                .append(documentSnapshot.getLong("max_people")).append(";")
+                                .append(documentSnapshot.getString("categorie")).append(";")
+                                .append(distanceInKm).append(";")
+                                .append(documentSnapshot.getTimestamp("time").getSeconds()).append("\n");
+                    }
+                }
+
+                Intent intent = new Intent(FilterActivity.this, HomePageActivity.class);
+                if (results.length() == 0) {
+                    intent.putExtra("noOrdersFound", true);
+                } else {
+                    intent.putExtra("filteredOrders", results.toString());
+                    intent.putExtra("filterActive", true);
+                }
+                startActivity(intent);
+            }
+        });
+    }
+
+    private List<String> getSelectedCategories() {
+        SparseBooleanArray checkedItems = categoryListView.getCheckedItemPositions();
+        List<String> selectedCategories = new ArrayList<>();
+        for (int i = 0; i < checkedItems.size(); i++) {
+            int position = checkedItems.keyAt(i);
+            if (checkedItems.valueAt(i)) {
+                selectedCategories.add(adapter.getItem(position));
+            }
+        }
+        return selectedCategories;
     }
 
     @Override
@@ -198,7 +418,7 @@ public class FilterActivity extends AppCompatActivity implements LocationListene
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case android.R.id.home:
-                onBackPressed(); // Go back when the back arrow is clicked
+                onBackPressed();
                 return true;
             case R.id.Personal_info:
                 personalInfo();
@@ -224,6 +444,43 @@ public class FilterActivity extends AppCompatActivity implements LocationListene
             default:
                 return super.onOptionsItemSelected(item);
         }
+    }
+    public void showTimePickerDialog(View view) {
+        Calendar calendar = Calendar.getInstance();
+        DatePickerDialog datePickerDialog = new DatePickerDialog(FilterActivity.this, new DatePickerDialog.OnDateSetListener() {
+            public void onDateSet(DatePicker view, int year, int month, int dayOfMonth) {
+                Calendar currentDate = Calendar.getInstance();
+                currentDate.set(Calendar.YEAR, year);
+                currentDate.set(Calendar.MONTH, month);
+                currentDate.set(Calendar.DAY_OF_MONTH, dayOfMonth);
+
+                if (currentDate.before(Calendar.getInstance())) {
+                    Toast.makeText(FilterActivity.this, "You can't choose a past date", Toast.LENGTH_SHORT).show();
+                } else {
+                    Calendar selectedDate = Calendar.getInstance();
+                    selectedDate.set(year, month, dayOfMonth);
+
+                    TimePickerDialog timePickerDialog = new TimePickerDialog(FilterActivity.this, new TimePickerDialog.OnTimeSetListener() {
+                        public void onTimeSet(TimePicker view, int hourOfDay, int minute) {
+                            selectedDate.set(Calendar.HOUR_OF_DAY, hourOfDay);
+                            selectedDate.set(Calendar.MINUTE, minute);
+
+                            if (selectedDate.before(Calendar.getInstance())) {
+                                Toast.makeText(FilterActivity.this, "You cannot select a past time", Toast.LENGTH_SHORT).show();
+                            } else {
+                                selectedTime = selectedDate;
+                                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault());
+                                String dateTime = sdf.format(selectedDate.getTime());
+
+                                timeEditText.setText(dateTime);
+                            }
+                        }
+                    }, calendar.get(Calendar.HOUR_OF_DAY), calendar.get(Calendar.MINUTE), true);
+                    timePickerDialog.show();
+                }
+            }
+        }, calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH));
+        datePickerDialog.show();
     }
 
     public void home() {
