@@ -16,11 +16,6 @@ public class ChatActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_chat);
 
-        // Enable the back button in the action bar
-        ActionBar actionBar = getSupportActionBar();
-        if (actionBar != null) {
-            actionBar.setDisplayHomeAsUpEnabled(true);
-        }
     }
 
     @Override
@@ -67,7 +62,7 @@ public class ChatActivity extends AppCompatActivity {
     }
 
     public void personalInfo() {
-        Intent toy = new Intent(ChatActivity.this, UserDetailsActivity.class);
+        Intent toy = new Intent(ChatActivity.this, UpdateUserDetailsActivity.class);
         startActivity(toy);
     }
 
