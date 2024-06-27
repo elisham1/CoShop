@@ -29,6 +29,11 @@ public class JoinOrderActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_join_order);
 
+        // Enable the back button in the action bar
+        ActionBar actionBar = getSupportActionBar();
+        if (actionBar != null) {
+            actionBar.setDisplayHomeAsUpEnabled(true);
+        }
         init();
 
     }
@@ -77,7 +82,7 @@ public class JoinOrderActivity extends AppCompatActivity {
     }
 
     public void personalInfo() {
-        Intent toy = new Intent(JoinOrderActivity.this, UpdateUserDetailsActivity.class);
+        Intent toy = new Intent(JoinOrderActivity.this, UserDetailsActivity.class);
         startActivity(toy);
     }
 

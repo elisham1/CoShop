@@ -29,59 +29,29 @@
         android:hint="Email"
         android:inputType="textEmailAddress" />
 
-    <RelativeLayout
-        android:id="@+id/password_layot"
+    <EditText
+        android:id="@+id/passwordEditText"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_below="@id/emailEditText"
-        android:layout_marginTop="16dp">
+        android:layout_marginTop="16dp"
+        android:hint="Password"
+        android:inputType="textPassword" />
 
-        <EditText
-            android:id="@+id/passwordEditText"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="Password"
-            android:inputType="textPassword" />
-
-        <ImageView
-            android:id="@+id/togglePasswordVisibility"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignParentEnd="true"
-            android:layout_centerVertical="true"
-            android:padding="8dp"
-            android:src="@drawable/baseline_visibility_24" />
-    </RelativeLayout>
-
-    <RelativeLayout
-        android:id="@+id/confirm_password_layout"
+    <EditText
+        android:id="@+id/confirmPasswordEditText"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_below="@id/password_layot"
-        android:layout_marginTop="16dp">
-
-        <EditText
-            android:id="@+id/confirmPasswordEditText"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="Confirm Password"
-            android:inputType="textPassword" />
-
-        <ImageView
-            android:id="@+id/toggleConfirmPasswordVisibility"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignParentEnd="true"
-            android:layout_centerVertical="true"
-            android:padding="8dp"
-            android:src="@drawable/baseline_visibility_24" />
-    </RelativeLayout>
+        android:layout_below="@id/passwordEditText"
+        android:layout_marginTop="16dp"
+        android:hint="Confirm Password"
+        android:inputType="textPassword" />
 
     <Button
         android:id="@+id/signUpButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@id/confirm_password_layout"
+        android:layout_below="@id/confirmPasswordEditText"
         android:layout_marginTop="16dp"
         android:text="Sign Up" />
 

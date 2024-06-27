@@ -8,7 +8,7 @@
     <TextView
         android:id="@+id/textView"
         android:layout_width="255dp"
-        android:layout_height="wrap_content"
+        android:layout_height="60dp"
         android:layout_marginTop="100dp"
         android:text="Log In"
         android:textAlignment="center"
@@ -23,6 +23,7 @@
         android:layout_width="212dp"
         android:layout_height="60dp"
         android:layout_marginTop="16dp"
+        android:onClick="emailLogin"
         android:text="email"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
