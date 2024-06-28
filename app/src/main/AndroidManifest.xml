@@ -22,9 +22,9 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.CoShop"
         tools:targetApi="31">
-        <activity
-            android:name=".UpdateUserDetailsActivity"
-            android:exported="false" />
+<!--        <activity-->
+<!--            android:name=".UpdateUserDetailsActivity"-->
+<!--            android:exported="false" />-->
         <activity
             android:name=".EmailLoginActivity"
             android:exported="false" />
@@ -77,6 +77,12 @@
         <activity
             android:name=".CategoriesActivity"
             android:exported="false" />
+
+        <activity
+            android:name=".LocationWindow"
+            android:theme="@style/AppTheme.Dialog.NoTitle">
+        </activity>
+
         <activity
             android:name=".MainActivity"
             android:exported="true">

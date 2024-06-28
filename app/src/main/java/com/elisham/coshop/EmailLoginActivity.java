@@ -40,7 +40,6 @@ public class EmailLoginActivity extends AppCompatActivity {
         passwordEditText = findViewById(R.id.passwordEditText);
         loginButton = findViewById(R.id.loginButton);
         togglePasswordVisibility = findViewById(R.id.togglePasswordVisibility);
-
         togglePassword();
 
         loginButton.setOnClickListener(new View.OnClickListener() {
@@ -96,15 +95,10 @@ public class EmailLoginActivity extends AppCompatActivity {
                             // Login success
                             // Set the result to OK to indicate success
                             setResult(RESULT_OK);
-
-                            // Create an intent to go to HomePageActivity
-                            Intent homeIntent = new Intent(EmailLoginActivity.this, HomePageActivity.class);
-
+                            Intent intent = new Intent(EmailLoginActivity.this, HomePageActivity.class);
                             // Clear the activity stack and start HomePageActivity as a new task
-                            homeIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
-
-                            startActivity(homeIntent);
-
+                            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+                            startActivity(intent);
                             // Finish UserDetailsActivity
                             finish();
                         } else {
@@ -118,6 +112,4 @@ public class EmailLoginActivity extends AppCompatActivity {
                     }
                 });
     }
-
-
 }
