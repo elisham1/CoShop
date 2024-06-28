@@ -6,14 +6,11 @@ import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.Manifest;
-import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Address;
 import android.location.Geocoder;
-import android.location.Location;
-import android.location.LocationManager;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.text.Editable;
@@ -60,8 +57,9 @@ public class LocationWindow extends AppCompatActivity {
     private ArrayAdapter<String> addressAdapter;
     private List<AutocompletePrediction> predictionList = new ArrayList<>();
     private ImageButton clearAddressButton;
-    private ActivityResultLauncher<Intent> locationSettingsLauncher;
+    public ActivityResultLauncher<Intent> locationSettingsLauncher;
     private String lastValidAddress;
+    private LocationFunctions locationFunctions;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -76,10 +74,25 @@ public class LocationWindow extends AppCompatActivity {
             actionBar.setDisplayHomeAsUpEnabled(true);
         }
 
+        addressEditText = findViewById(R.id.address);
+
+        locationSettingsLauncher = registerForActivityResult(
+                new ActivityResultContracts.StartActivityForResult(),
+                result -> {
+                    if (locationFunctions.isLocationEnabled()) {
+                        locationFunctions.checkLocationAndFetch();
+                    } else {
+                        Toast.makeText(this, "Please enable location services", Toast.LENGTH_SHORT).show();
+                    }
+                }
+        );
+
+        locationFunctions = new LocationFunctions(this, addressEditText, locationSettingsLauncher);
+
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
 
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-            checkLocationAndFetch();
+            locationFunctions.checkLocationAndFetch();
         }
 
         String apiKey = "AIzaSyCCEZAKwn0TCA-XvVpDKTOVrdiM__RfwCI"; // החלף במפתח ה-API שלך
@@ -89,7 +102,6 @@ public class LocationWindow extends AppCompatActivity {
         placesClient = Places.createClient(this);
 
         addressAdapter = new ArrayAdapter<>(this, android.R.layout.simple_dropdown_item_1line);
-        addressEditText = findViewById(R.id.address);
         addressEditText.setAdapter(addressAdapter);
 
         addressEditText.addTextChangedListener(new TextWatcher() {
@@ -156,21 +168,9 @@ public class LocationWindow extends AppCompatActivity {
             lastValidAddress = null;
         });
 
-        locationSettingsLauncher = registerForActivityResult(
-                new ActivityResultContracts.StartActivityForResult(),
-                result -> {
-                    if (isLocationEnabled()) {
-                        resetLocationFields();
-                        getLocationAndSetAddress();
-                    } else {
-                        Toast.makeText(this, "Please enable location services", Toast.LENGTH_SHORT).show();
-                    }
-                }
-        );
-
         // Set onClickListener for the get location button
         LinearLayout getLocationButton = findViewById(R.id.get_location_button);
-        getLocationButton.setOnClickListener(v -> checkLocationPermission());
+        getLocationButton.setOnClickListener(v -> locationFunctions.checkLocationPermission());
 
         distanceEditText.addTextChangedListener(new TextWatcher() {
             private boolean isUpdating = false;
@@ -220,7 +220,6 @@ public class LocationWindow extends AppCompatActivity {
             }
         });
 
-
         Button okButton = findViewById(R.id.ok_button);
         okButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -230,15 +229,16 @@ public class LocationWindow extends AppCompatActivity {
 
                 if (!address.isEmpty() && !distanceStr.isEmpty()) {
                     if (lastValidAddress == null) {
-                        fetchAddressCoordinates(address);
+                        locationFunctions.fetchAddressCoordinates(address, distanceEditText);
                     } else {
-                        sendResult(address, distanceStr);
+                        locationFunctions.sendResult(address, distanceStr);
                     }
                 } else {
                     Toast.makeText(LocationWindow.this, "Please enter a valid address and distance", Toast.LENGTH_SHORT).show();
                 }
             }
         });
+
         Intent intent = getIntent();
         if (intent != null) {
             String address = intent.getStringExtra("address");
@@ -257,52 +257,6 @@ public class LocationWindow extends AppCompatActivity {
                 numberPicker.setValue(0);
             }
         }
-
-
-    }
-
-    private void fetchAddressCoordinates(String address) {
-        Geocoder geocoder = new Geocoder(this, Locale.ENGLISH);
-        try {
-            List<Address> addresses = geocoder.getFromLocationName(address, 1);
-            if (addresses != null && !addresses.isEmpty()) {
-                Address location = addresses.get(0);
-                double lat = location.getLatitude();
-                double lon = location.getLongitude();
-                lastValidAddress = location.getAddressLine(0); // Use the address in English
-                sendResult(lastValidAddress, distanceEditText.getText().toString().replace(" KM", "").trim());
-            } else {
-                Toast.makeText(this, "Address not found", Toast.LENGTH_SHORT).show();
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-            Toast.makeText(this, "Geocoding failed", Toast.LENGTH_SHORT).show();
-        }
-    }
-
-
-    private void sendResult(String address, String distanceStr) {
-        int distance = Integer.parseInt(distanceStr);
-        Intent resultIntent = new Intent();
-        resultIntent.putExtra("address", address);
-        resultIntent.putExtra("distance", distance);
-
-        Geocoder geocoder = new Geocoder(this, Locale.ENGLISH);
-        try {
-            List<Address> addresses = geocoder.getFromLocationName(address, 1);
-            if (addresses != null && !addresses.isEmpty()) {
-                Address location = addresses.get(0);
-                double lat = location.getLatitude();
-                double lon = location.getLongitude();
-                resultIntent.putExtra("latitude", lat);
-                resultIntent.putExtra("longitude", lon);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        setResult(RESULT_OK, resultIntent);
-        finish();
     }
 
     private void getAutocompletePredictions(String query) {
@@ -351,77 +305,20 @@ public class LocationWindow extends AppCompatActivity {
         });
     }
 
-    private void checkLocationPermission() {
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, LOCATION_PERMISSION_REQUEST_CODE);
-        } else {
-            showLocationDialog();
-        }
-    }
-
-    private void showLocationDialog() {
-        new AlertDialog.Builder(this)
-                .setTitle("Use Current Location")
-                .setMessage("Do you want to use your current location?")
-                .setPositiveButton("Yes", (dialog, which) -> {
-                    if (ContextCompat.checkSelfPermission(LocationWindow.this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                        ActivityCompat.requestPermissions(LocationWindow.this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, LOCATION_PERMISSION_REQUEST_CODE);
-                    } else {
-                        resetLocationFields();
-                        getLocationAndSetAddress();
-                    }
-                })
-                .setNegativeButton("No", null)
-                .show();
-    }
     @Override
     protected void onResume() {
         super.onResume();
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-            resetLocationFields();
-            checkLocationAndFetch();
+            locationFunctions.checkLocationAndFetch();
         }
     }
 
-    private void resetLocationFields() {
-        addressEditText.setText("");
-        lastValidAddress = null;
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        locationFunctions.handleLocationPermissionResult(requestCode, grantResults);
     }
 
-    private void checkLocationAndFetch() {
-        if (isLocationEnabled()) {
-            getLocationAndSetAddress();
-        } else {
-            Toast.makeText(this, "Please enable location services", Toast.LENGTH_SHORT).show();
-            Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
-            locationSettingsLauncher.launch(intent);
-        }
-    }
-
-    private boolean isLocationEnabled() {
-        LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-        return locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER) || locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
-    }
-
-    @SuppressLint("MissingPermission")
-    private void getLocationAndSetAddress() {
-        fusedLocationClient.getLastLocation().addOnSuccessListener(this, location -> {
-            if (location != null) {
-                double latitude = location.getLatitude();
-                double longitude = location.getLongitude();
-                Geocoder geocoder = new Geocoder(this, Locale.ENGLISH);
-                try {
-                    List<Address> addresses = geocoder.getFromLocation(latitude, longitude, 1);
-                    if (addresses != null && !addresses.isEmpty()) {
-                        String address = addresses.get(0).getAddressLine(0);
-                        addressEditText.setText(address);
-                        lastValidAddress = address;
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-        });}
     @Override
     public void onWindowFocusChanged(boolean hasFocus) {
         super.onWindowFocusChanged(hasFocus);
