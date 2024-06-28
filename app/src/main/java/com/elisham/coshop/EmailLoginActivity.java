@@ -68,21 +68,6 @@ public class EmailLoginActivity extends AppCompatActivity {
         });
     }
 
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-
-        // Handle the back button click
-        if (id == android.R.id.home) {
-            onBackPressed(); // Go back when the back arrow is clicked
-            return true;
-        }
-        return super.onOptionsItemSelected(item);
-    }
-
     private void loginUser() {
         String email = emailEditText.getText().toString().trim();
         String password = passwordEditText.getText().toString().trim();

@@ -38,6 +38,7 @@ public class HomePageActivity extends AppCompatActivity {
     private FirebaseFirestore db;
     private LinearLayout ordersContainer;
     private Geocoder geocoder;
+    private MenuUtils menuUtils;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -58,6 +59,8 @@ public class HomePageActivity extends AppCompatActivity {
         if (actionBar != null) {
             actionBar.setDisplayHomeAsUpEnabled(true);
         }
+
+        menuUtils = new MenuUtils(this);
 
         // Retrieve filtered orders from Intent
         Intent intent = getIntent();
@@ -415,68 +418,30 @@ public class HomePageActivity extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
-            case android.R.id.home:
-                onBackPressed();
-                return true;
             case R.id.Personal_info:
-                personalInfo();
+                menuUtils.personalInfo();
                 return true;
             case R.id.My_Orders:
-                myOrders();
+                menuUtils.myOrders();
                 return true;
             case R.id.About_Us:
-                aboutUs();
+                menuUtils.aboutUs();
                 return true;
             case R.id.Contact_Us:
-                contactUs();
+                menuUtils.contactUs();
                 return true;
             case R.id.Log_Out:
-                logOut();
+                menuUtils.logOut();
                 return true;
             case R.id.list_icon:
-                basket();
+                menuUtils.basket();
                 return true;
             case R.id.home:
-                home();
+                menuUtils.home();
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
         }
-    }
-
-    public void personalInfo() {
-        Intent toy = new Intent(HomePageActivity.this, UserDetailsActivity.class);
-        startActivity(toy);
-    }
-
-    public void myOrders() {
-        Intent toy = new Intent(HomePageActivity.this, MyOrdersActivity.class);
-        startActivity(toy);
-    }
-
-    public void aboutUs() {
-        Intent toy = new Intent(HomePageActivity.this, AboutActivity.class);
-        startActivity(toy);
-    }
-
-    public void contactUs() {
-        Intent toy = new Intent(HomePageActivity.this, ContactUsActivity.class);
-        startActivity(toy);
-    }
-
-    public void basket() {
-        Intent toy = new Intent(HomePageActivity.this, BasketActivity.class);
-        startActivity(toy);
-    }
-
-    public void logOut() {
-        Intent toy = new Intent(HomePageActivity.this, MainActivity.class);
-        startActivity(toy);
-    }
-
-    public void home() {
-        Intent toy = new Intent(HomePageActivity.this, HomePageActivity.class);
-        startActivity(toy);
     }
 
     public void gotofilter(View v) {
@@ -488,4 +453,5 @@ public class HomePageActivity extends AppCompatActivity {
         Intent toy = new Intent(HomePageActivity.this, OpenNewOrderActivity.class);
         startActivity(toy);
     }
+
 }
