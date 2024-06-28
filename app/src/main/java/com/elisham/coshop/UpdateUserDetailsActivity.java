@@ -80,12 +80,13 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
     private Uri imageUri;
     private static final int TAKE_PHOTO_REQUEST = 1;
     private static final int PICK_IMAGE_REQUEST = 2;
+    private MenuUtils menuUtils;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_update_user_details);
-
+        menuUtils = new MenuUtils(this);
         db = FirebaseFirestore.getInstance();
         mAuth = FirebaseAuth.getInstance();
         storage = FirebaseStorage.getInstance();
@@ -567,70 +568,30 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
-            case android.R.id.home:
-                onBackPressed(); // Go back when the back arrow is clicked
-                return true;
             case R.id.Personal_info:
-                personalInfo();
+                menuUtils.personalInfo();
                 return true;
             case R.id.My_Orders:
-                myOrders();
+                menuUtils.myOrders();
                 return true;
             case R.id.About_Us:
-                aboutUs();
+                menuUtils.aboutUs();
                 return true;
             case R.id.Contact_Us:
-                contactUs();
+                menuUtils.contactUs();
                 return true;
             case R.id.Log_Out:
-                logOut();
+                menuUtils.logOut();
                 return true;
             case R.id.list_icon:
-                basket();
+                menuUtils.basket();
                 return true;
             case R.id.home:
-                home();
+                menuUtils.home();
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
         }
-    }
-
-    public void home() {
-        Intent toy = new Intent(UpdateUserDetailsActivity.this, HomePageActivity.class);
-        startActivity(toy);
-    }
-
-    public void personalInfo() {
-        Intent toy = new Intent(UpdateUserDetailsActivity.this, UpdateUserDetailsActivity.class);
-        startActivity(toy);
-    }
-
-    public void myOrders() {
-        Intent toy = new Intent(UpdateUserDetailsActivity.this, MyOrdersActivity.class);
-        startActivity(toy);
-    }
-
-    public void aboutUs() {
-        Intent toy = new Intent(UpdateUserDetailsActivity.this, AboutActivity.class);
-        startActivity(toy);
-    }
-
-    public void contactUs() {
-        Intent toy = new Intent(UpdateUserDetailsActivity.this, ContactUsActivity.class);
-        startActivity(toy);
-    }
-
-    public void basket() {
-        Intent toy = new Intent(UpdateUserDetailsActivity.this, BasketActivity.class);
-        startActivity(toy);
-    }
-
-    public void logOut() {
-        mAuth.signOut();
-        Intent toy = new Intent(UpdateUserDetailsActivity.this, MainActivity.class);
-        startActivity(toy);
-        finish();
     }
 
 }
