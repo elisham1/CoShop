@@ -85,40 +85,80 @@
             android:adjustViewBounds="true"
             android:focusable="false"
             android:clickable="false" />
-
-
-
-
     </LinearLayout>
 
-    <EditText
-        android:id="@+id/editTextText2"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:orientation="horizontal"
         android:layout_marginLeft="16dp"
         android:layout_marginRight="16dp"
         android:layout_marginTop="5dp"
         android:layout_marginBottom="10dp"
-        android:ems="10"
-        android:hint="Enter URL"
-        android:inputType="text"
-        android:minHeight="48dp" />
+        android:gravity="center_vertical">
 
-    <EditText
-        android:id="@+id/time"
+        <EditText
+            android:id="@+id/editTextText2"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:ems="10"
+            android:hint="Enter URL"
+            android:inputType="text"
+            android:minHeight="48dp" />
+
+        <ImageButton
+            android:id="@+id/clear_url_button"
+            android:layout_width="48dp"
+            android:layout_height="match_parent"
+            android:background="?android:attr/selectableItemBackground"
+            android:contentDescription="Clear URL"
+            android:src="@drawable/clear"
+            android:padding="10dp"
+            android:visibility="gone" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/time_row"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:ems="10"
-        android:inputType="text"
-        android:drawableRight="@drawable/ic_baseline_access_time_24"
-        android:hint="Choose a time that orders close by this time period"
-        android:textSize="15sp"
-        android:layout_marginTop="8dp"
-        android:layout_marginStart="16dp"
-        android:layout_marginEnd="16dp"
-        android:minHeight="48dp"
-        android:padding="12dp"
-        android:onClick="showTimePickerDialog"/>
+        android:orientation="horizontal"
+        android:layout_marginTop="16dp"
+        android:layout_marginLeft="16dp"
+        android:layout_marginRight="16dp"
+        android:layout_marginBottom="0dp"
+        android:clickable="true"
+        android:focusable="true"
+        android:background="?android:attr/selectableItemBackground"
+        android:padding="8dp"
+        android:onClick="showTimePickerDialog">
+
+        <EditText
+            android:id="@+id/time"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:ems="10"
+            android:inputType="none"
+            android:drawableRight="@drawable/ic_baseline_access_time_24"
+            android:hint="Select the latest time orders should be open"
+            android:textSize="15sp"
+            android:padding="12dp"
+            android:focusable="false"
+            android:clickable="false"/>
+
+        <ImageButton
+            android:id="@+id/clear_time_button"
+            android:layout_width="48dp"
+            android:layout_height="match_parent"
+            android:background="?android:attr/selectableItemBackground"
+            android:contentDescription="Clear time"
+            android:src="@drawable/clear"
+            android:padding="10dp"
+            android:visibility="gone"
+            android:onClick="clearTime"/>
+
+    </LinearLayout>
 
     <ListView
         android:id="@+id/category_list"
@@ -146,7 +186,6 @@
             android:text="Supplied orders"
             android:layout_margin="16dp" />
 
-
         <Space
             android:layout_width="56dp"
             android:layout_height="wrap_content"
@@ -159,7 +198,6 @@
             android:minHeight="48dp"
             android:text="Consumer orders"
             android:layout_margin="16dp"/>
-
     </LinearLayout>
 
     <LinearLayout
@@ -186,7 +224,6 @@
             android:layout_height="wrap_content"
             android:text="Unlimited People"
             android:layout_margin="16dp"/>
-
     </LinearLayout>
 
     <LinearLayout
@@ -208,8 +245,7 @@
             app:thumbRadius="12dp"
             app:thumbStrokeWidth="2dp"
             app:trackHeight="4dp"
-            android:enabled="false"
-            />
+            android:enabled="false" />
 
         <EditText
             android:id="@+id/unlimit_value"
@@ -223,8 +259,7 @@
             android:gravity="center"
             android:layout_marginStart="8dp"
             android:background="?android:attr/editTextBackground"
-            android:enabled="false"
-            />
+            android:enabled="false" />
     </LinearLayout>
 
     <LinearLayout
@@ -255,5 +290,4 @@
             android:onClick="OrderFiltering"
             android:text="Ok" />
     </LinearLayout>
-
 </LinearLayout>
