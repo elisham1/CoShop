@@ -191,5 +191,4 @@ public class ChatActivity extends AppCompatActivity {
         Intent toy = new Intent(ChatActivity.this, MainActivity.class);
         startActivity(toy);
     }
-
 }
