@@ -64,11 +64,13 @@ public class FilterActivity extends AppCompatActivity {
     private EditText editTextURL;
     private ImageButton clearURLButton;
     private String lastURL;
+    private MenuUtils menuUtils;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_filter);
+        menuUtils = new MenuUtils(this);
 
         timeEditText = findViewById(R.id.time);
         timeEditText.setOnClickListener(this::showTimePickerDialog);
@@ -661,38 +663,6 @@ public class FilterActivity extends AppCompatActivity {
         return true;
     }
 
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case android.R.id.home:
-                onBackPressed();
-                return true;
-            case R.id.Personal_info:
-                personalInfo();
-                return true;
-            case R.id.My_Orders:
-                myOrders();
-                return true;
-            case R.id.About_Us:
-                aboutUs();
-                return true;
-            case R.id.Contact_Us:
-                contactUs();
-                return true;
-            case R.id.Log_Out:
-                logOut();
-                return true;
-            case R.id.list_icon:
-                basket();
-                return true;
-            case R.id.home:
-                home();
-                return true;
-            default:
-                return super.onOptionsItemSelected(item);
-        }
-    }
-
     public void showTimePickerDialog(View view) {
         Locale.setDefault(Locale.ENGLISH); // הגדרת השפה לאנגלית
         Calendar calendar = Calendar.getInstance();
@@ -733,38 +703,33 @@ public class FilterActivity extends AppCompatActivity {
         datePickerDialog.show();
     }
 
-    public void home() {
-        Intent toy = new Intent(FilterActivity.this, HomePageActivity.class);
-        startActivity(toy);
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.Personal_info:
+                menuUtils.personalInfo();
+                return true;
+            case R.id.My_Orders:
+                menuUtils.myOrders();
+                return true;
+            case R.id.About_Us:
+                menuUtils.aboutUs();
+                return true;
+            case R.id.Contact_Us:
+                menuUtils.contactUs();
+                return true;
+            case R.id.Log_Out:
+                menuUtils.logOut();
+                return true;
+            case R.id.list_icon:
+                menuUtils.basket();
+                return true;
+            case R.id.home:
+                menuUtils.home();
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
     }
 
-    public void personalInfo() {
-        Intent toy = new Intent(FilterActivity.this, UserDetailsActivity.class);
-        startActivity(toy);
-    }
-
-    public void myOrders() {
-        Intent toy = new Intent(FilterActivity.this, MyOrdersActivity.class);
-        startActivity(toy);
-    }
-
-    public void aboutUs() {
-        Intent toy = new Intent(FilterActivity.this, AboutActivity.class);
-        startActivity(toy);
-    }
-
-    public void contactUs() {
-        Intent toy = new Intent(FilterActivity.this, ContactUsActivity.class);
-        startActivity(toy);
-    }
-
-    public void basket() {
-        Intent toy = new Intent(FilterActivity.this, BasketActivity.class);
-        startActivity(toy);
-    }
-
-    public void logOut() {
-        Intent toy = new Intent(FilterActivity.this, MainActivity.class);
-        startActivity(toy);
-    }
 }

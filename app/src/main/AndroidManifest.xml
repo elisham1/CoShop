@@ -22,9 +22,9 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.CoShop"
         tools:targetApi="31">
-<!--        <activity-->
-<!--            android:name=".UpdateUserDetailsActivity"-->
-<!--            android:exported="false" />-->
+        <activity
+            android:name=".UpdateUserDetailsActivity"
+            android:exported="false" />
         <activity
             android:name=".EmailLoginActivity"
             android:exported="false" />
@@ -54,9 +54,6 @@
             android:exported="false" />
         <activity
             android:name=".FilterActivity"
-            android:exported="false" />
-        <activity
-            android:name=".DeleteAccountActivity"
             android:exported="false" />
         <activity
             android:name=".HomePageActivity"

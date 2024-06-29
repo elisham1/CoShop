@@ -10,12 +10,14 @@ import android.view.MenuItem;
 import android.view.View;
 
 public class ContactUsActivity extends AppCompatActivity {
+    private MenuUtils menuUtils;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_contact_us);
-
+        menuUtils = new MenuUtils(this);
     }
 
     @Override
@@ -27,72 +29,29 @@ public class ContactUsActivity extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
-            case android.R.id.home:
-                onBackPressed(); // Go back when the back arrow is clicked
-                return true;
             case R.id.Personal_info:
-                personalInfo();
+                menuUtils.personalInfo();
                 return true;
             case R.id.My_Orders:
-                myOrders();
+                menuUtils.myOrders();
                 return true;
             case R.id.About_Us:
-                aboutUs();
+                menuUtils.aboutUs();
                 return true;
             case R.id.Contact_Us:
-                contactUs();
+                menuUtils.contactUs();
                 return true;
             case R.id.Log_Out:
-                logOut();
+                menuUtils.logOut();
                 return true;
             case R.id.list_icon:
-                basket();
+                menuUtils.basket();
                 return true;
             case R.id.home:
-                home();
+                menuUtils.home();
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
         }
     }
-
-    public void home() {
-        Intent toy = new Intent(ContactUsActivity.this, HomePageActivity.class);
-        startActivity(toy);
-    }
-    public void personalInfo() {
-        Intent toy = new Intent(ContactUsActivity.this, UpdateUserDetailsActivity.class);
-        startActivity(toy);
-    }
-
-    public void myOrders() {
-        Intent toy = new Intent(ContactUsActivity.this, MyOrdersActivity.class);
-        startActivity(toy);
-    }
-
-    public void aboutUs() {
-        Intent toy = new Intent(ContactUsActivity.this, AboutActivity.class);
-        startActivity(toy);
-    }
-
-    public void contactUs() {
-        Intent toy = new Intent(ContactUsActivity.this, ContactUsActivity.class);
-        startActivity(toy);
-    }
-
-    public void basket() {
-        Intent toy = new Intent(ContactUsActivity.this, BasketActivity.class);
-        startActivity(toy);
-    }
-
-    public void logOut() {
-        Intent toy = new Intent(ContactUsActivity.this, MainActivity.class);
-        startActivity(toy);
-    }
-
-    public void goToHome(View v) {
-        Intent toy = new Intent(ContactUsActivity.this, HomePageActivity.class);
-        startActivity(toy);
-    }
-
 }

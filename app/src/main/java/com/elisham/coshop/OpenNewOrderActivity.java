@@ -59,6 +59,7 @@ import android.view.MotionEvent;
 
 public class OpenNewOrderActivity extends AppCompatActivity implements LocationListener {
 
+    private MenuUtils menuUtils;
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 100;
     FirebaseFirestore db;
     Spinner categorySpinner;
@@ -81,6 +82,7 @@ public class OpenNewOrderActivity extends AppCompatActivity implements LocationL
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_open_new_order);
+        menuUtils = new MenuUtils(this);
         // Initialize Firestore
         db = FirebaseFirestore.getInstance();
         // Get references to the EditText fields
@@ -93,12 +95,6 @@ public class OpenNewOrderActivity extends AppCompatActivity implements LocationL
         categorySpinner = findViewById(R.id.category);
         // Read categories from Firestore and populate Spinner
         readCategoriesFromFireStore();
-
-        // Enable the back button in the action bar
-        ActionBar actionBar = getSupportActionBar();
-        if (actionBar != null) {
-            actionBar.setDisplayHomeAsUpEnabled(true);
-        }
 
         // Add a click listener to the address EditText
         addressEditText.setOnTouchListener(new View.OnTouchListener() {
@@ -381,68 +377,30 @@ public class OpenNewOrderActivity extends AppCompatActivity implements LocationL
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
-            case android.R.id.home:
-                onBackPressed();
-                return true;
             case R.id.Personal_info:
-                personalInfo();
+                menuUtils.personalInfo();
                 return true;
             case R.id.My_Orders:
-                myOrders();
+                menuUtils.myOrders();
                 return true;
             case R.id.About_Us:
-                aboutUs();
+                menuUtils.aboutUs();
                 return true;
             case R.id.Contact_Us:
-                contactUs();
+                menuUtils.contactUs();
                 return true;
             case R.id.Log_Out:
-                logOut();
+                menuUtils.logOut();
                 return true;
             case R.id.list_icon:
-                basket();
+                menuUtils.basket();
                 return true;
             case R.id.home:
-                home();
+                menuUtils.home();
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
         }
-    }
-
-    public void home() {
-        Intent intent = new Intent(OpenNewOrderActivity.this, HomePageActivity.class);
-        startActivity(intent);
-    }
-
-    public void personalInfo() {
-        Intent intent = new Intent(OpenNewOrderActivity.this, UserDetailsActivity.class);
-        startActivity(intent);
-    }
-
-    public void myOrders() {
-        Intent intent = new Intent(OpenNewOrderActivity.this, MyOrdersActivity.class);
-        startActivity(intent);
-    }
-
-    public void aboutUs() {
-        Intent intent = new Intent(OpenNewOrderActivity.this, AboutActivity.class);
-        startActivity(intent);
-    }
-
-    public void contactUs() {
-        Intent intent = new Intent(OpenNewOrderActivity.this, ContactUsActivity.class);
-        startActivity(intent);
-    }
-
-    public void basket() {
-        Intent intent = new Intent(OpenNewOrderActivity.this, BasketActivity.class);
-        startActivity(intent);
-    }
-
-    public void logOut() {
-        Intent intent = new Intent(OpenNewOrderActivity.this, MainActivity.class);
-        startActivity(intent);
     }
 
     public void goToMyOrders(View v) {

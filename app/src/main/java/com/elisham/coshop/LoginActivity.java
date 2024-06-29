@@ -81,7 +81,7 @@ public class LoginActivity extends AppCompatActivity {
                         if (isNewUser) {
                             // If user is new, navigate to MainActivity for sign-up
                             Toast.makeText(LoginActivity.this, "You need to sign up.", Toast.LENGTH_SHORT).show();
-                            Intent intent = new Intent(LoginActivity.this, UserDetailsActivity.class);
+                            Intent intent = new Intent(LoginActivity.this, SignupActivity.class);
                             startActivity(intent);
                             finish(); // Close this activity to prevent returning to it on back press
                         } else {
@@ -100,24 +100,9 @@ public class LoginActivity extends AppCompatActivity {
                 });
     }
 
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-
-        return super.onOptionsItemSelected(item);
-    }
-
     public void emailLogin() {
         Intent intent = new Intent(LoginActivity.this, EmailLoginActivity.class);
         startActivityForResult(intent, 1);
-    }
-    public void clickToHome(View v) {
-        Intent intent = new Intent(LoginActivity.this, HomePageActivity.class);
-        startActivity(intent);
     }
 
 }
