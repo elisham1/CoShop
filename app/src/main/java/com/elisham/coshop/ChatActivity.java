@@ -1,19 +1,23 @@
 package com.elisham.coshop;
 
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
 import android.content.Intent;
+import android.graphics.Rect;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.widget.Button;
+import android.view.View;
+import android.view.ViewTreeObserver;
 import android.widget.EditText;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.Toast;
+
 import com.bumptech.glide.Glide;
 import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
@@ -22,6 +26,7 @@ import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -31,7 +36,7 @@ public class ChatActivity extends AppCompatActivity {
     private FirebaseFirestore db;
     private RecyclerView chatRecyclerView;
     private EditText messageInput;
-    private Button sendButton;
+    private ImageView sendIcon;
     private String orderId;
     private FirebaseAuth mAuth;
     private FirebaseUser currentUser;
@@ -40,7 +45,6 @@ public class ChatActivity extends AppCompatActivity {
     private ArrayList<ChatMessage> chatMessages;
 
     private MenuUtils menuUtils;
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -55,7 +59,7 @@ public class ChatActivity extends AppCompatActivity {
         // Initialize chat components
         chatRecyclerView = findViewById(R.id.chatRecyclerView);
         messageInput = findViewById(R.id.messageInput);
-        sendButton = findViewById(R.id.sendButton);
+        sendIcon = findViewById(R.id.sendIcon);
 
         chatMessages = new ArrayList<>();
         chatAdapter = new ChatAdapter(chatMessages);
@@ -68,8 +72,37 @@ public class ChatActivity extends AppCompatActivity {
         Toast.makeText(this, "Order ID: " + orderId, Toast.LENGTH_SHORT).show();
         loadChatMessages(orderId);
 
-        sendButton.setOnClickListener(v -> sendMessage());
+        messageInput.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
 
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                if (s.length() > 0) {
+                    sendIcon.setVisibility(View.VISIBLE);
+                } else {
+                    sendIcon.setVisibility(View.GONE);
+                }
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {}
+        });
+
+        sendIcon.setOnClickListener(v -> sendMessage());
+
+        // Scroll to bottom when the keyboard appears
+        final View rootView = findViewById(android.R.id.content);
+        rootView.getViewTreeObserver().addOnGlobalLayoutListener(() -> {
+            Rect r = new Rect();
+            rootView.getWindowVisibleDisplayFrame(r);
+            int screenHeight = rootView.getRootView().getHeight();
+            int keypadHeight = screenHeight - r.bottom;
+
+            if (keypadHeight > screenHeight * 0.15) {
+                chatRecyclerView.scrollToPosition(chatMessages.size() - 1);
+            }
+        });
     }
 
     private void loadChatMessages(String orderId) {

@@ -27,10 +27,12 @@
             android:hint="Type a message"
             android:padding="10dp" />
 
-        <Button
-            android:id="@+id/sendButton"
+        <ImageView
+            android:id="@+id/sendIcon"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Send"/>
+            android:src="@drawable/send"
+            android:visibility="gone"
+            android:padding="10dp"/>
     </LinearLayout>
 </LinearLayout>
