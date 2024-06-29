@@ -23,10 +23,12 @@ import com.google.android.gms.tasks.Task;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.FirebaseAuthUserCollisionException;
 import com.google.firebase.auth.FirebaseAuthWeakPasswordException;
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException;
 import com.google.firebase.auth.FirebaseUser;
+
 
 
 public class EmailSignupActivity extends AppCompatActivity {
@@ -111,8 +113,14 @@ public class EmailSignupActivity extends AppCompatActivity {
             return;
         }
 
+        if (password.length() < 6)
+        {
+            showAlertDialog("Password must be at least 6 characters");
+            return;
+        }
+
         if (!password.equals(confirmPassword)) {
-            showAlertDialog("Signup failed: passwords are not equal");
+            showAlertDialog("Signup failed: Passwords are not equal");
             return;
         }
 
@@ -124,32 +132,41 @@ public class EmailSignupActivity extends AppCompatActivity {
                         if (task.isSuccessful()) {
                             // Sign in success, update UI with the signed-in user's information
                             Log.d("FirebaseAuth", "createUserWithEmail:success");
-                            user = mAuth.getCurrentUser();
+                            // Set the result to OK to indicate success
+                            setResult(RESULT_OK);
+                            Intent intent = new Intent(EmailSignupActivity.this, CategoriesActivity.class);
+                            intent.putExtra("email", email);
+                            intent.putExtra("firstName", firstName);
+                            intent.putExtra("familyName", familyName);
+                            // Clear the activity stack and start HomePageActivity as a new task
+                            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+                            startActivity(intent);
+                            finish();
                             Toast.makeText(EmailSignupActivity.this, "Authentication Successful.", Toast.LENGTH_SHORT).show();
                             // Update UI or redirect to another activity
                         } else {
-                            // If sign in fails, display a message to the user.
-                            Log.w("FirebaseAuth", "createUserWithEmail:failure", task.getException());
-                            Toast.makeText(EmailSignupActivity.this, "Authentication Failed: " + task.getException().getMessage(), Toast.LENGTH_LONG).show();
-                            Intent intent = new Intent(EmailSignupActivity.this, MainActivity.class);
-                            startActivity(intent);
-                            finish();
+                            if(task.getException().getMessage().contains("already in use by another account"))
+                            {
+                                Intent intent = new Intent(EmailSignupActivity.this, EmailLoginActivity.class);
+                                intent.putExtra("source", "EmailSignupActivity");
+                                intent.putExtra("email", email);
+                                startActivity(intent);
+                                finish();
+                            }
+                            else {
+                                // If sign in fails, display a message to the user.
+                                Log.w("FirebaseAuth", "createUserWithEmail:failure", task.getException());
+                                Toast.makeText(EmailSignupActivity.this, "Authentication Failed: " + task.getException().getMessage(), Toast.LENGTH_LONG).show();
+                                Intent intent = new Intent(EmailSignupActivity.this, MainActivity.class);
+                                startActivity(intent);
+                                finish();
+                            }
+
                         }
 
                     }
                 });
-        // Set the result to OK to indicate success
-        setResult(RESULT_OK);
-        Intent intent = new Intent(EmailSignupActivity.this, CategoriesActivity.class);
-        intent.putExtra("currUser", user);
-        intent.putExtra("email", email);
-        intent.putExtra("firstName", firstName);
-        intent.putExtra("familyName", familyName);
-        // Clear the activity stack and start HomePageActivity as a new task
-        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
-        startActivity(intent);
-        // Finish UserDetailsActivity
-        finish();
+
     }
 
     private void showAlertDialog(String message) {

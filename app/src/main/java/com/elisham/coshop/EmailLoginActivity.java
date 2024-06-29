@@ -23,6 +23,7 @@ import com.google.firebase.auth.FirebaseAuth;
 public class EmailLoginActivity extends AppCompatActivity {
 
     private EditText emailEditText, passwordEditText;
+    private String email;
     private Button loginButton;
     private boolean isPasswordVisible = false;
     ImageButton togglePasswordVisibility;
@@ -41,6 +42,12 @@ public class EmailLoginActivity extends AppCompatActivity {
         loginButton = findViewById(R.id.loginButton);
         togglePasswordVisibility = findViewById(R.id.togglePasswordVisibility);
         togglePassword();
+
+        String source = getIntent().getStringExtra("source");
+        if (source.equals("EmailSignupActivity")) {
+            email = getIntent().getStringExtra("email");
+            emailEditText.setText(email);
+        }
 
         loginButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -69,7 +76,7 @@ public class EmailLoginActivity extends AppCompatActivity {
     }
 
     private void loginUser() {
-        String email = emailEditText.getText().toString().trim();
+        email = emailEditText.getText().toString().trim();
         String password = passwordEditText.getText().toString().trim();
 
         mAuth.signInWithEmailAndPassword(email, password)
