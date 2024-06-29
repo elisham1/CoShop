@@ -17,10 +17,12 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.GeoPoint;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
 
 public class OrderDetailsActivity extends AppCompatActivity {
 
@@ -64,10 +66,17 @@ public class OrderDetailsActivity extends AppCompatActivity {
             actionBar.setDisplayHomeAsUpEnabled(true);
         }
 
+        // Check if the user is already in the list
+        checkUserInList();
+
         joinButton.setOnClickListener(v -> {
-            Intent chatIntent = new Intent(OrderDetailsActivity.this, ChatActivity.class);
-            chatIntent.putExtra("orderId", orderId);
-            startActivity(chatIntent);
+            if (joinButton.getText().toString().equals("Join")) {
+                addUserToOrder();
+            } else {
+                Intent chatIntent = new Intent(OrderDetailsActivity.this, ChatActivity.class);
+                chatIntent.putExtra("orderId", orderId);
+                startActivity(chatIntent);
+            }
         });
 
         closeButton.setOnClickListener(v -> finish());
@@ -103,6 +112,31 @@ public class OrderDetailsActivity extends AppCompatActivity {
                 Toast.makeText(this, "No such document", Toast.LENGTH_SHORT).show();
             }
         }).addOnFailureListener(e -> Toast.makeText(this, "Failed to fetch document", Toast.LENGTH_SHORT).show());
+    }
+
+    private void checkUserInList() {
+        DocumentReference orderRef = db.collection("orders").document(orderId);
+        orderRef.get().addOnSuccessListener(documentSnapshot -> {
+            if (documentSnapshot.exists()) {
+                List<String> listPeopleInOrder = (List<String>) documentSnapshot.get("listPeopleInOrder");
+                if (listPeopleInOrder != null && listPeopleInOrder.contains(currentUser.getEmail())) {
+                    joinButton.setText("Chat");
+                }
+            }
+        }).addOnFailureListener(e -> Toast.makeText(this, "Failed to check user in list", Toast.LENGTH_SHORT).show());
+    }
+
+    private void addUserToOrder() {
+        DocumentReference orderRef = db.collection("orders").document(orderId);
+        orderRef.update("listPeopleInOrder", FieldValue.arrayUnion(currentUser.getEmail()))
+                .addOnSuccessListener(aVoid -> {
+                    Toast.makeText(this, "Added to order", Toast.LENGTH_SHORT).show();
+                    joinButton.setText("Chat");
+                    Intent chatIntent = new Intent(OrderDetailsActivity.this, ChatActivity.class);
+                    chatIntent.putExtra("orderId", orderId);
+                    startActivity(chatIntent);
+                })
+                .addOnFailureListener(e -> Toast.makeText(this, "Failed to add user to order", Toast.LENGTH_SHORT).show());
     }
 
     @Override

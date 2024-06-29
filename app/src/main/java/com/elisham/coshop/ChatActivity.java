@@ -3,37 +3,44 @@ package com.elisham.coshop;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.ScrollView;
-import android.widget.TextView;
 import android.widget.Toast;
-
+import com.bumptech.glide.Glide;
 import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.CollectionReference;
+import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
-
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
 public class ChatActivity extends AppCompatActivity {
     private FirebaseFirestore db;
-    private LinearLayout chatContainer;
+    private RecyclerView chatRecyclerView;
     private EditText messageInput;
     private Button sendButton;
     private String orderId;
     private FirebaseAuth mAuth;
     private FirebaseUser currentUser;
+
+    private ChatAdapter chatAdapter;
+    private ArrayList<ChatMessage> chatMessages;
+
     private MenuUtils menuUtils;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -46,9 +53,14 @@ public class ChatActivity extends AppCompatActivity {
         currentUser = mAuth.getCurrentUser();
 
         // Initialize chat components
-        chatContainer = findViewById(R.id.chatContainer);
+        chatRecyclerView = findViewById(R.id.chatRecyclerView);
         messageInput = findViewById(R.id.messageInput);
         sendButton = findViewById(R.id.sendButton);
+
+        chatMessages = new ArrayList<>();
+        chatAdapter = new ChatAdapter(chatMessages);
+        chatRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+        chatRecyclerView.setAdapter(chatAdapter);
 
         // Get the orderId from the intent
         Intent intent = getIntent();
@@ -56,10 +68,8 @@ public class ChatActivity extends AppCompatActivity {
         Toast.makeText(this, "Order ID: " + orderId, Toast.LENGTH_SHORT).show();
         loadChatMessages(orderId);
 
-        sendButton.setOnClickListener(v -> {
-            Toast.makeText(this, "Send button clicked", Toast.LENGTH_SHORT).show();
-            sendMessage();
-        });
+        sendButton.setOnClickListener(v -> sendMessage());
+
     }
 
     private void loadChatMessages(String orderId) {
@@ -70,13 +80,15 @@ public class ChatActivity extends AppCompatActivity {
                 return;
             }
 
-            chatContainer.removeAllViews();
+            chatMessages.clear();
             if (snapshots != null) {
                 for (DocumentSnapshot doc : snapshots.getDocuments()) {
                     String message = doc.getString("message");
                     String sender = doc.getString("sender");
-                    addMessageToLayout(sender, message);
+                    chatMessages.add(new ChatMessage(sender, message));
                 }
+                chatAdapter.notifyDataSetChanged();
+                chatRecyclerView.scrollToPosition(chatMessages.size() - 1);
             } else {
                 Toast.makeText(this, "No chat messages found", Toast.LENGTH_SHORT).show();
             }
@@ -94,7 +106,6 @@ public class ChatActivity extends AppCompatActivity {
             return;
         }
         String userEmail = currentUser.getEmail();
-        Toast.makeText(this, "User Email: " + userEmail, Toast.LENGTH_SHORT).show();
 
         CollectionReference chatRef = db.collection("orders").document(orderId).collection("chat");
 
@@ -104,15 +115,25 @@ public class ChatActivity extends AppCompatActivity {
         chatMessage.put("timestamp", new Timestamp(new Date()));
 
         chatRef.add(chatMessage).addOnSuccessListener(documentReference -> {
-            Toast.makeText(this, "Message sent successfully", Toast.LENGTH_SHORT).show();
             messageInput.setText("");
+            chatRecyclerView.scrollToPosition(chatMessages.size() - 1);
         }).addOnFailureListener(e -> Toast.makeText(this, "Failed to send message", Toast.LENGTH_SHORT).show());
     }
 
-    private void addMessageToLayout(String sender, String message) {
-        TextView messageView = new TextView(this);
-        messageView.setText(sender + ": " + message);
-        chatContainer.addView(messageView);
+    private void getProfileImageUrl(String senderEmail, ProfileImageCallback callback) {
+        DocumentReference userRef = db.collection("users").document(senderEmail);
+        userRef.get().addOnSuccessListener(documentSnapshot -> {
+            if (documentSnapshot.exists()) {
+                String imageUrl = documentSnapshot.getString("profileImageUrl");
+                callback.onCallback(imageUrl);
+            } else {
+                callback.onCallback(null);
+            }
+        }).addOnFailureListener(e -> callback.onCallback(null));
+    }
+
+    private interface ProfileImageCallback {
+        void onCallback(String imageUrl);
     }
 
     @Override
@@ -149,6 +170,4 @@ public class ChatActivity extends AppCompatActivity {
                 return super.onOptionsItemSelected(item);
         }
     }
-
-
 }
