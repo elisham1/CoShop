@@ -41,7 +41,7 @@
             android:id="@+id/messageTextView"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:background="@drawable/message_background_user"
+            android:background="@drawable/message_background"
             android:padding="8dp"
             android:text="Sample message"
             android:textSize="16sp"
