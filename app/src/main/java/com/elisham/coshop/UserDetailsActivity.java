@@ -11,16 +11,22 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBar;
@@ -49,11 +55,18 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 public class UserDetailsActivity extends AppCompatActivity {
-
-    private EditText addressEditText;
+    private ActivityResultLauncher<Intent> locationWindowLauncher;
+    private TextView searchAddressText;
+    private ImageButton searchAddressButton;
+    private ImageButton editAddressButton;
+    private String lastAddress;
+    private double lastLatitude;
+    private double lastLongitude;
+    private int lastDistance;
     private TextView fullNameTextView, emailEditText;
     private String email, firstName, familyName, picUrl;
     private String newFirstName, newFamilyName, googleProfilePicUrl;
@@ -86,8 +99,11 @@ public class UserDetailsActivity extends AppCompatActivity {
 
         emailEditText = findViewById(R.id.emailText);
         fullNameTextView = findViewById(R.id.fullName);
-        addressEditText = findViewById(R.id.addressText);
         choiceRadioGroup = findViewById(R.id.choiceLinearLayout);
+
+        searchAddressText = findViewById(R.id.search_address_text);
+        searchAddressButton = findViewById(R.id.search_address_button);
+        editAddressButton = findViewById(R.id.edit_address_button);
 
         Intent intent = getIntent();
         if (intent != null) {
@@ -126,7 +142,91 @@ public class UserDetailsActivity extends AppCompatActivity {
             }
         });
 
+        showLocationWindow();
 
+    }
+
+    private void showLocationWindow() {
+        locationWindowLauncher = registerForActivityResult(
+                new ActivityResultContracts.StartActivityForResult(),
+                result -> {
+                    if (result.getResultCode() == RESULT_OK && result.getData() != null) {
+                        lastAddress = result.getData().getStringExtra("address");
+                        lastDistance = result.getData().getIntExtra("distance", 0);
+                        lastLatitude = result.getData().getDoubleExtra("latitude", 0);
+                        lastLongitude = result.getData().getDoubleExtra("longitude", 0);
+
+                        if (lastAddress != null) {
+                            String displayText = String.format(Locale.getDefault(), "%s, %d KM", lastAddress, lastDistance);
+                            searchAddressText.setText(displayText);
+                            searchAddressButton.setVisibility(View.VISIBLE);
+                            searchAddressButton.setTag("clear");
+                            searchAddressButton.setImageResource(R.drawable.clear);
+                            editAddressButton.setVisibility(View.VISIBLE);
+                        }
+                    }
+                }
+        );
+
+        LinearLayout searchRow = findViewById(R.id.search_row);
+        searchRow.setOnClickListener(v -> {
+            Intent intent = new Intent(UserDetailsActivity.this, LocationWindow.class);
+            if (lastAddress != null && !lastAddress.isEmpty() && lastDistance > 0) {
+                intent.putExtra("address", lastAddress);
+                intent.putExtra("distance", lastDistance);
+            }
+            locationWindowLauncher.launch(intent);
+        });
+
+        searchAddressButton.setOnClickListener(v -> {
+            if (searchAddressButton.getTag() != null && searchAddressButton.getTag().equals("clear")) {
+                searchAddressText.setText("");
+                searchAddressButton.setTag("search");
+                searchAddressButton.setImageResource(R.drawable.baseline_search_24);
+                editAddressButton.setVisibility(View.GONE);
+
+                // איפוס הערכים האחרונים
+                lastAddress = null;
+                lastDistance = 0;
+                lastLatitude = 0;
+                lastLongitude = 0;
+            }
+        });
+
+        searchAddressText.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                toggleSearchClearIcon();
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {}
+        });
+
+        editAddressButton.setOnClickListener(v -> {
+            Intent intent = new Intent(UserDetailsActivity.this, LocationWindow.class);
+            if (lastAddress != null && !lastAddress.isEmpty() && lastDistance > 0) {
+                intent.putExtra("address", lastAddress);
+                intent.putExtra("distance", lastDistance);
+            }
+            locationWindowLauncher.launch(intent);
+        });
+    }
+
+    private void toggleSearchClearIcon() {
+        String address = searchAddressText.getText().toString();
+        if (!address.isEmpty() && lastDistance > 0) {
+            searchAddressButton.setTag("clear");
+            searchAddressButton.setImageResource(R.drawable.clear);
+            editAddressButton.setVisibility(View.VISIBLE);
+        } else {
+            searchAddressButton.setTag("search");
+            searchAddressButton.setImageResource(R.drawable.baseline_search_24);
+            editAddressButton.setVisibility(View.GONE);
+        }
     }
 
     private void checkCameraPermissionAndTakePhoto() {
@@ -276,7 +376,11 @@ public class UserDetailsActivity extends AppCompatActivity {
         userDetails.put("favorite categories", selectedCategories);
         userDetails.put("first name", firstName);
         userDetails.put("family name", familyName);
-        userDetails.put("address", address);
+        // Create a GeoPoint object from the latitude and longitude
+        if (lastLatitude != 0 && lastLongitude != 0) {
+            address = new GeoPoint(lastLatitude, lastLongitude);
+            userDetails.put("address", address);
+        }
         if (!googleProfilePicUrl.isEmpty())
         {
             picUrl = googleProfilePicUrl;

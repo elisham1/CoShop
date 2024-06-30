@@ -1,5 +1,7 @@
 package com.elisham.coshop;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBar;
@@ -18,12 +20,16 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.RadioButton;
@@ -55,10 +61,20 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 
 public class UpdateUserDetailsActivity extends AppCompatActivity {
+
+    private ActivityResultLauncher<Intent> locationWindowLauncher;
+    private TextView searchAddressText;
+    private ImageButton searchAddressButton;
+    private ImageButton editAddressButton;
+    private String lastAddress;
+    private double lastLatitude;
+    private double lastLongitude;
+    private int lastDistance;
 
     private TextView fullNameTextView;
     private TextView emailTextView;
@@ -77,6 +93,7 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
 
     private boolean changeName = false;
     private boolean changePic = false;
+    private boolean changeLocation = false;
     private Uri imageUri;
     private static final int TAKE_PHOTO_REQUEST = 1;
     private static final int PICK_IMAGE_REQUEST = 2;
@@ -94,12 +111,16 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
 
         emailTextView = findViewById(R.id.emailText);
         fullNameTextView = findViewById(R.id.fullName);
-        addressEditText = findViewById(R.id.addressText);
+//        addressEditText = findViewById(R.id.addressText);
         typeOfUserTextView = findViewById(R.id.type_of_user);
         profileImageView = findViewById(R.id.profileImage);
 
+        searchAddressText = findViewById(R.id.search_address_text);
+        searchAddressButton = findViewById(R.id.search_address_button);
+        editAddressButton = findViewById(R.id.edit_address_button);
 
         getUserInformation();
+        showLocationWindow();
 
         fullNameTextView.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -116,6 +137,91 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
             }
         });
 
+    }
+
+    private void showLocationWindow() {
+        locationWindowLauncher = registerForActivityResult(
+                new ActivityResultContracts.StartActivityForResult(),
+                result -> {
+                    if (result.getResultCode() == RESULT_OK && result.getData() != null) {
+                        lastAddress = result.getData().getStringExtra("address");
+                        lastDistance = result.getData().getIntExtra("distance", 0);
+                        lastLatitude = result.getData().getDoubleExtra("latitude", 0);
+                        lastLongitude = result.getData().getDoubleExtra("longitude", 0);
+
+                        if (lastAddress != null) {
+                            String displayText = String.format(Locale.getDefault(), "%s, %d KM", lastAddress, lastDistance);
+                            searchAddressText.setText(displayText);
+                            searchAddressButton.setVisibility(View.VISIBLE);
+                            searchAddressButton.setTag("clear");
+                            searchAddressButton.setImageResource(R.drawable.clear);
+                            editAddressButton.setVisibility(View.VISIBLE);
+                        }
+                    }
+                }
+        );
+
+        LinearLayout searchRow = findViewById(R.id.search_row);
+        searchRow.setOnClickListener(v -> {
+            Intent intent = new Intent(UpdateUserDetailsActivity.this, LocationWindow.class);
+            if (lastAddress != null && !lastAddress.isEmpty() && lastDistance > 0) {
+                intent.putExtra("address", lastAddress);
+                intent.putExtra("distance", lastDistance);
+            }
+            locationWindowLauncher.launch(intent);
+        });
+
+        searchAddressButton.setOnClickListener(v -> {
+            if (searchAddressButton.getTag() != null && searchAddressButton.getTag().equals("clear")) {
+                searchAddressText.setText("");
+                searchAddressButton.setTag("search");
+                searchAddressButton.setImageResource(R.drawable.baseline_search_24);
+                editAddressButton.setVisibility(View.GONE);
+
+                // איפוס הערכים האחרונים
+                lastAddress = null;
+                lastDistance = 0;
+                lastLatitude = 0;
+                lastLongitude = 0;
+            }
+        });
+
+        searchAddressText.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                toggleSearchClearIcon();
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                changeLocation = true;
+            }
+        });
+
+        editAddressButton.setOnClickListener(v -> {
+            Intent intent = new Intent(UpdateUserDetailsActivity.this, LocationWindow.class);
+            if (lastAddress != null && !lastAddress.isEmpty() && lastDistance > 0) {
+                intent.putExtra("address", lastAddress);
+                intent.putExtra("distance", lastDistance);
+            }
+            locationWindowLauncher.launch(intent);
+        });
+    }
+
+    private void toggleSearchClearIcon() {
+        String address = searchAddressText.getText().toString();
+        if (!address.isEmpty() && lastDistance > 0) {
+            searchAddressButton.setTag("clear");
+            searchAddressButton.setImageResource(R.drawable.clear);
+            editAddressButton.setVisibility(View.VISIBLE);
+        } else {
+            searchAddressButton.setTag("search");
+            searchAddressButton.setImageResource(R.drawable.baseline_search_24);
+            editAddressButton.setVisibility(View.GONE);
+        }
     }
 
     private void showImageSourceDialog() {
@@ -328,7 +434,7 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
                                     // Get the name and family name fields
                                     firstName = document.getString("first name");
                                     familyName = document.getString("family name");
-//                                    address = document.getString("address");
+                                    address = document.getGeoPoint("address");
                                     userType = document.getString("type of user");
                                     picUrl = document.getString("profileImageUrl");
 
@@ -336,7 +442,7 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
                                     String typeText = "User Type: " + userType;
                                     emailTextView.setText(email);
                                     fullNameTextView.setText(fullName);
-//                                    addressEditText.setText(address);
+                                    searchAddressText.setText(geoPointToString(address));
                                     typeOfUserTextView.setText(typeText);
                                     if (picUrl != null && !picUrl.isEmpty()) {
                                         Glide.with(UpdateUserDetailsActivity.this)
@@ -372,6 +478,17 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
         }
 
     }
+
+    private String geoPointToString(GeoPoint geoPoint) {
+        if (geoPoint == null) {
+            return "";
+        }
+        double lat = geoPoint.getLatitude();
+        double lon = geoPoint.getLongitude();
+
+        return String.format(Locale.getDefault(), "Lat: %.6f, Lng: %.6f", lat, lon);
+    }
+
 
     public void editUserDetails(View view) {
         Map<String, Object> userDetails = new HashMap<>();
