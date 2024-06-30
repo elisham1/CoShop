@@ -185,6 +185,9 @@ public class ChatActivity extends AppCompatActivity {
             case R.id.home:
                 menuUtils.home();
                 return true;
+            case R.id.chat_icon: // הוספת המקרה עבור אייקון ה-chat
+                menuUtils.allChats();
+                return true;
             default:
                 return super.onOptionsItemSelected(item);
         }

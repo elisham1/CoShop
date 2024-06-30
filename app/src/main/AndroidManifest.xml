@@ -1,9 +1,6 @@
-<?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
-    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.INTERNET"/>
@@ -12,6 +9,12 @@
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
     <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE"
         tools:ignore="ScopedStorage" />
+
+    <!-- Add uses-feature tags -->
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
+    <uses-feature android:name="android.hardware.location.gps" android:required="false" />
+    <uses-feature android:name="android.hardware.location.network" android:required="false" />
+    <uses-feature android:name="android.hardware.location" android:required="false" />
 
     <application
         android:allowBackup="true"
@@ -61,7 +64,6 @@
         <activity
             android:name=".ChangePasswordActivity"
             android:exported="false" />
-
         <activity
             android:name=".OpenNewOrderActivity"
             android:exported="false" />
@@ -74,12 +76,13 @@
         <activity
             android:name=".CategoriesActivity"
             android:exported="false" />
-
         <activity
             android:name=".LocationWindow"
             android:theme="@style/AppTheme.Dialog.NoTitle">
         </activity>
-
+        <activity
+            android:name=".AllChatOfUserActivity"
+            android:exported="false" />
         <activity
             android:name=".MainActivity"
             android:exported="true">
@@ -91,5 +94,4 @@
         <activity android:name=".LoginActivity" />
         <activity android:name=".SignupActivity" />
     </application>
-
 </manifest>
