@@ -2,10 +2,14 @@ package com.elisham.coshop;
 
 import android.content.Context;
 import android.content.Intent;
+import android.util.Log;
 import android.view.MenuItem;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.google.android.gms.auth.api.signin.GoogleSignIn;
+import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.firebase.auth.FirebaseAuth;
 
 
@@ -13,10 +17,13 @@ public class MenuUtils {
 
     private static FirebaseAuth mAuth;
     private Context context;
+    GoogleSignInAccount googleSignInAccount;
 
     public MenuUtils(Context context) {
         this.context = context;
         mAuth = FirebaseAuth.getInstance();
+        googleSignInAccount = GoogleSignIn.getLastSignedInAccount(context);
+
     }
 
     public void personalInfo() {
@@ -45,7 +52,22 @@ public class MenuUtils {
     }
 
     public void logOut() {
+        if (googleSignInAccount != null) {
+            // Signed in with Google
+            GoogleSignIn.getClient(context, GoogleSignInOptions.DEFAULT_SIGN_IN).signOut().addOnCompleteListener(task -> {
+                if (task.isSuccessful()) {
+                    // Sign out from Firebase
+                    Log.d("Logout", "Google sign-out successful");
+                } else {
+                    // Handle sign-out failure
+                    Log.e("Logout", "Google sign-out failed");
+                }
+            });
+        }
+        // Not signed in with Google, sign out from Firebase in both cases
         mAuth.signOut();
+
+        // Navigate to MainActivity
         Intent intent = new Intent(context, MainActivity.class);
         context.startActivity(intent);
         finishActivity();
