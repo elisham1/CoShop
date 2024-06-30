@@ -10,6 +10,9 @@ import androidx.cardview.widget.CardView;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
+import android.location.Address;
+import android.location.Geocoder;
+
 import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -75,7 +78,6 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
     private double lastLatitude;
     private double lastLongitude;
     private int lastDistance;
-
     private TextView fullNameTextView;
     private TextView emailTextView;
     private EditText addressEditText;
@@ -148,6 +150,9 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
                         lastDistance = result.getData().getIntExtra("distance", 0);
                         lastLatitude = result.getData().getDoubleExtra("latitude", 0);
                         lastLongitude = result.getData().getDoubleExtra("longitude", 0);
+                        if (lastLatitude != 0 && lastLongitude != 0) {
+                            address = new GeoPoint(lastLatitude, lastLongitude);
+                        }
 
                         if (lastAddress != null) {
                             String displayText = String.format(Locale.getDefault(), "%s, %d KM", lastAddress, lastDistance);
@@ -485,8 +490,17 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
         }
         double lat = geoPoint.getLatitude();
         double lon = geoPoint.getLongitude();
-
-        return String.format(Locale.getDefault(), "Lat: %.6f, Lng: %.6f", lat, lon);
+        String address = "";
+        Geocoder geocoder = new Geocoder(this, Locale.ENGLISH);
+        try {
+            List<Address> addresses = geocoder.getFromLocation(lat, lon, 1);
+            if (addresses != null && !addresses.isEmpty()) {
+                address = addresses.get(0).getAddressLine(0);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return address;
     }
 
 
@@ -503,6 +517,8 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
         if (changePic) {
             userDetails.put("profileImageUrl", picUrl);
         }
+
+        userDetails.put("address", address);
 
         // Update Firestore with the new details
         db.collection("users").document(email)
