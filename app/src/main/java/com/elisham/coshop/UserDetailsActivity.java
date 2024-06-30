@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Matrix;
+import android.graphics.drawable.Drawable;
 import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.Build;
@@ -37,6 +38,8 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.request.target.CustomTarget;
+import com.bumptech.glide.request.transition.Transition;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.tasks.OnFailureListener;
@@ -51,6 +54,7 @@ import com.google.firebase.storage.UploadTask;
 
 import org.w3c.dom.Text;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -118,14 +122,19 @@ public class UserDetailsActivity extends AppCompatActivity {
         emailEditText.setText(email);
         fullNameTextView.setText(fullName);
 
-        // Inside onCreate method
-        GoogleSignInAccount account = GoogleSignIn.getLastSignedInAccount(this);
-        if (account != null) {
-            googleProfilePicUrl = account.getPhotoUrl().toString();
-            Glide.with(this)
-                    .load(googleProfilePicUrl)
-                    .into(profileImageView);
+        if (isGoogleSignUp)
+        {
+            // Inside onCreate method
+            GoogleSignInAccount account = GoogleSignIn.getLastSignedInAccount(this);
+            if (account != null) {
+                googleProfilePicUrl = account.getPhotoUrl().toString();
+                downloadAndUploadGoogleProfilePic(googleProfilePicUrl);
+                Glide.with(this)
+                        .load(googleProfilePicUrl)
+                        .into(profileImageView);
+            }
         }
+
 
         fullNameTextView.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -144,6 +153,42 @@ public class UserDetailsActivity extends AppCompatActivity {
 
         showLocationWindow();
 
+    }
+
+    private void downloadAndUploadGoogleProfilePic(String url) {
+        // Use Glide to download the image
+        Glide.with(this)
+                .asBitmap()
+                .load(url)
+                .into(new CustomTarget<Bitmap>() {
+                    @Override
+                    public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
+                        uploadImageToFirebase(resource);
+                    }
+
+                    @Override
+                    public void onLoadCleared(@Nullable Drawable placeholder) {
+                        // Handle cleanup if necessary
+                    }
+                });
+    }
+
+    private void uploadImageToFirebase(Bitmap bitmap) {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, baos);
+        byte[] data = baos.toByteArray();
+
+        StorageReference fileReference = storageReference.child("profile_images/" + System.currentTimeMillis() + ".jpg");
+        UploadTask uploadTask = fileReference.putBytes(data);
+
+        uploadTask.addOnSuccessListener(taskSnapshot -> {
+            fileReference.getDownloadUrl().addOnSuccessListener(uri -> {
+                picUrl = uri.toString();
+                Toast.makeText(UserDetailsActivity.this, "Upload picUrl: " + picUrl, Toast.LENGTH_SHORT).show();
+            });
+        }).addOnFailureListener(e -> {
+            Toast.makeText(UserDetailsActivity.this, "Upload failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+        });
     }
 
     private void showLocationWindow() {
@@ -347,12 +392,6 @@ public class UserDetailsActivity extends AppCompatActivity {
     public void editUserDetails(View view) {
         Map<String, Object> userDetails = new HashMap<>();
 
-//        address = addressEditText.getText().toString().trim();
-//        if (address.equals("")) {
-//            showAlertDialog("Please enter your address");
-//            return;
-//        }
-
         choiceRadioGroup.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(RadioGroup group, int checkedId) {
@@ -381,9 +420,10 @@ public class UserDetailsActivity extends AppCompatActivity {
             address = new GeoPoint(lastLatitude, lastLongitude);
             userDetails.put("address", address);
         }
-        if (!googleProfilePicUrl.isEmpty())
-        {
-            picUrl = googleProfilePicUrl;
+
+        if (address == null) {
+            showAlertDialog("Please enter your address");
+            return;
         }
         userDetails.put("profileImageUrl", picUrl);
         if (selectedRadioButton != null) {
