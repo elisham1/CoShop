@@ -73,7 +73,7 @@ public class AllChatOfUserActivity extends AppCompatActivity {
                 }
 
                 if (snapshots != null) {
-                    chatOrders.clear();
+                    chatOrders.clear(); // ננקה את הרשימה כדי להימנע מהוספה כפולה
                     for (DocumentSnapshot doc : snapshots) {
                         List<String> peopleInOrder = (List<String>) doc.get("listPeopleInOrder");
                         if (peopleInOrder != null && peopleInOrder.contains(userEmail)) {
@@ -95,6 +95,14 @@ public class AllChatOfUserActivity extends AppCompatActivity {
                     public void onEvent(@Nullable QuerySnapshot snapshots, @Nullable FirebaseFirestoreException e) {
                         if (e != null) {
                             return;
+                        }
+
+                        // הסרת ההזמנה הקיימת עם אותו orderId
+                        for (int i = 0; i < chatOrders.size(); i++) {
+                            if (chatOrders.get(i).getOrderId().equals(orderId)) {
+                                chatOrders.remove(i);
+                                break;
+                            }
                         }
 
                         if (snapshots != null && !snapshots.isEmpty()) {
