@@ -29,12 +29,15 @@
 
             <TextView
                 android:id="@+id/fullName"
-                android:layout_width="241dp"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginEnd="8dp"
                 android:gravity="start"
                 android:textColor="#333333"
-                android:textSize="30sp" />
+                android:textSize="30sp"
+                android:ellipsize="end"
+                android:singleLine="true"/>
+
         </LinearLayout>
 
         <!-- First User's Image -->
@@ -60,45 +63,49 @@
 
     </LinearLayout>
     <!-- Email Section -->
-    <EditText
+    <TextView
         android:id="@+id/emailText"
-        android:layout_width="200dp"
-        android:layout_height="48dp"
-        android:hint="Email"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
         android:layout_marginTop="16dp"
-        android:textSize="16sp" />
+        android:textSize="18sp"
+        android:textColor="@color/black"
+        android:background="#EEEEEE"
+        android:gravity="center_vertical|start" />
+
 
     <!-- Address Section -->
     <EditText
         android:id="@+id/addressText"
-        android:layout_width="200dp"
-        android:layout_height="48dp"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
         android:hint="Address"
         android:layout_marginTop="16dp"
-        android:textSize="16sp"
+        android:textSize="18sp"
+        android:textColor="@color/black"
         android:inputType="text" />
 
-
-    <RadioGroup
-        android:id="@+id/choiceLinearLayout"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:orientation="horizontal">
-
-        <RadioButton
-            android:id="@+id/supplierRadioButton"
-            android:layout_width="wrap_content"
+        <RadioGroup
+            android:id="@+id/choiceLinearLayout"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Supplier" />
+            android:layout_marginTop="16dp"
+            android:orientation="horizontal">
 
-        <RadioButton
-            android:id="@+id/consumerRadioButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Consumer" />
-    </RadioGroup>
+            <RadioButton
+                android:id="@+id/supplierRadioButton"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Supplier" />
 
+            <RadioButton
+                android:id="@+id/consumerRadioButton"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Consumer" />
+        </RadioGroup>
 
     <LinearLayout
         android:layout_width="match_parent"

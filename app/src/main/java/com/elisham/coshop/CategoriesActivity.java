@@ -26,6 +26,7 @@ public class CategoriesActivity extends AppCompatActivity {
     private FirebaseUser currentUser;
     private String email, firstName, familyName, fullName;
     private List<String> selectedCategories;
+    private boolean isGoogleSignUp;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -36,11 +37,12 @@ public class CategoriesActivity extends AppCompatActivity {
         mAuth = FirebaseAuth.getInstance();
         currentUser = mAuth.getCurrentUser();
         selectedCategories = new ArrayList<>();
+        isGoogleSignUp = getIntent().getBooleanExtra("google_sign_up", true);
 
         //get the user mail and name
         Intent intent = getIntent();
         if (intent != null) {
-            if (intent.getBooleanExtra("google_sign_up", true)) {
+            if (isGoogleSignUp) {
                 email = currentUser.getEmail();
                 fullName = currentUser.getDisplayName();
                 // Break the full name into first name and family name
@@ -116,6 +118,7 @@ public class CategoriesActivity extends AppCompatActivity {
 
     public void doneCategory(View v) {
         Intent toy = new Intent(CategoriesActivity.this, UserDetailsActivity.class);
+        toy.putExtra("google_sign_up", isGoogleSignUp);
         toy.putExtra("email", email);
         toy.putExtra("firstName", firstName);
         toy.putExtra("familyName", familyName);
