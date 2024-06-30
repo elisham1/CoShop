@@ -11,10 +11,13 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 
 public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
@@ -66,17 +69,18 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     public int getItemCount() {
         return chatMessages.size();
     }
-
     class CurrentUserViewHolder extends RecyclerView.ViewHolder {
         TextView messageTextView;
         ImageView profileImageView;
         TextView nameTextView;
+        TextView timeTextView;
 
         public CurrentUserViewHolder(@NonNull View itemView) {
             super(itemView);
             messageTextView = itemView.findViewById(R.id.messageTextView);
             profileImageView = itemView.findViewById(R.id.profileImageView);
             nameTextView = itemView.findViewById(R.id.nameTextView);
+            timeTextView = itemView.findViewById(R.id.timeTextView);
         }
 
         public void bind(ChatMessage chatMessage) {
@@ -102,6 +106,15 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                     profileImageView.setImageResource(R.drawable.star);
                 }
             });
+
+            // Update timeTextView
+            Timestamp timestamp = chatMessage.getTimestamp();
+            if (timestamp != null) {
+                Date date = timestamp.toDate();
+                SimpleDateFormat sdf = new SimpleDateFormat("HH:mm");
+                String formattedTime = sdf.format(date);
+                timeTextView.setText(formattedTime);
+            }
         }
     }
 
@@ -109,12 +122,14 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         TextView messageTextView;
         ImageView profileImageView;
         TextView nameTextView;
+        TextView timeTextView;
 
         public OtherUserViewHolder(@NonNull View itemView) {
             super(itemView);
             messageTextView = itemView.findViewById(R.id.messageTextView);
             profileImageView = itemView.findViewById(R.id.profileImageView);
             nameTextView = itemView.findViewById(R.id.nameTextView);
+            timeTextView = itemView.findViewById(R.id.timeTextView);
         }
 
         public void bind(ChatMessage chatMessage) {
@@ -140,6 +155,15 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                     profileImageView.setImageResource(R.drawable.star);
                 }
             });
+
+            // Update timeTextView
+            Timestamp timestamp = chatMessage.getTimestamp();
+            if (timestamp != null) {
+                Date date = timestamp.toDate();
+                SimpleDateFormat sdf = new SimpleDateFormat("HH:mm");
+                String formattedTime = sdf.format(date);
+                timeTextView.setText(formattedTime);
+            }
         }
     }
-}
+     }

@@ -33,6 +33,6 @@
             android:layout_height="wrap_content"
             android:src="@drawable/send"
             android:visibility="gone"
-            android:padding="10dp"/>
+        android:padding="10dp"/>
     </LinearLayout>
 </LinearLayout>
