@@ -28,6 +28,15 @@
             android:text="Sample message"
             android:textSize="16sp"
             android:gravity="end"/>
+
+        <!-- TextView for the time -->
+        <TextView
+            android:id="@+id/timeTextView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Time"
+            android:textSize="12sp"
+            android:gravity="end"/>
     </LinearLayout>
 
     <ImageView
