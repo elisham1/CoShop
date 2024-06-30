@@ -84,4 +84,9 @@ public class MenuUtils {
             ((AppCompatActivity) context).finish();
         }
     }
+    public void allChats() {
+        Intent intent = new Intent(context, AllChatOfUserActivity.class);
+        context.startActivity(intent);
+    }
+
 }
