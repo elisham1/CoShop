@@ -75,15 +75,54 @@
 
 
     <!-- Address Section -->
-    <EditText
-        android:id="@+id/addressText"
+    <LinearLayout
+        android:id="@+id/search_row"
         android:layout_width="match_parent"
-        android:layout_height="50dp"
-        android:hint="Address"
-        android:layout_marginTop="16dp"
-        android:textSize="18sp"
-        android:textColor="@color/black"
-        android:inputType="text" />
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:clickable="true"
+        android:focusable="true"
+        android:background="?android:attr/selectableItemBackground"
+        android:padding="8dp">
+
+        <ImageButton
+            android:id="@+id/edit_address_button"
+            android:layout_width="48dp"
+            android:layout_height="match_parent"
+            android:background="?android:attr/selectableItemBackground"
+            android:contentDescription="Edit address"
+            android:src="@drawable/edit"
+            android:padding="10dp"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/search_address_text"
+            android:layout_width="0dp"
+            android:layout_height="38dp"
+            android:layout_gravity="end"
+            android:layout_weight="1"
+            android:gravity="center_vertical|end"
+            android:hint="Search address"
+            android:paddingStart="12dp"
+            android:textSize="15sp" />
+
+        <ImageButton
+            android:id="@+id/search_address_button"
+            android:layout_width="48dp"
+            android:layout_height="match_parent"
+            android:background="?android:attr/selectableItemBackground"
+            android:contentDescription="Search address"
+            android:src="@drawable/baseline_search_24"
+            android:paddingTop="8dp"
+            android:paddingBottom="8dp"
+            android:paddingLeft="0dp"
+            android:paddingRight="0dp"
+            android:scaleType="fitStart"
+            android:layout_gravity="center_vertical|start"
+            android:adjustViewBounds="true"
+            android:focusable="false"
+            android:clickable="false" />
+    </LinearLayout>
 
         <RadioGroup
             android:id="@+id/choiceLinearLayout"
@@ -107,32 +146,7 @@
                 android:text="Consumer" />
         </RadioGroup>
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal">
-        <!-- change password Section -->
-        <Button
-            android:id="@+id/changePasswordText"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:layout_weight="1"
-            android:onClick="changePassword"
-            android:text="change password"
-            android:textSize="14sp" />
 
-        <!-- Account Deletion Section -->
-        <Button
-            android:id="@+id/deleteButton"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:layout_weight="1"
-            android:onClick="deleteAccount"
-            android:text="Account Deletion"
-            android:textSize="14sp" />
-    </LinearLayout>
 
     <Button
         android:id="@+id/doneButton"
