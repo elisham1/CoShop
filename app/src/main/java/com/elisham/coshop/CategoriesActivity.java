@@ -24,8 +24,9 @@ public class CategoriesActivity extends AppCompatActivity {
     private FirebaseFirestore db;
     private FirebaseAuth mAuth;
     private FirebaseUser currentUser;
-    private String email, firstName, familyName;
+    private String email, firstName, familyName, fullName;
     private List<String> selectedCategories;
+    private boolean isGoogleSignUp;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -36,19 +37,37 @@ public class CategoriesActivity extends AppCompatActivity {
         mAuth = FirebaseAuth.getInstance();
         currentUser = mAuth.getCurrentUser();
         selectedCategories = new ArrayList<>();
+        isGoogleSignUp = getIntent().getBooleanExtra("google_sign_up", true);
 
+        //get the user mail and name
         Intent intent = getIntent();
         if (intent != null) {
-            email = intent.getStringExtra("email");
-            firstName = intent.getStringExtra("firstName");
-            familyName = intent.getStringExtra("familyName");
+            if (isGoogleSignUp) {
+                email = currentUser.getEmail();
+                fullName = currentUser.getDisplayName();
+                // Break the full name into first name and family name
+                if (fullName != null) {
+                    int spaceIndex = fullName.indexOf(' ');
+                    if (spaceIndex != -1) {
+                        firstName = fullName.substring(0, spaceIndex);
+                        familyName = fullName.substring(spaceIndex + 1);
+                    } else {
+                        firstName = fullName;
+                        familyName = "";
+                    }
+                } else {
+                    email = intent.getStringExtra("email");
+                    firstName = intent.getStringExtra("firstName");
+                    familyName = intent.getStringExtra("familyName");
 
-            String helloUser = "Hello, " + firstName;
-            TextView userName = findViewById(R.id.userName);
-            userName.setText(helloUser);
+                }
+                String helloUser = "Hello, " + firstName;
+                TextView userName = findViewById(R.id.userName);
+                userName.setText(helloUser);
+            }
+
         }
-        
-        displayCategories();
+    displayCategories();
     }
 
     public void displayCategories() {
@@ -99,6 +118,7 @@ public class CategoriesActivity extends AppCompatActivity {
 
     public void doneCategory(View v) {
         Intent toy = new Intent(CategoriesActivity.this, UserDetailsActivity.class);
+        toy.putExtra("google_sign_up", isGoogleSignUp);
         toy.putExtra("email", email);
         toy.putExtra("firstName", firstName);
         toy.putExtra("familyName", familyName);

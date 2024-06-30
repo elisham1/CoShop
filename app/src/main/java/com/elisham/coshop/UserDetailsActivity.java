@@ -30,6 +30,9 @@ import androidx.cardview.widget.CardView;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
+import com.bumptech.glide.Glide;
+import com.google.android.gms.auth.api.signin.GoogleSignIn;
+import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
@@ -50,9 +53,11 @@ import java.util.Map;
 
 public class UserDetailsActivity extends AppCompatActivity {
 
-    private EditText addressEditText, emailEditText;
-    private TextView fullNameTextView;
+    private EditText addressEditText;
+    private TextView fullNameTextView, emailEditText;
     private String email, firstName, familyName, picUrl;
+    private String newFirstName, newFamilyName, googleProfilePicUrl;
+    private boolean changeName = false;
     private GeoPoint address;
     private ArrayList<String> selectedCategories;
     private RadioGroup choiceRadioGroup;
@@ -65,6 +70,7 @@ public class UserDetailsActivity extends AppCompatActivity {
     private ImageView profileImageView;
     private FirebaseStorage storage;
     private StorageReference storageReference;
+    boolean isGoogleSignUp;
 
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -83,16 +89,9 @@ public class UserDetailsActivity extends AppCompatActivity {
         addressEditText = findViewById(R.id.addressText);
         choiceRadioGroup = findViewById(R.id.choiceLinearLayout);
 
-        CardView profilePic = findViewById(R.id.profilePic);
-        profilePic.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                showImageSourceDialog();
-            }
-        });
-
         Intent intent = getIntent();
         if (intent != null) {
+            isGoogleSignUp = intent.getBooleanExtra("google_sign_up", true);
             email = intent.getStringExtra("email");
             firstName = intent.getStringExtra("firstName");
             familyName = intent.getStringExtra("familyName");
@@ -102,6 +101,32 @@ public class UserDetailsActivity extends AppCompatActivity {
         String fullName = firstName + " " + familyName;
         emailEditText.setText(email);
         fullNameTextView.setText(fullName);
+
+        // Inside onCreate method
+        GoogleSignInAccount account = GoogleSignIn.getLastSignedInAccount(this);
+        if (account != null) {
+            googleProfilePicUrl = account.getPhotoUrl().toString();
+            Glide.with(this)
+                    .load(googleProfilePicUrl)
+                    .into(profileImageView);
+        }
+
+        fullNameTextView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                showNameEditDialog();
+            }
+        });
+
+        CardView profilePic = findViewById(R.id.profilePic);
+        profilePic.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                showImageSourceDialog();
+            }
+        });
+
+
     }
 
     private void checkCameraPermissionAndTakePhoto() {
@@ -252,6 +277,10 @@ public class UserDetailsActivity extends AppCompatActivity {
         userDetails.put("first name", firstName);
         userDetails.put("family name", familyName);
         userDetails.put("address", address);
+        if (!googleProfilePicUrl.isEmpty())
+        {
+            picUrl = googleProfilePicUrl;
+        }
         userDetails.put("profileImageUrl", picUrl);
         if (selectedRadioButton != null) {
             String selectedChoice = selectedRadioButton.getText().toString();
@@ -274,6 +303,63 @@ public class UserDetailsActivity extends AppCompatActivity {
                     Log.e("Firestore", "Error adding user details: " + e.getMessage());
                     showAlertDialog("Error adding user details: " + e.getMessage());
                 });
+    }
+
+    private void showNameEditDialog() {
+        android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(this);
+        View dialogView = getLayoutInflater().inflate(R.layout.dialog_edit_name, null);
+        EditText firstNameEditText = dialogView.findViewById(R.id.firstNameEditText);
+        EditText familyNameEditText = dialogView.findViewById(R.id.familyNameEditText);
+        ImageView clearFirstNameIcon = dialogView.findViewById(R.id.clearFirstNameIcon); // Icon view
+        ImageView clearFamilyNameIcon = dialogView.findViewById(R.id.clearFamilyNameIcon); // Icon view
+
+        // Set current values
+        firstNameEditText.setText(firstName);
+        familyNameEditText.setText(familyName);
+
+        // Set onClickListener for the  first name clear icon
+        clearFirstNameIcon.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                firstNameEditText.setText(""); // Clear the text in EditText
+            }
+        });
+
+        // Set onClickListener for the family name clear icon
+        clearFamilyNameIcon.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                familyNameEditText.setText(""); // Clear the text in EditText
+            }
+        });
+
+        builder.setView(dialogView)
+                .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        newFirstName = firstNameEditText.getText().toString().trim();
+                        firstName = newFirstName;
+                        newFamilyName = familyNameEditText.getText().toString().trim();
+                        familyName = newFamilyName;
+
+                        // Update UI with new names
+                        String fullName = newFirstName + " " + newFamilyName;
+                        fullNameTextView.setText(fullName);
+                        changeName = true;
+
+                        // Dismiss dialog
+                        dialog.dismiss();
+                    }
+                })
+                .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
+                    }
+                });
+
+        android.app.AlertDialog dialog = builder.create();
+        dialog.show();
     }
 
     private void showImageSourceDialog() {
