@@ -28,6 +28,12 @@
         android:title="Log Out"/>
 
     <item
+        android:id="@+id/chat_icon"
+        android:icon="@drawable/chat"
+        android:title="Cart"
+        app:showAsAction="always" />
+
+    <item
         android:id="@+id/home"
         android:icon="@drawable/home_white_24"
         android:title="Home"

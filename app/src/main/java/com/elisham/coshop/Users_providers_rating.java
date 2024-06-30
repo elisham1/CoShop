@@ -49,6 +49,9 @@ public class Users_providers_rating extends AppCompatActivity {
             case R.id.home:
                 menuUtils.home();
                 return true;
+            case R.id.chat_icon:
+                menuUtils.allChats();
+                return true;
             default:
                 return super.onOptionsItemSelected(item);
         }
