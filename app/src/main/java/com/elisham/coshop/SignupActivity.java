@@ -25,6 +25,7 @@ public class SignupActivity extends AppCompatActivity {
     private static final int RC_SIGN_IN = 123;
     private GoogleSignInClient mGoogleSignInClient;
     private FirebaseAuth mAuth;
+    String webClientId;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -32,15 +33,9 @@ public class SignupActivity extends AppCompatActivity {
         setContentView(R.layout.activity_signup);
         Resources res = getResources();
         int defaultWebClientId = res.getIdentifier("default_web_client_id", "string", getPackageName()); // Get the resource ID dynamically
-        String webClientId = res.getString(defaultWebClientId);
+        webClientId = res.getString(defaultWebClientId);
 
         mAuth = FirebaseAuth.getInstance();
-
-        GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-                .requestIdToken(webClientId)
-                .requestEmail()
-                .build();
-        mGoogleSignInClient = GoogleSignIn.getClient(this, gso);
 
         // Call signIn method when the Google Sign-In button is clicked
         findViewById(R.id.button3).setOnClickListener(view -> signUp());
@@ -49,6 +44,11 @@ public class SignupActivity extends AppCompatActivity {
     }
 
     private void signUp() {
+        GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                .requestIdToken(webClientId)
+                .requestEmail()
+                .build();
+        mGoogleSignInClient = GoogleSignIn.getClient(this, gso);
         Intent signInIntent = mGoogleSignInClient.getSignInIntent();
         startActivityForResult(signInIntent, RC_SIGN_IN);
     }
@@ -86,6 +86,7 @@ public class SignupActivity extends AppCompatActivity {
                             Log.d("Firebase Auth", "signInWithCredential:success - New User");
                             Toast.makeText(SignupActivity.this, "Sign up successful.", Toast.LENGTH_SHORT).show();
                             Intent intent = new Intent(SignupActivity.this, CategoriesActivity.class);
+                            intent.putExtra("google_sign_up", true);
                             startActivity(intent);
                             finish(); // Close this activity to prevent returning to it on back press
                         } else {

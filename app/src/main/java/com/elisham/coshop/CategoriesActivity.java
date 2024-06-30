@@ -24,7 +24,7 @@ public class CategoriesActivity extends AppCompatActivity {
     private FirebaseFirestore db;
     private FirebaseAuth mAuth;
     private FirebaseUser currentUser;
-    private String email, firstName, familyName;
+    private String email, firstName, familyName, fullName;
     private List<String> selectedCategories;
 
     @Override
@@ -37,18 +37,35 @@ public class CategoriesActivity extends AppCompatActivity {
         currentUser = mAuth.getCurrentUser();
         selectedCategories = new ArrayList<>();
 
+        //get the user mail and name
         Intent intent = getIntent();
         if (intent != null) {
-            email = intent.getStringExtra("email");
-            firstName = intent.getStringExtra("firstName");
-            familyName = intent.getStringExtra("familyName");
+            if (intent.getBooleanExtra("google_sign_up", true)) {
+                email = currentUser.getEmail();
+                fullName = currentUser.getDisplayName();
+                // Break the full name into first name and family name
+                if (fullName != null) {
+                    int spaceIndex = fullName.indexOf(' ');
+                    if (spaceIndex != -1) {
+                        firstName = fullName.substring(0, spaceIndex);
+                        familyName = fullName.substring(spaceIndex + 1);
+                    } else {
+                        firstName = fullName;
+                        familyName = "";
+                    }
+                } else {
+                    email = intent.getStringExtra("email");
+                    firstName = intent.getStringExtra("firstName");
+                    familyName = intent.getStringExtra("familyName");
 
-            String helloUser = "Hello, " + firstName;
-            TextView userName = findViewById(R.id.userName);
-            userName.setText(helloUser);
+                }
+                String helloUser = "Hello, " + firstName;
+                TextView userName = findViewById(R.id.userName);
+                userName.setText(helloUser);
+            }
+
         }
-        
-        displayCategories();
+    displayCategories();
     }
 
     public void displayCategories() {
