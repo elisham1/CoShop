@@ -6,14 +6,12 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.content.Intent;
-import android.graphics.Rect;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewTreeObserver;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Toast;
@@ -90,19 +88,6 @@ public class ChatActivity extends AppCompatActivity {
         });
 
         sendIcon.setOnClickListener(v -> sendMessage());
-
-        // Scroll to bottom when the keyboard appears
-        final View rootView = findViewById(android.R.id.content);
-        rootView.getViewTreeObserver().addOnGlobalLayoutListener(() -> {
-            Rect r = new Rect();
-            rootView.getWindowVisibleDisplayFrame(r);
-            int screenHeight = rootView.getRootView().getHeight();
-            int keypadHeight = screenHeight - r.bottom;
-
-            if (keypadHeight > screenHeight * 0.15) {
-                chatRecyclerView.scrollToPosition(chatMessages.size() - 1);
-            }
-        });
     }
 
     private void loadChatMessages(String orderId) {
@@ -118,7 +103,8 @@ public class ChatActivity extends AppCompatActivity {
                 for (DocumentSnapshot doc : snapshots.getDocuments()) {
                     String message = doc.getString("message");
                     String sender = doc.getString("sender");
-                    chatMessages.add(new ChatMessage(sender, message));
+                    Timestamp timestamp = doc.getTimestamp("timestamp");
+                    chatMessages.add(new ChatMessage(sender, message, timestamp)); // להוסיף את timestamp
                 }
                 chatAdapter.notifyDataSetChanged();
                 chatRecyclerView.scrollToPosition(chatMessages.size() - 1);
