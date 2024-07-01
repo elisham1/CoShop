@@ -14,6 +14,10 @@
         android:gravity="center"
         android:layout_gravity="center" />
 
-    <!-- You can add more UI elements here -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/chatRecyclerView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:paddingTop="16dp"/>
 
 </LinearLayout>
