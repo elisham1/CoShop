@@ -216,6 +216,7 @@ public class UserDetailsActivity extends AppCompatActivity {
         LinearLayout searchRow = findViewById(R.id.search_row);
         searchRow.setOnClickListener(v -> {
             Intent intent = new Intent(UserDetailsActivity.this, LocationWindow.class);
+            intent.putExtra("hideDistanceLayout", true);
             if (lastAddress != null && !lastAddress.isEmpty() && lastDistance > 0) {
                 intent.putExtra("address", lastAddress);
                 intent.putExtra("distance", lastDistance);
@@ -253,6 +254,7 @@ public class UserDetailsActivity extends AppCompatActivity {
 
         editAddressButton.setOnClickListener(v -> {
             Intent intent = new Intent(UserDetailsActivity.this, LocationWindow.class);
+            intent.putExtra("hideDistanceLayout", true);
             if (lastAddress != null && !lastAddress.isEmpty() && lastDistance > 0) {
                 intent.putExtra("address", lastAddress);
                 intent.putExtra("distance", lastDistance);

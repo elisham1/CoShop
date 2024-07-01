@@ -57,11 +57,23 @@
                 android:contentDescription="Toggle password visibility" />
         </RelativeLayout>
 
+        <TextView
+            android:id="@+id/forgotPasswordTextView"
+            android:layout_width="wrap_content"
+            android:layout_height="48dp"
+            android:layout_below="@id/password_layout"
+            android:layout_marginTop="16dp"
+            android:text="Forgot Password?"
+            android:textColor="@android:color/holo_blue_dark"
+            android:clickable="true"
+            android:focusable="true" />
+
         <Button
             android:id="@+id/loginButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_below="@id/password_layout"
+            android:layout_below="@id/forgotPasswordTextView"
+            android:layout_centerHorizontal="true"
             android:layout_marginTop="16dp"
             android:text="Login" />
 
