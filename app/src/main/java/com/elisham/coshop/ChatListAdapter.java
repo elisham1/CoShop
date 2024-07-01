@@ -1,25 +1,4 @@
 package com.elisham.coshop;import android.content.Context;
-import android.location.Address;
-import android.location.Geocoder;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.ImageView;
-import android.widget.TextView;
-
-import androidx.annotation.NonNull;
-import androidx.recyclerview.widget.RecyclerView;
-
-import com.google.firebase.Timestamp;
-import com.google.firebase.firestore.DocumentReference;
-import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.GeoPoint;
-import com.google.firebase.firestore.QueryDocumentSnapshot;
-
-import java.io.IOException;
-import java.text.SimpleDateFormat;
-import java.util.List;
-import java.util.Locale;
 import android.content.Context;
 import android.location.Address;
 import android.location.Geocoder;
@@ -33,6 +12,8 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.firebase.Timestamp;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.GeoPoint;
@@ -48,12 +29,14 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.ChatVi
     private OnChatSelectedListener onChatSelectedListener;
     private FirebaseFirestore db;
     private Context context;
+    private FirebaseUser currentUser;
 
     public ChatListAdapter(Context context, List<ChatOrder> chatOrders, OnChatSelectedListener onChatSelectedListener) {
         this.context = context;
         this.chatOrders = chatOrders;
         this.onChatSelectedListener = onChatSelectedListener;
         this.db = FirebaseFirestore.getInstance();
+        this.currentUser = FirebaseAuth.getInstance().getCurrentUser();
     }
 
     @NonNull
@@ -79,6 +62,7 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.ChatVi
         private TextView orderTitleTextView;
         private TextView orderLocationTextView;
         private TextView lastMessageTimeTextView;
+        private TextView unreadCountTextView;
 
         public ChatViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -86,6 +70,7 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.ChatVi
             orderTitleTextView = itemView.findViewById(R.id.orderTitleTextView);
             orderLocationTextView = itemView.findViewById(R.id.orderLocationTextView);
             lastMessageTimeTextView = itemView.findViewById(R.id.lastMessageTimeTextView);
+            unreadCountTextView = itemView.findViewById(R.id.unreadCountTextView);
         }
 
         public void bind(ChatOrder chatOrder, OnChatSelectedListener listener) {
@@ -115,6 +100,9 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.ChatVi
                 lastMessageTimeTextView.setText(""); // Set empty if no messages
             }
 
+            // Set unread count
+            setUnreadCount(chatOrder.getOrderId(), unreadCountTextView);
+
             itemView.setOnClickListener(v -> listener.onChatSelected(chatOrder.getOrderId()));
         }
 
@@ -132,6 +120,30 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.ChatVi
                 e.printStackTrace();
                 textView.setText("Error retrieving location");
             }
+        }
+
+        private void setUnreadCount(String orderId, TextView unreadCountTextView) {
+            db.collection("orders").document(orderId).collection("chat")
+                    .whereNotEqualTo("readBy", currentUser.getEmail())
+                    .get()
+                    .addOnCompleteListener(task -> {
+                        if (task.isSuccessful()) {
+                            int unreadCount = 0;
+                            for (QueryDocumentSnapshot document : task.getResult()) {
+                                List<String> readBy = (List<String>) document.get("readBy");
+                                if (readBy == null || !readBy.contains(currentUser.getEmail())) {
+                                    unreadCount++;
+                                }
+                            }
+                            if (unreadCount > 0) {
+                                unreadCountTextView.setText(String.valueOf(unreadCount));
+                            } else {
+                                unreadCountTextView.setText("");
+                            }
+                        } else {
+                            unreadCountTextView.setText("");
+                        }
+                    });
         }
     }
 
