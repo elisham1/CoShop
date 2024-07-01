@@ -24,10 +24,13 @@ import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.WriteBatch;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class ChatActivity extends AppCompatActivity {
@@ -132,12 +135,48 @@ public class ChatActivity extends AppCompatActivity {
         chatMessage.put("sender", userEmail);
         chatMessage.put("message", messageText);
         chatMessage.put("timestamp", new Timestamp(new Date()));
+        chatMessage.put("readBy", Collections.singletonList(userEmail)); // Add readBy field
 
         chatRef.add(chatMessage).addOnSuccessListener(documentReference -> {
             messageInput.setText("");
             chatRecyclerView.scrollToPosition(chatMessages.size() - 1);
         }).addOnFailureListener(e -> Toast.makeText(this, "Failed to send message", Toast.LENGTH_SHORT).show());
     }
+
+    private void updateReadStatus() {
+        CollectionReference chatRef = db.collection("orders").document(orderId).collection("chat");
+        chatRef.get().addOnCompleteListener(task -> {
+            if (task.isSuccessful()) {
+                WriteBatch batch = db.batch();
+                for (DocumentSnapshot document : task.getResult()) {
+                    if (document.exists()) {
+                        List<String> readBy = (List<String>) document.get("readBy");
+                        if (readBy == null) {
+                            readBy = new ArrayList<>();
+                        }
+                        if (!readBy.contains(currentUser.getEmail())) {
+                            readBy.add(currentUser.getEmail());
+                            batch.update(document.getReference(), "readBy", readBy);
+                        }
+                    }
+                }
+                batch.commit().addOnCompleteListener(batchTask -> {
+                    if (batchTask.isSuccessful()) {
+                        // Update successful
+                    } else {
+                        // Handle failure
+                    }
+                });
+            }
+        });
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        updateReadStatus();
+    }
+
 
     private void getProfileImageUrl(String senderEmail, ProfileImageCallback callback) {
         DocumentReference userRef = db.collection("users").document(senderEmail);
