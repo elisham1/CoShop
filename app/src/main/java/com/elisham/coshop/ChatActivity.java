@@ -23,7 +23,12 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.EventListener;
+import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.FirebaseFirestoreException;
+import com.google.firebase.firestore.ListenerRegistration;
+import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.firestore.WriteBatch;
 
 import java.util.ArrayList;
@@ -32,6 +37,8 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import javax.annotation.Nullable;
 
 public class ChatActivity extends AppCompatActivity {
     private FirebaseFirestore db;
@@ -46,6 +53,7 @@ public class ChatActivity extends AppCompatActivity {
     private ArrayList<ChatMessage> chatMessages;
 
     private MenuUtils menuUtils;
+    private ListenerRegistration chatListener;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -143,7 +151,45 @@ public class ChatActivity extends AppCompatActivity {
         }).addOnFailureListener(e -> Toast.makeText(this, "Failed to send message", Toast.LENGTH_SHORT).show());
     }
 
-    private void updateReadStatus() {
+    private void updateReadStatusInRealtime() {
+        CollectionReference chatRef = db.collection("orders").document(orderId).collection("chat");
+        chatListener = chatRef.addSnapshotListener(new EventListener<QuerySnapshot>() {
+            @Override
+            public void onEvent(@Nullable QuerySnapshot snapshots, @Nullable FirebaseFirestoreException e) {
+                if (e != null) {
+                    Toast.makeText(ChatActivity.this, "Error updating read status", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                if (snapshots != null) {
+                    WriteBatch batch = db.batch();
+                    for (DocumentSnapshot document : snapshots.getDocuments()) {
+                        List<String> readBy = (List<String>) document.get("readBy");
+                        if (readBy == null) {
+                            readBy = new ArrayList<>();
+                        }
+                        if (!readBy.contains(currentUser.getEmail())) {
+                            readBy.add(currentUser.getEmail());
+                            batch.update(document.getReference(), "readBy", readBy);
+                        }
+                    }
+                    batch.commit().addOnCompleteListener(batchTask -> {
+                        if (!batchTask.isSuccessful()) {
+                            Toast.makeText(ChatActivity.this, "Failed to update read status", Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                }
+            }
+        });
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        updateReadStatusForAllMessages();
+    }
+
+    private void updateReadStatusForAllMessages() {
         CollectionReference chatRef = db.collection("orders").document(orderId).collection("chat");
         chatRef.get().addOnCompleteListener(task -> {
             if (task.isSuccessful()) {
@@ -161,10 +207,8 @@ public class ChatActivity extends AppCompatActivity {
                     }
                 }
                 batch.commit().addOnCompleteListener(batchTask -> {
-                    if (batchTask.isSuccessful()) {
-                        // Update successful
-                    } else {
-                        // Handle failure
+                    if (!batchTask.isSuccessful()) {
+                        Toast.makeText(ChatActivity.this, "Failed to update read status", Toast.LENGTH_SHORT).show();
                     }
                 });
             }
@@ -172,11 +216,18 @@ public class ChatActivity extends AppCompatActivity {
     }
 
     @Override
-    protected void onStart() {
-        super.onStart();
-        updateReadStatus();
+    protected void onResume() {
+        super.onResume();
+        updateReadStatusInRealtime();
     }
 
+    @Override
+    protected void onPause() {
+        super.onPause();
+        if (chatListener != null) {
+            chatListener.remove();
+        }
+    }
 
     private void getProfileImageUrl(String senderEmail, ProfileImageCallback callback) {
         DocumentReference userRef = db.collection("users").document(senderEmail);
