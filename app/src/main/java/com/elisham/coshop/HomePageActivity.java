@@ -78,9 +78,18 @@ public class HomePageActivity extends AppCompatActivity {
         }
 
         // הצגת כפתור הסרת הסינון אם יש סינון פעיל
+        ImageButton filterOffButton = findViewById(R.id.filterOffButton);
         if (filterActive) {
-            findViewById(R.id.filterOffButton).setVisibility(View.VISIBLE);
+            filterOffButton.setVisibility(View.VISIBLE);
+        } else {
+            filterOffButton.setVisibility(View.GONE);
         }
+
+        // Set up the filter off button
+        filterOffButton.setOnClickListener(v -> {
+            filterOffButton.setVisibility(View.GONE);
+            fetchAllOrders2();
+        });
 
         // Set up the star button toggle
         ImageButton starButton = findViewById(R.id.starButton);
@@ -93,13 +102,6 @@ public class HomePageActivity extends AppCompatActivity {
                 starButton.setTag("star");
             }
         });
-
-        // Set up the filter off button
-        ImageButton filterOffButton = findViewById(R.id.filterOffButton);
-        filterOffButton.setOnClickListener(v -> {
-            filterOffButton.setVisibility(View.GONE);
-            fetchAllOrders2();
-        });
     }
 
 
@@ -107,24 +109,43 @@ public class HomePageActivity extends AppCompatActivity {
         CollectionReference ordersRef = db.collection("orders");
         ordersRef.get().addOnCompleteListener(task -> {
             if (task.isSuccessful()) {
+                FirebaseAuth mAuth = FirebaseAuth.getInstance();
+                FirebaseUser currentUser = mAuth.getCurrentUser();
+                String userEmail = null;
+                if (currentUser != null) {
+                    userEmail = currentUser.getEmail();
+                }
+
+                long currentTime = System.currentTimeMillis();
                 for (QueryDocumentSnapshot documentSnapshot : task.getResult()) {
+                    Timestamp timestamp = documentSnapshot.getTimestamp("time");
+                    long timeRemaining = timestamp.toDate().getTime() - currentTime;
+
+                    if (timeRemaining <= 0) continue; // דילוג על הזמנות שזמן ההזמנה שלהן נגמר
+
+                    String orderOwner = documentSnapshot.getString("ownerEmail");
+                    List<String> joinedUsers = (List<String>) documentSnapshot.get("listPeopleInOrder");
+
+                    if (orderOwner != null && orderOwner.equals(userEmail)) continue; // דילוג על הזמנות שפתחתי
+                    if (joinedUsers != null && joinedUsers.contains(userEmail)) continue; // דילוג על הזמנות שהצטרפתי אליהן
+
+                    long numberOfPeopleInOrder = documentSnapshot.getLong("NumberOfPeopleInOrder");
+                    long maxPeople = documentSnapshot.getLong("max_people");
+
+                    if (numberOfPeopleInOrder == maxPeople) continue; // דילוג על הזמנות מלאות
+
                     String orderId = documentSnapshot.getId();
                     String titleOfOrder = documentSnapshot.getString("titleOfOrder");
                     GeoPoint orderLocation = documentSnapshot.getGeoPoint("location");
                     String location = orderLocation != null ? getAddressFromLatLng(orderLocation.getLatitude(), orderLocation.getLongitude()) : "N/A";
-                    long numberOfPeopleInOrder = documentSnapshot.getLong("NumberOfPeopleInOrder");
-                    long maxPeople = documentSnapshot.getLong("max_people");
                     String categorie = documentSnapshot.getString("categorie");
-                    Timestamp timestamp = documentSnapshot.getTimestamp("time");
 
-                    // Calculate distance and add the order view to the layout
                     float distance = calculateDistance(userLocation, orderLocation);
                     addOrderToLayout(orderId, titleOfOrder, location, numberOfPeopleInOrder, maxPeople, categorie, distance, timestamp);
                 }
             }
         });
     }
-
     private void showFilteredOrders(String filteredOrders) {
         // Clear any existing orders
         ordersContainer.removeAllViews();
@@ -210,27 +231,51 @@ public class HomePageActivity extends AppCompatActivity {
         return "N/A";
     }
 
+
+
+
     private void fetchAllOrders2() {
         ordersContainer.removeAllViews();
         CollectionReference ordersRef = db.collection("orders");
         ordersRef.get().addOnCompleteListener(task -> {
             if (task.isSuccessful()) {
+                FirebaseAuth mAuth = FirebaseAuth.getInstance();
+                FirebaseUser currentUser = mAuth.getCurrentUser();
+                String userEmail = null;
+                if (currentUser != null) {
+                    userEmail = currentUser.getEmail();
+                }
+
+                long currentTime = System.currentTimeMillis();
                 for (QueryDocumentSnapshot documentSnapshot : task.getResult()) {
+                    Timestamp timestamp = documentSnapshot.getTimestamp("time");
+                    long timeRemaining = timestamp.toDate().getTime() - currentTime;
+
+                    if (timeRemaining <= 0) continue; // דילוג על הזמנות שזמן ההזמנה שלהן נגמר
+
+                    String orderOwner = documentSnapshot.getString("ownerEmail");
+                    List<String> joinedUsers = (List<String>) documentSnapshot.get("listPeopleInOrder");
+
+                    if (orderOwner != null && orderOwner.equals(userEmail)) continue; // דילוג על הזמנות שפתחתי
+                    if (joinedUsers != null && joinedUsers.contains(userEmail)) continue; // דילוג על הזמנות שהצטרפתי אליהן
+
+                    long numberOfPeopleInOrder = documentSnapshot.getLong("NumberOfPeopleInOrder");
+                    long maxPeople = documentSnapshot.getLong("max_people");
+
+                    if (numberOfPeopleInOrder == maxPeople) continue; // דילוג על הזמנות מלאות
+
                     String orderId = documentSnapshot.getId();
                     String titleOfOrder = documentSnapshot.getString("titleOfOrder");
                     GeoPoint orderLocation = documentSnapshot.getGeoPoint("location");
                     String location = orderLocation != null ? getAddressFromLatLng(orderLocation.getLatitude(), orderLocation.getLongitude()) : "N/A";
-                    long numberOfPeopleInOrder = documentSnapshot.getLong("NumberOfPeopleInOrder");
-                    long maxPeople = documentSnapshot.getLong("max_people");
                     String categorie = documentSnapshot.getString("categorie");
-                    Timestamp timestamp = documentSnapshot.getTimestamp("time");
 
-                    // Calculate distance and add the order view to the layout
                     float distance = 0; // No need to calculate distance for fetching all orders
                     addOrderToLayout(orderId, titleOfOrder, location, numberOfPeopleInOrder, maxPeople, categorie, distance, timestamp);
                 }
             }
-        });}
+        });
+    }
     private void addOrderToLayout(String orderId, String titleOfOrder, String location, long numberOfPeopleInOrder, long maxPeople, String categorie, double distance, Timestamp timestamp) {
         // Create a new RelativeLayout for the order
         RelativeLayout orderLayout = new RelativeLayout(this);

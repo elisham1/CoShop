@@ -30,6 +30,9 @@ import android.widget.TimePicker;
 import android.widget.Toast;
 
 import com.google.android.material.slider.RangeSlider;
+import com.google.firebase.Timestamp;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -394,9 +397,32 @@ public class FilterActivity extends AppCompatActivity {
         CollectionReference ordersRef = db.collection("orders");
         ordersRef.get().addOnCompleteListener(task -> {
             if (task.isSuccessful()) {
+                FirebaseAuth mAuth = FirebaseAuth.getInstance();
+                FirebaseUser currentUser = mAuth.getCurrentUser();
+                String userEmail = null;
+                if (currentUser != null) {
+                    userEmail = currentUser.getEmail();
+                }
+
                 StringBuilder results = new StringBuilder();
-                long currentTimeMillis = System.currentTimeMillis(); // זמן נוכחי במילישניות
+                long currentTimeMillis = System.currentTimeMillis();
                 for (QueryDocumentSnapshot documentSnapshot : task.getResult()) {
+                    Timestamp timestamp = documentSnapshot.getTimestamp("time");
+                    long timeRemaining = timestamp.toDate().getTime() - currentTimeMillis;
+
+                    if (timeRemaining <= 0) continue; // דילוג על הזמנות שזמן ההזמנה שלהן נגמר
+
+                    String orderOwner = documentSnapshot.getString("ownerEmail");
+                    List<String> joinedUsers = (List<String>) documentSnapshot.get("listPeopleInOrder");
+
+                    if (orderOwner != null && orderOwner.equals(userEmail)) continue; // דילוג על הזמנות שפתחתי
+                    if (joinedUsers != null && joinedUsers.contains(userEmail)) continue; // דילוג על הזמנות שהצטרפתי אליהן
+
+                    long numberOfPeopleInOrder = documentSnapshot.getLong("NumberOfPeopleInOrder");
+                    long maxPeople = documentSnapshot.getLong("max_people");
+
+                    if (numberOfPeopleInOrder == maxPeople) continue; // דילוג על הזמנות מלאות
+
                     boolean matchesCategory = true;
                     if (filterByCategory) {
                         String categorie = documentSnapshot.getString("categorie");
@@ -432,11 +458,11 @@ public class FilterActivity extends AppCompatActivity {
 
                     boolean matchesPeopleLimit = true;
                     if (filterByPeopleLimit || filterByUnlimitedPeople) {
-                        Long maxPeople = documentSnapshot.getLong("max_people");
+                        Long maxPeopleDoc = documentSnapshot.getLong("max_people");
                         if (filterByUnlimitedPeople) {
-                            matchesPeopleLimit = maxPeople != null && maxPeople == 0;
+                            matchesPeopleLimit = maxPeopleDoc != null && maxPeopleDoc == 0;
                         } else if (filterByPeopleLimit) {
-                            matchesPeopleLimit = maxPeople != null && maxPeople >= 2 && maxPeople <= peopleLimit && maxPeople != 0;
+                            matchesPeopleLimit = maxPeopleDoc != null && maxPeopleDoc >= 2 && maxPeopleDoc <= peopleLimit && maxPeopleDoc != 0;
                         }
                     }
 
@@ -462,16 +488,17 @@ public class FilterActivity extends AppCompatActivity {
                 }
 
                 Intent intent = new Intent(FilterActivity.this, HomePageActivity.class);
+                intent.putExtra("filterActive", true); // תמיד מציינים שסינון פעיל
                 if (results.length() == 0) {
                     intent.putExtra("noOrdersFound", true);
                 } else {
                     intent.putExtra("filteredOrders", results.toString());
-                    intent.putExtra("filterActive", true);
                 }
                 startActivity(intent);
             }
         });
     }
+
 
     private void fetchOrdersByUrl(String url, String address, List<String> selectedCategories, boolean filterByCategory, boolean filterByConsumer, boolean filterBySupplied, boolean filterByPeopleLimit, int peopleLimit, boolean filterByUnlimitedPeople, boolean filterByTime, Calendar selectedTime) {
         String domainName = getDomainName(url);
@@ -486,6 +513,11 @@ public class FilterActivity extends AppCompatActivity {
                 StringBuilder results = new StringBuilder();
                 long currentTimeMillis = System.currentTimeMillis(); // זמן נוכחי במילישניות
                 for (QueryDocumentSnapshot documentSnapshot : task.getResult()) {
+                    long numberOfPeopleInOrder = documentSnapshot.getLong("NumberOfPeopleInOrder");
+                    long maxPeople = documentSnapshot.getLong("max_people");
+
+                    if (numberOfPeopleInOrder == maxPeople) continue; // דילוג על הזמנות מלאות
+
                     boolean matchesCategory = true;
                     if (filterByCategory) {
                         String categorie = documentSnapshot.getString("categorie");
@@ -521,11 +553,11 @@ public class FilterActivity extends AppCompatActivity {
 
                     boolean matchesPeopleLimit = true;
                     if (filterByPeopleLimit || filterByUnlimitedPeople) {
-                        Long maxPeople = documentSnapshot.getLong("max_people");
+                        Long maxPeopleDoc = documentSnapshot.getLong("max_people");
                         if (filterByUnlimitedPeople) {
-                            matchesPeopleLimit = maxPeople != null && maxPeople == 0;
+                            matchesPeopleLimit = maxPeopleDoc != null && maxPeopleDoc == 0;
                         } else if (filterByPeopleLimit) {
-                            matchesPeopleLimit = maxPeople != null && maxPeople >= 2 && maxPeople <= peopleLimit && maxPeople != 0;
+                            matchesPeopleLimit = maxPeopleDoc != null && maxPeopleDoc >= 2 && maxPeopleDoc <= peopleLimit && maxPeopleDoc != 0;
                         }
                     }
 
@@ -561,6 +593,8 @@ public class FilterActivity extends AppCompatActivity {
             }
         });
     }
+
+
     private void fetchOrdersByString(String str, String address, List<String> selectedCategories, boolean filterByCategory, boolean filterByConsumer, boolean filterBySupplied, boolean filterByPeopleLimit, int peopleLimit, boolean filterByUnlimitedPeople, boolean filterByTime, Calendar selectedTime) {
         CollectionReference ordersRef = db.collection("orders");
         ordersRef.whereEqualTo("URL", str).get().addOnCompleteListener(task -> {
@@ -568,6 +602,11 @@ public class FilterActivity extends AppCompatActivity {
                 StringBuilder results = new StringBuilder();
                 long currentTimeMillis = System.currentTimeMillis(); // זמן נוכחי במילישניות
                 for (QueryDocumentSnapshot documentSnapshot : task.getResult()) {
+                    long numberOfPeopleInOrder = documentSnapshot.getLong("NumberOfPeopleInOrder");
+                    long maxPeople = documentSnapshot.getLong("max_people");
+
+                    if (numberOfPeopleInOrder == maxPeople) continue; // דילוג על הזמנות מלאות
+
                     boolean matchesCategory = true;
                     if (filterByCategory) {
                         String categorie = documentSnapshot.getString("categorie");
@@ -603,11 +642,11 @@ public class FilterActivity extends AppCompatActivity {
 
                     boolean matchesPeopleLimit = true;
                     if (filterByPeopleLimit || filterByUnlimitedPeople) {
-                        Long maxPeople = documentSnapshot.getLong("max_people");
+                        Long maxPeopleDoc = documentSnapshot.getLong("max_people");
                         if (filterByUnlimitedPeople) {
-                            matchesPeopleLimit = maxPeople != null && maxPeople == 0;
+                            matchesPeopleLimit = maxPeopleDoc != null && maxPeopleDoc == 0;
                         } else if (filterByPeopleLimit) {
-                            matchesPeopleLimit = maxPeople != null && maxPeople >= 2 && maxPeople <= peopleLimit && maxPeople != 0;
+                            matchesPeopleLimit = maxPeopleDoc != null && maxPeopleDoc >= 2 && maxPeopleDoc <= peopleLimit && maxPeopleDoc != 0;
                         }
                     }
 
@@ -643,7 +682,6 @@ public class FilterActivity extends AppCompatActivity {
             }
         });
     }
-
 
     private List<String> getSelectedCategories() {
         SparseBooleanArray checkedItems = categoryListView.getCheckedItemPositions();
