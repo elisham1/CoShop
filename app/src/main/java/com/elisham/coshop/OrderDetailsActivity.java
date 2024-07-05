@@ -128,15 +128,22 @@ public class OrderDetailsActivity extends AppCompatActivity {
 
     private void addUserToOrder() {
         DocumentReference orderRef = db.collection("orders").document(orderId);
-        orderRef.update("listPeopleInOrder", FieldValue.arrayUnion(currentUser.getEmail()))
-                .addOnSuccessListener(aVoid -> {
-                    Toast.makeText(this, "Added to order", Toast.LENGTH_SHORT).show();
-                    joinButton.setText("Chat");
-                    Intent chatIntent = new Intent(OrderDetailsActivity.this, ChatActivity.class);
-                    chatIntent.putExtra("orderId", orderId);
-                    startActivity(chatIntent);
-                })
-                .addOnFailureListener(e -> Toast.makeText(this, "Failed to add user to order", Toast.LENGTH_SHORT).show());
+        db.runTransaction(transaction -> {
+            DocumentSnapshot snapshot = transaction.get(orderRef);
+            List<String> listPeopleInOrder = (List<String>) snapshot.get("listPeopleInOrder");
+            if (listPeopleInOrder != null && !listPeopleInOrder.contains(currentUser.getEmail())) {
+                transaction.update(orderRef, "listPeopleInOrder", FieldValue.arrayUnion(currentUser.getEmail()));
+                Long currentNumberOfPeople = snapshot.getLong("NumberOfPeopleInOrder");
+                transaction.update(orderRef, "NumberOfPeopleInOrder", currentNumberOfPeople + 1);
+            }
+            return null;
+        }).addOnSuccessListener(aVoid -> {
+            Toast.makeText(this, "Added to order", Toast.LENGTH_SHORT).show();
+            joinButton.setText("Chat");
+            Intent chatIntent = new Intent(OrderDetailsActivity.this, ChatActivity.class);
+            chatIntent.putExtra("orderId", orderId);
+            startActivity(chatIntent);
+        }).addOnFailureListener(e -> Toast.makeText(this, "Failed to add user to order", Toast.LENGTH_SHORT).show());
     }
 
     @Override

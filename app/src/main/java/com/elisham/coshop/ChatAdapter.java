@@ -8,6 +8,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
@@ -81,6 +82,16 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             profileImageView = itemView.findViewById(R.id.profileImageView);
             nameTextView = itemView.findViewById(R.id.nameTextView);
             timeTextView = itemView.findViewById(R.id.timeTextView);
+
+            profileImageView.setOnClickListener(v -> {
+                String imageUrl = (String) profileImageView.getTag();
+                showImageDialog(imageUrl);
+            });
+        }
+
+        private void showImageDialog(String imageUrl) {
+            ImageDialogFragment dialogFragment = ImageDialogFragment.newInstance(imageUrl);
+            dialogFragment.show(((AppCompatActivity) itemView.getContext()).getSupportFragmentManager(), "image_dialog");
         }
 
         public void bind(ChatMessage chatMessage) {
@@ -96,18 +107,20 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                                 .placeholder(R.drawable.star)
                                 .circleCrop()
                                 .into(profileImageView);
+                        profileImageView.setTag(imageUrl);
                     } else {
                         profileImageView.setImageResource(R.drawable.star);
+                        profileImageView.setTag(null);
                     }
 
                     String firstName = documentSnapshot.getString("first name");
                     nameTextView.setText(firstName);
                 } else {
                     profileImageView.setImageResource(R.drawable.star);
+                    profileImageView.setTag(null);
                 }
             });
 
-            // Update timeTextView
             Timestamp timestamp = chatMessage.getTimestamp();
             if (timestamp != null) {
                 Date date = timestamp.toDate();
@@ -130,6 +143,16 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             profileImageView = itemView.findViewById(R.id.profileImageView);
             nameTextView = itemView.findViewById(R.id.nameTextView);
             timeTextView = itemView.findViewById(R.id.timeTextView);
+
+            profileImageView.setOnClickListener(v -> {
+                String imageUrl = (String) profileImageView.getTag();
+                showImageDialog(imageUrl);
+            });
+        }
+
+        private void showImageDialog(String imageUrl) {
+            ImageDialogFragment dialogFragment = ImageDialogFragment.newInstance(imageUrl);
+            dialogFragment.show(((AppCompatActivity) itemView.getContext()).getSupportFragmentManager(), "image_dialog");
         }
 
         public void bind(ChatMessage chatMessage) {
@@ -145,18 +168,20 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                                 .placeholder(R.drawable.star)
                                 .circleCrop()
                                 .into(profileImageView);
+                        profileImageView.setTag(imageUrl);
                     } else {
                         profileImageView.setImageResource(R.drawable.star);
+                        profileImageView.setTag(null);
                     }
 
                     String firstName = documentSnapshot.getString("first name");
                     nameTextView.setText(firstName);
                 } else {
                     profileImageView.setImageResource(R.drawable.star);
+                    profileImageView.setTag(null);
                 }
             });
 
-            // Update timeTextView
             Timestamp timestamp = chatMessage.getTimestamp();
             if (timestamp != null) {
                 Date date = timestamp.toDate();
@@ -166,4 +191,6 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             }
         }
     }
+
+
      }
