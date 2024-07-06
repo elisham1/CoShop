@@ -26,6 +26,7 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 
 public class EmailLoginActivity extends AppCompatActivity {
 
@@ -126,6 +127,8 @@ public class EmailLoginActivity extends AppCompatActivity {
                 } else {
                     clearEmailIcon.setVisibility(View.GONE);
                 }
+                emailForgotPasswordEditText.setBackgroundResource(android.R.color.transparent); // Reset to default
+                errorTextView.setVisibility(View.GONE);
             }
 
             @Override
@@ -193,7 +196,6 @@ public class EmailLoginActivity extends AppCompatActivity {
         return !TextUtils.isEmpty(target) && android.util.Patterns.EMAIL_ADDRESS.matcher(target).matches();
     }
 
-
     private void loginUser() {
         email = emailEditText.getText().toString().trim();
         String password = passwordEditText.getText().toString().trim();
@@ -203,22 +205,28 @@ public class EmailLoginActivity extends AppCompatActivity {
                     @Override
                     public void onComplete(@NonNull Task<AuthResult> task) {
                         if (task.isSuccessful()) {
-                            // Login success
-                            // Set the result to OK to indicate success
-                            setResult(RESULT_OK);
-                            Intent intent = new Intent(EmailLoginActivity.this, HomePageActivity.class);
-                            // Clear the activity stack and start HomePageActivity as a new task
-                            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
-                            startActivity(intent);
-                            // Finish UserDetailsActivity
-                            finish();
+                            FirebaseUser user = mAuth.getCurrentUser();
+                            if (user != null && user.isEmailVerified()) {
+                                boolean isFirstEntry = getIntent().getBooleanExtra("isFirstEntry", false);
+                                Intent intent;
+                                if (isFirstEntry) {
+                                    intent = new Intent(EmailLoginActivity.this, UserDetailsActivity.class);
+                                    intent.putExtra("email", email);
+                                    intent.putExtra("firstName", getIntent().getStringExtra("firstName"));
+                                    intent.putExtra("familyName", getIntent().getStringExtra("familyName"));
+                                    intent.putExtra("source", "EmailSignupActivity");
+
+                                } else {
+                                    intent = new Intent(EmailLoginActivity.this, HomePageActivity.class);
+                                }
+                                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+                                startActivity(intent);
+                                finish();
+                            } else {
+                                Toast.makeText(EmailLoginActivity.this, "Please verify your email before logging in", Toast.LENGTH_SHORT).show();
+                            }
                         } else {
-                            // Login failed
-                            Toast.makeText(EmailLoginActivity.this, "Login failed: " + task.getException().getMessage(),
-                                    Toast.LENGTH_SHORT).show();
-                            Intent intent = new Intent(EmailLoginActivity.this, MainActivity.class);
-                            startActivity(intent);
-                            finish();
+                            Toast.makeText(EmailLoginActivity.this, "Login failed: " + task.getException().getMessage(), Toast.LENGTH_SHORT).show();
                         }
                     }
                 });

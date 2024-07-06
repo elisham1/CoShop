@@ -11,6 +11,7 @@ import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.provider.MediaStore;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -36,6 +37,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.cardview.widget.CardView;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.core.content.FileProvider;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.target.CustomTarget;
@@ -55,6 +57,8 @@ import com.google.firebase.storage.UploadTask;
 import org.w3c.dom.Text;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -87,7 +91,7 @@ public class UserDetailsActivity extends AppCompatActivity {
     private ImageView profileImageView;
     private FirebaseStorage storage;
     private StorageReference storageReference;
-    boolean isGoogleSignUp;
+    boolean isGoogleSignUp, changePic = false;
 
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -111,7 +115,7 @@ public class UserDetailsActivity extends AppCompatActivity {
 
         Intent intent = getIntent();
         if (intent != null) {
-            isGoogleSignUp = intent.getBooleanExtra("google_sign_up", true);
+            isGoogleSignUp = intent.getBooleanExtra("google_sign_up", false);
             email = intent.getStringExtra("email");
             firstName = intent.getStringExtra("firstName");
             familyName = intent.getStringExtra("familyName");
@@ -124,11 +128,12 @@ public class UserDetailsActivity extends AppCompatActivity {
 
         if (isGoogleSignUp)
         {
+            Toast.makeText(UserDetailsActivity.this, "google signup", Toast.LENGTH_SHORT).show();
             // Inside onCreate method
             GoogleSignInAccount account = GoogleSignIn.getLastSignedInAccount(this);
             if (account != null) {
                 googleProfilePicUrl = account.getPhotoUrl().toString();
-                downloadAndUploadGoogleProfilePic(googleProfilePicUrl);
+//                downloadAndUploadGoogleProfilePic(googleProfilePicUrl);
                 Glide.with(this)
                         .load(googleProfilePicUrl)
                         .into(profileImageView);
@@ -153,42 +158,6 @@ public class UserDetailsActivity extends AppCompatActivity {
 
         showLocationWindow();
 
-    }
-
-    private void downloadAndUploadGoogleProfilePic(String url) {
-        // Use Glide to download the image
-        Glide.with(this)
-                .asBitmap()
-                .load(url)
-                .into(new CustomTarget<Bitmap>() {
-                    @Override
-                    public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
-                        uploadImageToFirebase(resource);
-                    }
-
-                    @Override
-                    public void onLoadCleared(@Nullable Drawable placeholder) {
-                        // Handle cleanup if necessary
-                    }
-                });
-    }
-
-    private void uploadImageToFirebase(Bitmap bitmap) {
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, baos);
-        byte[] data = baos.toByteArray();
-
-        StorageReference fileReference = storageReference.child("profile_images/" + System.currentTimeMillis() + ".jpg");
-        UploadTask uploadTask = fileReference.putBytes(data);
-
-        uploadTask.addOnSuccessListener(taskSnapshot -> {
-            fileReference.getDownloadUrl().addOnSuccessListener(uri -> {
-                picUrl = uri.toString();
-                Toast.makeText(UserDetailsActivity.this, "Upload picUrl: " + picUrl, Toast.LENGTH_SHORT).show();
-            });
-        }).addOnFailureListener(e -> {
-            Toast.makeText(UserDetailsActivity.this, "Upload failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-        });
     }
 
     private void showLocationWindow() {
@@ -314,7 +283,8 @@ public class UserDetailsActivity extends AppCompatActivity {
                     Bitmap bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), imageUri);
                     bitmap = rotateImageIfRequired(bitmap, imageUri);
                     profileImageView.setImageBitmap(bitmap);
-                    uploadImage();
+//                    uploadImage();
+                    changePic = true;
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -324,18 +294,36 @@ public class UserDetailsActivity extends AppCompatActivity {
                 try {
                     bitmap = rotateImageIfRequired(bitmap, imageUri);
                     profileImageView.setImageBitmap(bitmap);
-                    uploadImage();
+//                    uploadImage();
+                    changePic = true;
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
             }
+
         }
     }
 
+
     private Uri getImageUri(Bitmap bitmap) {
-        String path = MediaStore.Images.Media.insertImage(getContentResolver(), bitmap, "ProfilePic", null);
-        return Uri.parse(path);
+        // Create a file for the image
+        File imagesFolder = new File(getExternalFilesDir(Environment.DIRECTORY_PICTURES), "ProfilePic");
+        if (!imagesFolder.exists()) {
+            imagesFolder.mkdirs();
+        }
+        File imageFile = new File(imagesFolder, "ProfilePic_" + System.currentTimeMillis() + ".jpg");
+
+        try (FileOutputStream fos = new FileOutputStream(imageFile)) {
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, fos);
+            fos.flush();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        // Use FileProvider to get the content URI
+        return FileProvider.getUriForFile(this, BuildConfig.APPLICATION_ID + ".provider", imageFile);
     }
+
 
     private Bitmap rotateImageIfRequired(Bitmap img, Uri selectedImage) throws IOException {
         InputStream input = getContentResolver().openInputStream(selectedImage);
@@ -365,31 +353,51 @@ public class UserDetailsActivity extends AppCompatActivity {
         return Bitmap.createBitmap(img, 0, 0, img.getWidth(), img.getHeight(), matrix, true);
     }
 
-    private void uploadImage() {
-        if (imageUri != null) {
-            StorageReference fileReference = storageReference.child("profile_images/" + System.currentTimeMillis() + ".jpg");
-            fileReference.putFile(imageUri)
-                    .addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
-                        @Override
-                        public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-                            fileReference.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
-                                @Override
-                                public void onSuccess(Uri uri) {
-                                    picUrl = uri.toString();
-                                }
-                            });
-                        }
-                    })
-                    .addOnFailureListener(new OnFailureListener() {
-                        @Override
-                        public void onFailure(@NonNull Exception e) {
-                            Toast.makeText(UserDetailsActivity.this, "Upload failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                        }
-                    });
-        } else {
-            Toast.makeText(this, "No file selected", Toast.LENGTH_SHORT).show();
-        }
+    private void downloadAndUploadGoogleProfilePic(String url, OnSuccessListener<String> onSuccessListener, OnFailureListener onFailureListener) {
+        // Use Glide to download the image
+        Glide.with(this)
+                .asBitmap()
+                .load(url)
+                .into(new CustomTarget<Bitmap>() {
+                    @Override
+                    public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
+                        uploadImageToFirebase(resource, onSuccessListener, onFailureListener);
+                    }
+
+                    @Override
+                    public void onLoadCleared(@Nullable Drawable placeholder) {
+                        // Handle cleanup if necessary
+                    }
+                });
     }
+
+    private void uploadImageToFirebase(Bitmap bitmap, OnSuccessListener<String> onSuccessListener, OnFailureListener onFailureListener) {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, baos);
+        byte[] data = baos.toByteArray();
+
+        StorageReference fileReference = storageReference.child("profile_images/" + System.currentTimeMillis() + ".jpg");
+        UploadTask uploadTask = fileReference.putBytes(data);
+
+        uploadTask.addOnSuccessListener(taskSnapshot -> fileReference.getDownloadUrl()
+                        .addOnSuccessListener(uri -> {
+                            picUrl = uri.toString();
+                            if (onSuccessListener != null) {
+                                onSuccessListener.onSuccess(picUrl);
+                            }
+                        })
+                        .addOnFailureListener(e -> {
+                            if (onFailureListener != null) {
+                                onFailureListener.onFailure(e);
+                            }
+                        }))
+                .addOnFailureListener(e -> {
+                    if (onFailureListener != null) {
+                        onFailureListener.onFailure(e);
+                    }
+                });
+    }
+
 
     public void editUserDetails(View view) {
         Map<String, Object> userDetails = new HashMap<>();
@@ -427,7 +435,7 @@ public class UserDetailsActivity extends AppCompatActivity {
             showAlertDialog("Please enter your address");
             return;
         }
-        userDetails.put("profileImageUrl", picUrl);
+
         if (selectedRadioButton != null) {
             String selectedChoice = selectedRadioButton.getText().toString();
             userDetails.put("type of user", selectedChoice);
@@ -437,11 +445,48 @@ public class UserDetailsActivity extends AppCompatActivity {
             return;
         }
 
-        // Add a new document with a generated ID
+        if (isGoogleSignUp && !changePic) {
+            Toast.makeText(UserDetailsActivity.this, "1", Toast.LENGTH_SHORT).show();
+
+            // If Google Sign Up, download the Google profile picture and upload it to Firebase
+            downloadAndUploadGoogleProfilePic(googleProfilePicUrl, new OnSuccessListener<String>() {
+                @Override
+                public void onSuccess(String picUrl) {
+                    userDetails.put("profileImageUrl", picUrl);
+                    saveUserDetailsToFirestore(userDetails);
+                }
+            }, e -> {
+                Toast.makeText(UserDetailsActivity.this, "2: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+            });
+        } else {
+            // If not Google Sign Up, upload the selected image
+            if (imageUri != null) {
+                StorageReference fileReference = storageReference.child("profile_images/" + System.currentTimeMillis() + ".jpg");
+                fileReference.putFile(imageUri)
+                        .addOnSuccessListener(taskSnapshot -> fileReference.getDownloadUrl()
+                                .addOnSuccessListener(uri -> {
+                                    String picUrl = uri.toString();
+                                    userDetails.put("profileImageUrl", picUrl);
+                                    saveUserDetailsToFirestore(userDetails);
+                                })
+                                .addOnFailureListener(e -> {
+                                    Toast.makeText(UserDetailsActivity.this, "3 Upload failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                                }))
+                        .addOnFailureListener(e -> {
+                            Toast.makeText(UserDetailsActivity.this, "4 Upload failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                        });
+            } else {
+                Toast.makeText(UserDetailsActivity.this, "5 No file selected", Toast.LENGTH_SHORT).show();
+                saveUserDetailsToFirestore(userDetails);
+            }
+        }
+    }
+
+    private void saveUserDetailsToFirestore(Map<String, Object> userDetails) {
         db.collection("users").document(email)
                 .set(userDetails)
                 .addOnSuccessListener(documentReference -> {
-                    Toast.makeText(UserDetailsActivity.this, "user details updated successfully", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(UserDetailsActivity.this, "User details updated successfully", Toast.LENGTH_SHORT).show();
                     home();
                     finish();
                 })
@@ -450,6 +495,7 @@ public class UserDetailsActivity extends AppCompatActivity {
                     showAlertDialog("Error adding user details: " + e.getMessage());
                 });
     }
+
 
     private void showNameEditDialog() {
         android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(this);
@@ -566,6 +612,7 @@ public class UserDetailsActivity extends AppCompatActivity {
 
 
     public void deleteAccount(View v) {
+        MenuUtils logout = new MenuUtils(this);
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setMessage("Are you sure you want to delete your account?")
                 .setCancelable(true)
@@ -578,10 +625,8 @@ public class UserDetailsActivity extends AppCompatActivity {
                                         public void onSuccess(Void aVoid) {
                                             showAlertDialog("Account successfully deleted! 1");
                                             Toast.makeText(UserDetailsActivity.this, "Account successfully deleted! 111", Toast.LENGTH_SHORT).show();
-                                            Intent toy = new Intent(UserDetailsActivity.this, MainActivity.class);
-                                            startActivity(toy);
-                                            finish();
                                             Log.d("MainActivity", "User account deleted.");
+                                            logout.logOut();
                                         }
                                     })
                                     .addOnFailureListener(new OnFailureListener() {

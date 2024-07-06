@@ -58,12 +58,6 @@ public class HomePageActivity extends AppCompatActivity {
         // Initialize Geocoder
         geocoder = new Geocoder(this, Locale.ENGLISH);
 
-        // Enable the back button in the action bar
-        ActionBar actionBar = getSupportActionBar();
-        if (actionBar != null) {
-            actionBar.setDisplayHomeAsUpEnabled(true);
-        }
-
         menuUtils = new MenuUtils(this);
 
         // Retrieve filtered orders from Intent
