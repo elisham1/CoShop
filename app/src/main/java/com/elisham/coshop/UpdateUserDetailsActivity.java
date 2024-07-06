@@ -639,6 +639,7 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
                             deleteUserFromAllOrders(db, email);
                             deleteUserDetails(db, email);
                             deleteUser(currentUser);
+                            menuUtils.logOut();
                             dialog.dismiss();
                         }
                         else {
@@ -681,32 +682,69 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
                             List<DocumentSnapshot> documents = task.getResult().getDocuments();
                             for (DocumentSnapshot document : documents) {
                                 List<String> mails = (List<String>) document.get("listPeopleInOrder");
+                                String userEmail = document.getString("user_email");
+                                Long numberOfPeopleInOrder = document.getLong("NumberOfPeopleInOrder");
+
                                 if (mails != null && mails.contains(emailToRemove)) {
-                                    // Mail exists, remove it
-                                    mails.remove(emailToRemove);
-                                    document.getReference().update("listPeopleInOrder", mails)
-                                            .addOnSuccessListener(new OnSuccessListener<Void>() {
-                                                @Override
-                                                public void onSuccess(Void aVoid) {
-                                                    Toast.makeText(UpdateUserDetailsActivity.this,
-                                                            "user removed successfully from all orders", Toast.LENGTH_SHORT).show();
-                                                    Log.d("MainActivity", "Mail removed successfully from " + document.getId());
-                                                }
-                                            })
-                                            .addOnFailureListener(new OnFailureListener() {
-                                                @Override
-                                                public void onFailure(@NonNull Exception e) {
-                                                    Toast.makeText(UpdateUserDetailsActivity.this,
-                                                            "failed to remove user from all orders", Toast.LENGTH_SHORT).show();
-                                                    Log.e("MainActivity", "Error updating document", e);
-                                                }
-                                            });
-                                    Log.d("MainActivity", document.getId() + " => " + document.getData());
+
+                                    if (mails.size() == 1) {
+                                        // Mail is the only one in the list, delete the whole order
+                                        document.getReference().delete()
+                                                .addOnSuccessListener(new OnSuccessListener<Void>() {
+                                                    @Override
+                                                    public void onSuccess(Void aVoid) {
+                                                        Toast.makeText(UpdateUserDetailsActivity.this,
+                                                                "Order deleted successfully", Toast.LENGTH_SHORT).show();
+                                                        Log.d("MainActivity", "Order deleted successfully: " + document.getId());
+                                                    }
+                                                })
+                                                .addOnFailureListener(new OnFailureListener() {
+                                                    @Override
+                                                    public void onFailure(@NonNull Exception e) {
+                                                        Toast.makeText(UpdateUserDetailsActivity.this,
+                                                                "Failed to delete order", Toast.LENGTH_SHORT).show();
+                                                        Log.e("MainActivity", "Error deleting document", e);
+                                                    }
+                                                });
+                                    } else {
+                                        // Mail exists, remove it
+                                        mails.remove(emailToRemove);
+
+                                        // Decrease the number of people in order by one
+                                        long updatedNumberOfPeopleInOrder = numberOfPeopleInOrder != null ? numberOfPeopleInOrder - 1 : 0;
+
+                                        // If user_email matches emailToRemove, update it to the next email in the list
+                                        if (emailToRemove.equals(userEmail)) {
+                                            userEmail = mails.get(0); // Assuming we set it to the next email in the list
+                                        }
+
+                                        Map<String, Object> updates = new HashMap<>();
+                                        updates.put("listPeopleInOrder", mails);
+                                        updates.put("NumberOfPeopleInOrder", updatedNumberOfPeopleInOrder);
+                                        updates.put("user_email", userEmail);
+
+                                        document.getReference().update(updates)
+                                                .addOnSuccessListener(new OnSuccessListener<Void>() {
+                                                    @Override
+                                                    public void onSuccess(Void aVoid) {
+                                                        Toast.makeText(UpdateUserDetailsActivity.this,
+                                                                "User removed successfully from all orders", Toast.LENGTH_SHORT).show();
+                                                        Log.d("MainActivity", "Mail removed successfully from " + document.getId());
+                                                    }
+                                                })
+                                                .addOnFailureListener(new OnFailureListener() {
+                                                    @Override
+                                                    public void onFailure(@NonNull Exception e) {
+                                                        Toast.makeText(UpdateUserDetailsActivity.this,
+                                                                "Failed to remove user from all orders", Toast.LENGTH_SHORT).show();
+                                                        Log.e("MainActivity", "Error updating document", e);
+                                                    }
+                                                });
+                                        Log.d("MainActivity", document.getId() + " => " + document.getData());
+                                    }
                                 }
                             }
-                        }
-
-                        else {
+                        } else {
                             Log.w("MainActivity", "Error getting documents.", task.getException());
                         }
                     }
@@ -722,9 +760,7 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
                         Toast.makeText(UpdateUserDetailsActivity.this,
                                 "user details removed successfully", Toast.LENGTH_SHORT).show();
                         Log.d("MainActivity", "Document successfully deleted!");
-                        Intent toy = new Intent(UpdateUserDetailsActivity.this, MainActivity.class);
-                        startActivity(toy);
-                        finish();
+
                     }
                 })
                 .addOnFailureListener(new OnFailureListener() {
@@ -759,7 +795,6 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
         Intent toy = new Intent(UpdateUserDetailsActivity.this, ChangePasswordActivity.class);
         startActivity(toy);
     }
-
 
     private void showAlertDialog(String message) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);

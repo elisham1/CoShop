@@ -63,6 +63,7 @@ public class EmailSignupActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 signUpUser();
+                sendVerificationEmail();
             }
         });
     }
@@ -113,8 +114,7 @@ public class EmailSignupActivity extends AppCompatActivity {
             return;
         }
 
-        if (password.length() < 6)
-        {
+        if (password.length() < 6) {
             showAlertDialog("Password must be at least 6 characters");
             return;
         }
@@ -128,32 +128,38 @@ public class EmailSignupActivity extends AppCompatActivity {
                 .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
                     @Override
                     public void onComplete(@NonNull Task<AuthResult> task) {
-
                         if (task.isSuccessful()) {
-                            // Sign in success, update UI with the signed-in user's information
-                            Log.d("FirebaseAuth", "createUserWithEmail:success");
-                            // Set the result to OK to indicate success
-                            setResult(RESULT_OK);
-                            Intent intent = new Intent(EmailSignupActivity.this, CategoriesActivity.class);
-                            intent.putExtra("email", email);
-                            intent.putExtra("firstName", firstName);
-                            intent.putExtra("familyName", familyName);
-                            // Clear the activity stack and start HomePageActivity as a new task
-                            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
-                            startActivity(intent);
-                            finish();
-                            Toast.makeText(EmailSignupActivity.this, "Authentication Successful.", Toast.LENGTH_SHORT).show();
-                            // Update UI or redirect to another activity
+                            // Sign in success, send verification email
+                            sendVerificationEmail();
+
+                            // Show a dialog asking the user to verify their email
+                            AlertDialog.Builder builder = new AlertDialog.Builder(EmailSignupActivity.this);
+                            builder.setMessage("A verification email has been sent to " + email + ". Please verify your email before logging in.")
+                                    .setCancelable(false)
+                                    .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                                        public void onClick(DialogInterface dialog, int id) {
+                                            dialog.dismiss();
+                                            Intent intent = new Intent(EmailSignupActivity.this, EmailLoginActivity.class);
+                                            intent.putExtra("source", "EmailSignupActivity");
+                                            intent.putExtra("isFirstEntry", true);
+                                            intent.putExtra("email", email);
+                                            intent.putExtra("firstName", firstName);
+                                            intent.putExtra("familyName", familyName);
+                                            startActivity(intent);
+                                            finish();
+                                        }
+                                    });
+                            AlertDialog alert = builder.create();
+                            alert.show();
                         } else {
-                            if(task.getException().getMessage().contains("already in use by another account"))
-                            {
+                            if (task.getException().getMessage().contains("already in use by another account")) {
                                 Intent intent = new Intent(EmailSignupActivity.this, EmailLoginActivity.class);
                                 intent.putExtra("source", "EmailSignupActivity");
+                                intent.putExtra("isFirstEntry", false);
                                 intent.putExtra("email", email);
                                 startActivity(intent);
                                 finish();
-                            }
-                            else {
+                            } else {
                                 // If sign in fails, display a message to the user.
                                 Log.w("FirebaseAuth", "createUserWithEmail:failure", task.getException());
                                 Toast.makeText(EmailSignupActivity.this, "Authentication Failed: " + task.getException().getMessage(), Toast.LENGTH_LONG).show();
@@ -161,13 +167,28 @@ public class EmailSignupActivity extends AppCompatActivity {
                                 startActivity(intent);
                                 finish();
                             }
-
                         }
-
                     }
                 });
-
     }
+
+    private void sendVerificationEmail() {
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user != null) {
+            user.sendEmailVerification()
+                    .addOnCompleteListener(new OnCompleteListener<Void>() {
+                        @Override
+                        public void onComplete(@NonNull Task<Void> task) {
+                            if (task.isSuccessful()) {
+                                Toast.makeText(EmailSignupActivity.this, "Verification email sent to " + user.getEmail(), Toast.LENGTH_SHORT).show();
+                            } else {
+                                Toast.makeText(EmailSignupActivity.this, "Failed to send verification email.", Toast.LENGTH_SHORT).show();
+                            }
+                        }
+                    });
+        }
+    }
+
 
     private void showAlertDialog(String message) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
