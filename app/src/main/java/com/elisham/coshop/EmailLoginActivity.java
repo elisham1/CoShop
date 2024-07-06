@@ -210,7 +210,7 @@ public class EmailLoginActivity extends AppCompatActivity {
                                 boolean isFirstEntry = getIntent().getBooleanExtra("isFirstEntry", false);
                                 Intent intent;
                                 if (isFirstEntry) {
-                                    intent = new Intent(EmailLoginActivity.this, UserDetailsActivity.class);
+                                    intent = new Intent(EmailLoginActivity.this, CategoriesActivity.class);
                                     intent.putExtra("email", email);
                                     intent.putExtra("firstName", getIntent().getStringExtra("firstName"));
                                     intent.putExtra("familyName", getIntent().getStringExtra("familyName"));
