@@ -393,29 +393,26 @@ public class HomePageActivity extends AppCompatActivity {
 
         rightSquareLayout.addView(rightSquare);
 
-        TextView timerTextView = new TextView(this);
-        timerTextView.setId(View.generateViewId());
-        timerTextView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 10);
-        RelativeLayout.LayoutParams timerTextParams = new RelativeLayout.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        timerTextParams.addRule(RelativeLayout.CENTER_IN_PARENT); // Center the timer text inside the square
-        timerTextView.setLayoutParams(timerTextParams);
+        // Inflate custom timer layout
+        View timerView = getLayoutInflater().inflate(R.layout.timer_layout, null);
+        RelativeLayout.LayoutParams timerViewParams = new RelativeLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
+        timerView.setLayoutParams(timerViewParams);
 
-        rightSquareLayout.addView(timerTextView);
+        rightSquareLayout.addView(timerView);
 
-        TextView timeLabelTextView = new TextView(this);
-        timeLabelTextView.setText("Time");
-        timeLabelTextView.setId(View.generateViewId());
-        timeLabelTextView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 10);
-        LinearLayout.LayoutParams timeLabelTextParams = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        timeLabelTextParams.setMargins(0, dpToPx(5), 0, dpToPx(15)); // Add margin between the square and the text
-        timeLabelTextView.setLayoutParams(timeLabelTextParams);
-        timeLabelTextView.setGravity(Gravity.CENTER_HORIZONTAL);
-
-        rightSquareContainer.addView(timeLabelTextView);
-
-        orderLayout.addView(rightSquareContainer);
+        // Get references to timer text views
+        LinearLayout daysContainer = timerView.findViewById(R.id.daysContainer);
+        TextView daysTextView = timerView.findViewById(R.id.daysTextView);
+        TextView colon1 = timerView.findViewById(R.id.colon1);
+        LinearLayout hoursContainer = timerView.findViewById(R.id.hoursContainer);
+        TextView hoursTextView = timerView.findViewById(R.id.hoursTextView);
+        TextView colon2 = timerView.findViewById(R.id.colon2);
+        LinearLayout minutesContainer = timerView.findViewById(R.id.minutesContainer);
+        TextView minutesTextView = timerView.findViewById(R.id.minutesTextView);
+        TextView colon3 = timerView.findViewById(R.id.colon3);
+        LinearLayout secondsContainer = timerView.findViewById(R.id.secondsContainer);
+        TextView secondsTextView = timerView.findViewById(R.id.secondsTextView);
 
         long currentTime = System.currentTimeMillis();
         Date date = timestamp.toDate();
@@ -425,25 +422,24 @@ public class HomePageActivity extends AppCompatActivity {
             new CountDownTimer(timeRemaining, 1000) {
 
                 public void onTick(long millisUntilFinished) {
-                    long seconds = millisUntilFinished / 1000;
-                    long minutes = seconds / 60;
-                    long hours = minutes / 60;
-                    long days = hours / 24;
-
-                    seconds = seconds % 60;
-                    minutes = minutes % 60;
-                    hours = hours % 24;
-
-                    timerTextView.setText(String.format(Locale.getDefault(), "%02d:%02d:%02d:%02d", days, hours, minutes, seconds));
+                    updateTimerTextViews(daysContainer, daysTextView, colon1, hoursContainer, hoursTextView, colon2, minutesContainer, minutesTextView, colon3, secondsContainer, secondsTextView, millisUntilFinished);
                 }
 
                 public void onFinish() {
-                    timerTextView.setText("זמן נגמר");
+                    daysTextView.setText("00");
+                    hoursTextView.setText("00");
+                    minutesTextView.setText("00");
+                    secondsTextView.setText("00");
                 }
             }.start();
         } else {
-            timerTextView.setText("זמן נגמר");
+            daysTextView.setText("00");
+            hoursTextView.setText("00");
+            minutesTextView.setText("00");
+            secondsTextView.setText("00");
         }
+
+        orderLayout.addView(rightSquareContainer);
 
         // Create and add the location
         TextView locationTextView = new TextView(this);
@@ -461,6 +457,36 @@ public class HomePageActivity extends AppCompatActivity {
 
         // Add the order layout to the container
         ordersContainer.addView(orderLayout);
+    }
+    private void updateTimerTextViews(LinearLayout daysContainer, TextView daysTextView, TextView colon1, LinearLayout hoursContainer, TextView hoursTextView, TextView colon2, LinearLayout minutesContainer, TextView minutesTextView, TextView colon3, LinearLayout secondsContainer, TextView secondsTextView, long millisUntilFinished) {
+        long seconds = millisUntilFinished / 1000;
+        long minutes = seconds / 60;
+        long hours = minutes / 60;
+        long days = hours / 24;
+
+        seconds = seconds % 60;
+        minutes = minutes % 60;
+        hours = hours % 24;
+
+        if (days > 0) {
+            daysContainer.setVisibility(View.VISIBLE);
+            colon1.setVisibility(View.VISIBLE);
+            secondsContainer.setVisibility(View.GONE);
+            colon3.setVisibility(View.GONE);
+
+            daysTextView.setText(String.format(Locale.getDefault(), "%02d", days));
+            hoursTextView.setText(String.format(Locale.getDefault(), "%02d", hours));
+            minutesTextView.setText(String.format(Locale.getDefault(), "%02d", minutes));
+        } else {
+            daysContainer.setVisibility(View.GONE);
+            colon1.setVisibility(View.GONE);
+            secondsContainer.setVisibility(View.VISIBLE);
+            colon3.setVisibility(View.VISIBLE);
+
+            hoursTextView.setText(String.format(Locale.getDefault(), "%02d", hours));
+            minutesTextView.setText(String.format(Locale.getDefault(), "%02d", minutes));
+            secondsTextView.setText(String.format(Locale.getDefault(), "%02d", seconds));
+        }
     }
 
     private int dpToPx(int dp) {
