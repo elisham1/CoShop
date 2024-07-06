@@ -60,12 +60,6 @@ public class OrderDetailsActivity extends AppCompatActivity {
         Toast.makeText(this, "Order ID: " + orderId, Toast.LENGTH_SHORT).show();
         fetchOrderDetails(orderId);
 
-        // Enable the back button in the action bar
-        ActionBar actionBar = getSupportActionBar();
-        if (actionBar != null) {
-            actionBar.setDisplayHomeAsUpEnabled(true);
-        }
-
         // Check if the user is already in the list
         checkUserInList();
 
