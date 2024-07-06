@@ -281,13 +281,25 @@ public class HomePageActivity extends AppCompatActivity {
         orderLayoutParams.setMargins(0, 0, 0, dpToPx(8)); // Add margin between orders
         orderLayout.setLayoutParams(orderLayoutParams);
         orderLayout.setPadding(dpToPx(8), dpToPx(8), dpToPx(8), dpToPx(8));
-        orderLayout.setBackgroundColor(Color.LTGRAY);
+        orderLayout.setBackgroundColor(Color.WHITE); // Set the background color to white
 
         // Set onClickListener to open order details
         orderLayout.setOnClickListener(v -> {
             Intent intent = new Intent(HomePageActivity.this, OrderDetailsActivity.class);
             intent.putExtra("orderId", orderId);
             startActivity(intent);
+        });
+
+        // Fetch the type of order from Firestore
+        db.collection("orders").document(orderId).get().addOnSuccessListener(documentSnapshot -> {
+            String typeOfOrder = documentSnapshot.getString("type_of_order");
+            if (typeOfOrder != null) {
+                if (typeOfOrder.equals("Consumer")) {
+                    orderLayout.setBackgroundResource(R.drawable.border_green); // Use a drawable with blue border
+                } else if (typeOfOrder.equals("Supplier")) {
+                    orderLayout.setBackgroundResource(R.drawable.border_blue); // Use a drawable with green border
+                }
+            }
         });
 
         TextView titleTextView = new TextView(this);
@@ -340,7 +352,7 @@ public class HomePageActivity extends AppCompatActivity {
         leftSquareLayout.setLayoutParams(leftSquareLayoutParams);
 
         ImageView leftSquare = new ImageView(this);
-        leftSquare.setBackgroundColor(Color.GRAY);
+        leftSquare.setBackgroundColor(Color.WHITE); // Set the background color to white
         leftSquare.setId(View.generateViewId());
         LinearLayout.LayoutParams leftSquareParams = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, dpToPx(80));
@@ -385,7 +397,7 @@ public class HomePageActivity extends AppCompatActivity {
         rightSquareContainer.addView(rightSquareLayout);
 
         ImageView rightSquare = new ImageView(this);
-        rightSquare.setBackgroundColor(Color.GRAY);
+        rightSquare.setBackgroundColor(Color.WHITE); // Set the background color to white
         rightSquare.setId(View.generateViewId());
         RelativeLayout.LayoutParams rightSquareParams = new RelativeLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);

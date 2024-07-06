@@ -1,0 +1,4 @@
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <solid android:color="#FFFFFF"/> <!-- Set the background color to white -->
+    <stroke android:width="2dp" android:color="#0000FF"/> <!-- Set the border color to blue -->
+</shape>
