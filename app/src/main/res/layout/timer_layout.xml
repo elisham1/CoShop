@@ -5,177 +5,16 @@
     android:textDirection="ltr">
 
     <LinearLayout
-        android:id="@+id/secondsContainer"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:gravity="center"
-        android:visibility="gone"
-        app:layout_constraintEnd_toStartOf="@id/colon3"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintHorizontal_chainStyle="spread">
-
-        <FrameLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content">
-
-            <TextView
-                android:id="@+id/secondsTextView"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:background="@android:color/black"
-                android:textSize="10sp"
-                android:textColor="@android:color/white"
-                android:padding="4dp"
-                android:textDirection="ltr" />
-        </FrameLayout>
-
-        <TextView
-            android:id="@+id/secondsLabel"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Sec"
-            android:textSize="8sp"
-            android:textColor="@android:color/black"
-            android:padding="2dp"
-            android:textDirection="ltr"
-            android:layoutDirection="ltr" />
-    </LinearLayout>
-
-    <TextView
-        android:id="@+id/colon3"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text=":"
-        android:textSize="10sp"
-        android:textColor="@android:color/black"
-        android:padding="2dp"
-        android:visibility="gone"
-        android:textDirection="ltr"
-        app:layout_constraintEnd_toStartOf="@id/minutesContainer"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent" />
-
-    <LinearLayout
-        android:id="@+id/minutesContainer"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:gravity="center"
-        app:layout_constraintEnd_toStartOf="@id/colon2"
-        app:layout_constraintStart_toEndOf="@id/colon3"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintHorizontal_chainStyle="spread">
-
-        <FrameLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content">
-
-            <TextView
-                android:id="@+id/minutesTextView"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:background="@android:color/black"
-                android:textSize="10sp"
-                android:textColor="@android:color/white"
-                android:padding="4dp"
-                android:textDirection="ltr" />
-        </FrameLayout>
-
-        <TextView
-            android:id="@+id/minutesLabel"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Min"
-            android:textSize="8sp"
-            android:textColor="@android:color/black"
-            android:padding="2dp"
-            android:textDirection="ltr"
-            android:layoutDirection="ltr" />
-    </LinearLayout>
-
-    <TextView
-        android:id="@+id/colon2"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text=":"
-        android:textSize="10sp"
-        android:textColor="@android:color/black"
-        android:padding="2dp"
-        android:textDirection="ltr"
-        app:layout_constraintEnd_toStartOf="@id/hoursContainer"
-        app:layout_constraintStart_toEndOf="@id/minutesContainer"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent" />
-
-    <LinearLayout
-        android:id="@+id/hoursContainer"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:gravity="center"
-        app:layout_constraintEnd_toStartOf="@id/colon1"
-        app:layout_constraintStart_toEndOf="@id/colon2"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintHorizontal_chainStyle="spread">
-
-        <FrameLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content">
-
-            <TextView
-                android:id="@+id/hoursTextView"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:background="@android:color/black"
-                android:textSize="10sp"
-                android:textColor="@android:color/white"
-                android:padding="4dp"
-                android:textDirection="ltr" />
-        </FrameLayout>
-
-        <TextView
-            android:id="@+id/hoursLabel"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Hour"
-            android:textSize="8sp"
-            android:textColor="@android:color/black"
-            android:padding="2dp"
-            android:textDirection="ltr"
-            android:layoutDirection="ltr" />
-    </LinearLayout>
-
-    <TextView
-        android:id="@+id/colon1"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text=":"
-        android:textSize="10sp"
-        android:textColor="@android:color/black"
-        android:padding="2dp"
-        android:visibility="gone"
-        android:textDirection="ltr"
-        app:layout_constraintEnd_toStartOf="@id/daysContainer"
-        app:layout_constraintStart_toEndOf="@id/hoursContainer"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent" />
-
-    <LinearLayout
         android:id="@+id/daysContainer"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:gravity="center"
         android:visibility="gone"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@id/colon1"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/colon1"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintHorizontal_chainStyle="spread">
+        app:layout_constraintBottom_toBottomOf="parent">
 
         <FrameLayout
             android:layout_width="wrap_content"
@@ -188,8 +27,7 @@
                 android:background="@android:color/black"
                 android:textSize="10sp"
                 android:textColor="@android:color/white"
-                android:padding="4dp"
-                android:textDirection="ltr" />
+                android:padding="4dp" />
         </FrameLayout>
 
         <TextView
@@ -199,8 +37,153 @@
             android:text="Day"
             android:textSize="8sp"
             android:textColor="@android:color/black"
-            android:padding="2dp"
-            android:textDirection="ltr"
-            android:layoutDirection="ltr" />
+            android:padding="2dp" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/colon1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text=":"
+        android:textSize="10sp"
+        android:textColor="@android:color/black"
+        android:padding="2dp"
+        android:visibility="gone"
+        app:layout_constraintStart_toEndOf="@id/daysContainer"
+        app:layout_constraintEnd_toStartOf="@id/hoursContainer"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent" />
+
+    <LinearLayout
+        android:id="@+id/hoursContainer"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center"
+        app:layout_constraintStart_toEndOf="@id/colon1"
+        app:layout_constraintEnd_toStartOf="@id/colon2"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent">
+
+        <FrameLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+
+            <TextView
+                android:id="@+id/hoursTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@android:color/black"
+                android:textSize="10sp"
+                android:textColor="@android:color/white"
+                android:padding="4dp" />
+        </FrameLayout>
+
+        <TextView
+            android:id="@+id/hoursLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Hour"
+            android:textSize="8sp"
+            android:textColor="@android:color/black"
+            android:padding="2dp" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/colon2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text=":"
+        android:textSize="10sp"
+        android:textColor="@android:color/black"
+        android:padding="2dp"
+        app:layout_constraintStart_toEndOf="@id/hoursContainer"
+        app:layout_constraintEnd_toStartOf="@id/minutesContainer"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent" />
+
+    <LinearLayout
+        android:id="@+id/minutesContainer"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center"
+        app:layout_constraintStart_toEndOf="@id/colon2"
+        app:layout_constraintEnd_toStartOf="@id/colon3"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent">
+
+        <FrameLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+
+            <TextView
+                android:id="@+id/minutesTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@android:color/black"
+                android:textSize="10sp"
+                android:textColor="@android:color/white"
+                android:padding="4dp" />
+        </FrameLayout>
+
+        <TextView
+            android:id="@+id/minutesLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Min"
+            android:textSize="8sp"
+            android:textColor="@android:color/black"
+            android:padding="2dp" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/colon3"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text=":"
+        android:textSize="10sp"
+        android:textColor="@android:color/black"
+        android:padding="2dp"
+        android:visibility="gone"
+        app:layout_constraintStart_toEndOf="@id/minutesContainer"
+        app:layout_constraintEnd_toStartOf="@id/secondsContainer"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent" />
+
+    <LinearLayout
+        android:id="@+id/secondsContainer"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:visibility="gone"
+        app:layout_constraintStart_toEndOf="@id/colon3"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent">
+
+        <FrameLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+
+            <TextView
+                android:id="@+id/secondsTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@android:color/black"
+                android:textSize="10sp"
+                android:textColor="@android:color/white"
+                android:padding="4dp" />
+        </FrameLayout>
+
+        <TextView
+            android:id="@+id/secondsLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Sec"
+            android:textSize="8sp"
+            android:textColor="@android:color/black"
+            android:padding="2dp" />
     </LinearLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>
