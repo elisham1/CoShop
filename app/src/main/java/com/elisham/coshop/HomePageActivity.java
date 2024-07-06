@@ -10,9 +10,11 @@ import android.location.Location;
 import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.util.TypedValue;
+import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
@@ -20,6 +22,8 @@ import android.widget.TextView;
 import android.widget.ImageView;
 import android.widget.Toast;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -98,7 +102,6 @@ public class HomePageActivity extends AppCompatActivity {
         });
     }
 
-
     private void fetchAllOrders(GeoPoint userLocation) {
         CollectionReference ordersRef = db.collection("orders");
         ordersRef.get().addOnCompleteListener(task -> {
@@ -140,6 +143,7 @@ public class HomePageActivity extends AppCompatActivity {
             }
         });
     }
+
     private void showFilteredOrders(String filteredOrders) {
         // Clear any existing orders
         ordersContainer.removeAllViews();
@@ -174,6 +178,7 @@ public class HomePageActivity extends AppCompatActivity {
         noOrdersTextView.setTextColor(Color.RED);
         ordersContainer.addView(noOrdersTextView);
     }
+
     private float calculateDistance(GeoPoint userLocation, GeoPoint orderLocation) {
         if (userLocation == null || orderLocation == null) return 0;
 
@@ -225,9 +230,6 @@ public class HomePageActivity extends AppCompatActivity {
         return "N/A";
     }
 
-
-
-
     private void fetchAllOrders2() {
         ordersContainer.removeAllViews();
         CollectionReference ordersRef = db.collection("orders");
@@ -270,11 +272,12 @@ public class HomePageActivity extends AppCompatActivity {
             }
         });
     }
+
     private void addOrderToLayout(String orderId, String titleOfOrder, String location, long numberOfPeopleInOrder, long maxPeople, String categorie, double distance, Timestamp timestamp) {
         // Create a new RelativeLayout for the order
         RelativeLayout orderLayout = new RelativeLayout(this);
         RelativeLayout.LayoutParams orderLayoutParams = new RelativeLayout.LayoutParams(
-                RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         orderLayoutParams.setMargins(0, 0, 0, dpToPx(8)); // Add margin between orders
         orderLayout.setLayoutParams(orderLayoutParams);
         orderLayout.setPadding(dpToPx(8), dpToPx(8), dpToPx(8), dpToPx(8));
@@ -292,7 +295,7 @@ public class HomePageActivity extends AppCompatActivity {
         titleTextView.setId(View.generateViewId());
         titleTextView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
         RelativeLayout.LayoutParams titleTextParams = new RelativeLayout.LayoutParams(
-                RelativeLayout.LayoutParams.WRAP_CONTENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         titleTextParams.addRule(RelativeLayout.ALIGN_PARENT_END);
         titleTextParams.addRule(RelativeLayout.ALIGN_PARENT_TOP);
         titleTextParams.setMargins(dpToPx(20), dpToPx(10), dpToPx(10), dpToPx(5)); // Add margin from the edge
@@ -304,7 +307,7 @@ public class HomePageActivity extends AppCompatActivity {
         distanceTextView.setId(View.generateViewId());
         distanceTextView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
         RelativeLayout.LayoutParams distanceTextParams = new RelativeLayout.LayoutParams(
-                RelativeLayout.LayoutParams.WRAP_CONTENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         distanceTextParams.addRule(RelativeLayout.ALIGN_PARENT_START);
         distanceTextParams.addRule(RelativeLayout.ALIGN_PARENT_TOP);
         distanceTextParams.setMargins(dpToPx(10), dpToPx(10), dpToPx(20), dpToPx(5)); // Add margin from the edge
@@ -320,16 +323,17 @@ public class HomePageActivity extends AppCompatActivity {
         }
         peopleTextView.setId(View.generateViewId());
         RelativeLayout.LayoutParams peopleTextParams = new RelativeLayout.LayoutParams(
-                RelativeLayout.LayoutParams.WRAP_CONTENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         peopleTextParams.addRule(RelativeLayout.CENTER_IN_PARENT); // Center horizontally and vertically
         peopleTextView.setLayoutParams(peopleTextParams);
         peopleTextParams.setMargins(0, dpToPx(10), 0, dpToPx(10)); // Add margin between title and people count
         orderLayout.addView(peopleTextView);
 
         // Create and add the left square with category
-        RelativeLayout leftSquareLayout = new RelativeLayout(this);
+        LinearLayout leftSquareLayout = new LinearLayout(this);
+        leftSquareLayout.setOrientation(LinearLayout.VERTICAL);
         RelativeLayout.LayoutParams leftSquareLayoutParams = new RelativeLayout.LayoutParams(
-                RelativeLayout.LayoutParams.WRAP_CONTENT, RelativeLayout.LayoutParams.WRAP_CONTENT); // Set WRAP_CONTENT for the layout
+                dpToPx(80), ViewGroup.LayoutParams.WRAP_CONTENT); // Size of the left square
         leftSquareLayoutParams.addRule(RelativeLayout.ALIGN_PARENT_START);
         leftSquareLayoutParams.addRule(RelativeLayout.BELOW, peopleTextView.getId());
         leftSquareLayoutParams.setMargins(dpToPx(15), dpToPx(10), dpToPx(20), dpToPx(15)); // Add margin from the left edge
@@ -338,65 +342,80 @@ public class HomePageActivity extends AppCompatActivity {
         ImageView leftSquare = new ImageView(this);
         leftSquare.setBackgroundColor(Color.GRAY);
         leftSquare.setId(View.generateViewId());
-        RelativeLayout.LayoutParams leftSquareParams = new RelativeLayout.LayoutParams(dpToPx(80), dpToPx(80)); // Size of the left square
+        LinearLayout.LayoutParams leftSquareParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, dpToPx(80));
         leftSquare.setLayoutParams(leftSquareParams);
+
+        leftSquareLayout.addView(leftSquare);
+
+        // Load the icon from URL
+        String iconUrl = "https://firebasestorage.googleapis.com/v0/b/coshop-6fecd.appspot.com/o/icons%2F" + categorie + ".png?alt=media";
+        Glide.with(this)
+                .load(iconUrl)
+                .diskCacheStrategy(DiskCacheStrategy.ALL) // Enable caching
+                .placeholder(R.drawable.star) // Optional: Add a placeholder image
+                .error(R.drawable.star2) // Optional: Add an error image
+                .into(leftSquare);
 
         TextView categoryTextView = new TextView(this);
         categoryTextView.setText(categorie);
         categoryTextView.setId(View.generateViewId());
         categoryTextView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 10);
-        RelativeLayout.LayoutParams categoryTextParams = new RelativeLayout.LayoutParams(
-                RelativeLayout.LayoutParams.WRAP_CONTENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
-        categoryTextParams.addRule(RelativeLayout.CENTER_HORIZONTAL); // Center the category text horizontally
-        categoryTextParams.addRule(RelativeLayout.BELOW, leftSquare.getId());
-        categoryTextParams.setMargins(0, dpToPx(5), 0, dpToPx(20)); // Add margin between square and text
-        categoryTextView.setLayoutParams(categoryTextParams);
-
-        leftSquareLayout.addView(leftSquare);
+        categoryTextView.setGravity(Gravity.CENTER_HORIZONTAL);
         leftSquareLayout.addView(categoryTextView);
 
         orderLayout.addView(leftSquareLayout);
 
         // Create and add the right square with timer
+        LinearLayout rightSquareContainer = new LinearLayout(this);
+        rightSquareContainer.setOrientation(LinearLayout.VERTICAL);
+        rightSquareContainer.setGravity(Gravity.CENTER_HORIZONTAL); // Center the container horizontally
+        RelativeLayout.LayoutParams rightSquareContainerParams = new RelativeLayout.LayoutParams(
+                dpToPx(80), ViewGroup.LayoutParams.WRAP_CONTENT); // Size of the right square container
+        rightSquareContainerParams.addRule(RelativeLayout.ALIGN_PARENT_END);
+        rightSquareContainerParams.addRule(RelativeLayout.BELOW, peopleTextView.getId());
+        rightSquareContainerParams.setMargins(dpToPx(20), dpToPx(10), dpToPx(15), dpToPx(20)); // Add margin from the right edge
+        rightSquareContainer.setLayoutParams(rightSquareContainerParams);
+
         RelativeLayout rightSquareLayout = new RelativeLayout(this);
-        RelativeLayout.LayoutParams rightSquareLayoutParams = new RelativeLayout.LayoutParams(
-                RelativeLayout.LayoutParams.WRAP_CONTENT, RelativeLayout.LayoutParams.WRAP_CONTENT); // Set WRAP_CONTENT for the layout
-        rightSquareLayoutParams.addRule(RelativeLayout.ALIGN_PARENT_END);
-        rightSquareLayoutParams.addRule(RelativeLayout.BELOW, peopleTextView.getId());
-        rightSquareLayoutParams.setMargins(dpToPx(20), dpToPx(10), dpToPx(15), dpToPx(20)); // Add margin from the right edge
+        LinearLayout.LayoutParams rightSquareLayoutParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, dpToPx(80)); // Size of the right square
         rightSquareLayout.setLayoutParams(rightSquareLayoutParams);
+
+        rightSquareContainer.addView(rightSquareLayout);
 
         ImageView rightSquare = new ImageView(this);
         rightSquare.setBackgroundColor(Color.GRAY);
         rightSquare.setId(View.generateViewId());
-        RelativeLayout.LayoutParams rightSquareParams = new RelativeLayout.LayoutParams(dpToPx(80), dpToPx(80)); // Size of the right square
+        RelativeLayout.LayoutParams rightSquareParams = new RelativeLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
         rightSquare.setLayoutParams(rightSquareParams);
+
+        rightSquareLayout.addView(rightSquare);
 
         TextView timerTextView = new TextView(this);
         timerTextView.setId(View.generateViewId());
         timerTextView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 10);
         RelativeLayout.LayoutParams timerTextParams = new RelativeLayout.LayoutParams(
-                RelativeLayout.LayoutParams.WRAP_CONTENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         timerTextParams.addRule(RelativeLayout.CENTER_IN_PARENT); // Center the timer text inside the square
         timerTextView.setLayoutParams(timerTextParams);
 
-        rightSquareLayout.addView(rightSquare);
         rightSquareLayout.addView(timerTextView);
 
         TextView timeLabelTextView = new TextView(this);
-        timeLabelTextView.setText("time");
+        timeLabelTextView.setText("Time");
         timeLabelTextView.setId(View.generateViewId());
         timeLabelTextView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 10);
-        RelativeLayout.LayoutParams timeLabelTextParams = new RelativeLayout.LayoutParams(
-                RelativeLayout.LayoutParams.WRAP_CONTENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
-        timeLabelTextParams.addRule(RelativeLayout.CENTER_HORIZONTAL);
-        timeLabelTextParams.addRule(RelativeLayout.BELOW, rightSquare.getId()); // שינוי זה מוודא שהטקסט יופיע מתחת לריבוע של הטיימר
-        timeLabelTextParams.setMargins(0, dpToPx(5), 0, dpToPx(15)); // הוספת מרווח בין הריבוע לטקסט
+        LinearLayout.LayoutParams timeLabelTextParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        timeLabelTextParams.setMargins(0, dpToPx(5), 0, dpToPx(15)); // Add margin between the square and the text
         timeLabelTextView.setLayoutParams(timeLabelTextParams);
+        timeLabelTextView.setGravity(Gravity.CENTER_HORIZONTAL);
 
-        rightSquareLayout.addView(timeLabelTextView);
+        rightSquareContainer.addView(timeLabelTextView);
 
-        orderLayout.addView(rightSquareLayout);
+        orderLayout.addView(rightSquareContainer);
 
         long currentTime = System.currentTimeMillis();
         Date date = timestamp.toDate();
@@ -431,12 +450,12 @@ public class HomePageActivity extends AppCompatActivity {
         locationTextView.setText(location);
         locationTextView.setId(View.generateViewId());
         RelativeLayout.LayoutParams locationParams = new RelativeLayout.LayoutParams(
-                RelativeLayout.LayoutParams.WRAP_CONTENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
-        locationParams.addRule(RelativeLayout.BELOW, rightSquareLayout.getId());
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        locationParams.addRule(RelativeLayout.BELOW, rightSquareContainer.getId());
         locationParams.addRule(RelativeLayout.BELOW, leftSquareLayout.getId());
         locationParams.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
         locationParams.addRule(RelativeLayout.CENTER_HORIZONTAL);
-        locationParams.setMargins(0, dpToPx(20), 0, 0); // Add margin to prevent touching the squares
+        locationParams.setMargins(0, dpToPx(150), 0, 0); // Add margin to prevent touching the squares
         locationTextView.setLayoutParams(locationParams);
         orderLayout.addView(locationTextView);
 
