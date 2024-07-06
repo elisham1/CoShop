@@ -39,7 +39,8 @@
             android:textSize="8sp"
             android:textColor="@android:color/black"
             android:padding="2dp"
-            android:textDirection="ltr" />
+            android:textDirection="ltr"
+            android:layoutDirection="ltr" />
     </LinearLayout>
 
     <TextView
@@ -91,7 +92,8 @@
             android:textSize="8sp"
             android:textColor="@android:color/black"
             android:padding="2dp"
-            android:textDirection="ltr" />
+            android:textDirection="ltr"
+            android:layoutDirection="ltr" />
     </LinearLayout>
 
     <TextView
@@ -143,7 +145,8 @@
             android:textSize="8sp"
             android:textColor="@android:color/black"
             android:padding="2dp"
-            android:textDirection="ltr" />
+            android:textDirection="ltr"
+            android:layoutDirection="ltr" />
     </LinearLayout>
 
     <TextView
@@ -197,6 +200,7 @@
             android:textSize="8sp"
             android:textColor="@android:color/black"
             android:padding="2dp"
-            android:textDirection="ltr" />
+            android:textDirection="ltr"
+            android:layoutDirection="ltr" />
     </LinearLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>
