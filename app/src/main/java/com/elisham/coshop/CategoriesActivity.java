@@ -37,7 +37,7 @@ public class CategoriesActivity extends AppCompatActivity {
         mAuth = FirebaseAuth.getInstance();
         currentUser = mAuth.getCurrentUser();
         selectedCategories = new ArrayList<>();
-        isGoogleSignUp = getIntent().getBooleanExtra("google_sign_up", true);
+        isGoogleSignUp = getIntent().getBooleanExtra("google_sign_up", false);
 
         //get the user mail and name
         Intent intent = getIntent();
@@ -55,19 +55,19 @@ public class CategoriesActivity extends AppCompatActivity {
                         firstName = fullName;
                         familyName = "";
                     }
-                } else {
+                }
+            } else {
                     email = intent.getStringExtra("email");
                     firstName = intent.getStringExtra("firstName");
                     familyName = intent.getStringExtra("familyName");
 
-                }
-                String helloUser = "Hello, " + firstName;
-                TextView userName = findViewById(R.id.userName);
-                userName.setText(helloUser);
             }
-
+            String helloUser = "Hello, " + firstName;
+            TextView userName = findViewById(R.id.userName);
+            userName.setText(helloUser);
         }
-    displayCategories();
+
+        displayCategories();
     }
 
     public void displayCategories() {
