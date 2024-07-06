@@ -115,7 +115,7 @@ public class UserDetailsActivity extends AppCompatActivity {
 
         Intent intent = getIntent();
         if (intent != null) {
-            isGoogleSignUp = intent.getBooleanExtra("google_sign_up", true);
+            isGoogleSignUp = intent.getBooleanExtra("google_sign_up", false);
             email = intent.getStringExtra("email");
             firstName = intent.getStringExtra("firstName");
             familyName = intent.getStringExtra("familyName");
@@ -128,6 +128,7 @@ public class UserDetailsActivity extends AppCompatActivity {
 
         if (isGoogleSignUp)
         {
+            Toast.makeText(UserDetailsActivity.this, "google signup", Toast.LENGTH_SHORT).show();
             // Inside onCreate method
             GoogleSignInAccount account = GoogleSignIn.getLastSignedInAccount(this);
             if (account != null) {
@@ -158,42 +159,6 @@ public class UserDetailsActivity extends AppCompatActivity {
         showLocationWindow();
 
     }
-
-//    private void downloadAndUploadGoogleProfilePic(String url) {
-//        // Use Glide to download the image
-//        Glide.with(this)
-//                .asBitmap()
-//                .load(url)
-//                .into(new CustomTarget<Bitmap>() {
-//                    @Override
-//                    public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
-//                        uploadImageToFirebase(resource);
-//                    }
-//
-//                    @Override
-//                    public void onLoadCleared(@Nullable Drawable placeholder) {
-//                        // Handle cleanup if necessary
-//                    }
-//                });
-//    }
-//
-//    private void uploadImageToFirebase(Bitmap bitmap) {
-//        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-//        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, baos);
-//        byte[] data = baos.toByteArray();
-//
-//        StorageReference fileReference = storageReference.child("profile_images/" + System.currentTimeMillis() + ".jpg");
-//        UploadTask uploadTask = fileReference.putBytes(data);
-//
-//        uploadTask.addOnSuccessListener(taskSnapshot -> {
-//            fileReference.getDownloadUrl().addOnSuccessListener(uri -> {
-//                picUrl = uri.toString();
-//                Toast.makeText(UserDetailsActivity.this, "Upload picUrl: " + picUrl, Toast.LENGTH_SHORT).show();
-//            });
-//        }).addOnFailureListener(e -> {
-//            Toast.makeText(UserDetailsActivity.this, "Upload failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-//        });
-//    }
 
     private void showLocationWindow() {
         locationWindowLauncher = registerForActivityResult(
@@ -512,6 +477,7 @@ public class UserDetailsActivity extends AppCompatActivity {
                         });
             } else {
                 Toast.makeText(UserDetailsActivity.this, "5 No file selected", Toast.LENGTH_SHORT).show();
+                saveUserDetailsToFirestore(userDetails);
             }
         }
     }
@@ -646,6 +612,7 @@ public class UserDetailsActivity extends AppCompatActivity {
 
 
     public void deleteAccount(View v) {
+        MenuUtils logout = new MenuUtils(this);
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setMessage("Are you sure you want to delete your account?")
                 .setCancelable(true)
@@ -658,10 +625,8 @@ public class UserDetailsActivity extends AppCompatActivity {
                                         public void onSuccess(Void aVoid) {
                                             showAlertDialog("Account successfully deleted! 1");
                                             Toast.makeText(UserDetailsActivity.this, "Account successfully deleted! 111", Toast.LENGTH_SHORT).show();
-                                            Intent toy = new Intent(UserDetailsActivity.this, MainActivity.class);
-                                            startActivity(toy);
-                                            finish();
                                             Log.d("MainActivity", "User account deleted.");
+                                            logout.logOut();
                                         }
                                     })
                                     .addOnFailureListener(new OnFailureListener() {
