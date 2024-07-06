@@ -126,6 +126,8 @@ public class EmailLoginActivity extends AppCompatActivity {
                 } else {
                     clearEmailIcon.setVisibility(View.GONE);
                 }
+                emailForgotPasswordEditText.setBackgroundResource(android.R.color.transparent); // Reset to default
+                errorTextView.setVisibility(View.GONE);
             }
 
             @Override
