@@ -105,8 +105,18 @@ public class ChangePasswordActivity extends AppCompatActivity {
             return;
         }
 
-        if (!newPassword.equals(confirmNewPassword)) {
+        if (newPassword.equals(oldPassword) ) {
+            Toast.makeText(this, "New password is the same as old password.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        if (!newPassword.equals(confirmNewPassword) ) {
             Toast.makeText(this, "New passwords do not match.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        if (newPassword.length() < 6) {
+            Toast.makeText(this, "Password must be at least 6 characters long.", Toast.LENGTH_SHORT).show();
             return;
         }
 

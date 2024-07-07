@@ -31,6 +31,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -103,7 +104,9 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
     private Uri imageUri;
     private static final int TAKE_PHOTO_REQUEST = 1;
     private static final int PICK_IMAGE_REQUEST = 2;
+    private static final int UPDATE_CATEGORIES_REQUEST = 3;
     private MenuUtils menuUtils;
+    private ArrayList<String> currentCategories;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -124,6 +127,7 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
         searchAddressText = findViewById(R.id.search_address_text);
         searchAddressButton = findViewById(R.id.search_address_button);
         editAddressButton = findViewById(R.id.edit_address_button);
+        currentCategories = new ArrayList<String>();
 
         getUserInformation();
         showLocationWindow();
@@ -140,6 +144,16 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 showImageSourceDialog();
+            }
+        });
+
+        Button updateCategoriesButton = findViewById(R.id.btn_update_categories);
+        updateCategoriesButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(UpdateUserDetailsActivity.this, CategoriesActivity.class);
+                intent.putExtra("categories_update", true);
+                startActivityForResult(intent, UPDATE_CATEGORIES_REQUEST);
             }
         });
 
@@ -441,6 +455,7 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
                                     address = document.getGeoPoint("address");
                                     userType = document.getString("type of user");
                                     picUrl = document.getString("profileImageUrl");
+                                    currentCategories = (ArrayList<String>) document.get("favorite categories");
 
                                     String fullName = firstName + " " + familyName;
                                     String typeText = "User Type: " + userType;
