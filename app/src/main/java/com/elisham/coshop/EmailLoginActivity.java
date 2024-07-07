@@ -215,6 +215,7 @@ public class EmailLoginActivity extends AppCompatActivity {
                                     intent.putExtra("firstName", getIntent().getStringExtra("firstName"));
                                     intent.putExtra("familyName", getIntent().getStringExtra("familyName"));
                                     intent.putExtra("source", "EmailSignupActivity");
+                                    intent.putExtra("email_sign_up", true);
 
                                 } else {
                                     intent = new Intent(EmailLoginActivity.this, HomePageActivity.class);
