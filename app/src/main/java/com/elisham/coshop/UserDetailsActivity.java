@@ -158,6 +158,14 @@ public class UserDetailsActivity extends AppCompatActivity {
 
         showLocationWindow();
 
+        Button doneButton = findViewById(R.id.doneButton);
+        doneButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                editUserDetails();
+            }
+        });
+
     }
 
     private void showLocationWindow() {
@@ -399,7 +407,7 @@ public class UserDetailsActivity extends AppCompatActivity {
     }
 
 
-    public void editUserDetails(View view) {
+    public void editUserDetails() {
         Map<String, Object> userDetails = new HashMap<>();
 
         choiceRadioGroup.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {

@@ -157,6 +157,30 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
             }
         });
 
+        Button changePasswordButton = findViewById(R.id.changePasswordText);
+        changePasswordButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                changePassword();
+            }
+        });
+
+        Button deleteAccountButton = findViewById(R.id.deleteButton);
+        deleteAccountButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                deleteAccount();
+            }
+        });
+
+        Button doneButton = findViewById(R.id.doneButton);
+        doneButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                editUserDetails();
+            }
+        });
+
     }
 
     private void showLocationWindow() {
@@ -517,7 +541,7 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
         return address;
     }
 
-    public void editUserDetails(View view) {
+    public void editUserDetails() {
         Map<String, Object> userDetails = new HashMap<>();
         //check if change name is true and update map based on this.
         if (changeName) {
@@ -640,8 +664,9 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
         }
     }
 
-    public void deleteAccount(View v) {
+    public void deleteAccount() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Delete Account");
         builder.setMessage("Are you sure you want to delete your account?")
                 .setCancelable(true)
                 .setPositiveButton("OK", new DialogInterface.OnClickListener() {
@@ -663,7 +688,8 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
                             Log.d("UpdateUserActivity", "No user is currently signed in.");
                         }
                     }
-                });
+                })
+                .setIcon(android.R.drawable.ic_dialog_alert);
         AlertDialog alert = builder.create();
         alert.show();
     }
@@ -806,7 +832,7 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
                 });
     }
 
-    public void changePassword(View v) {
+    public void changePassword() {
         Intent toy = new Intent(UpdateUserDetailsActivity.this, ChangePasswordActivity.class);
         startActivity(toy);
     }
