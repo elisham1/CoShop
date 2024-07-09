@@ -553,56 +553,10 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
 
         //check if change pic is true and update based on this.
         if (changePic) {
-            uploadImage(new OnSuccessListener<String>() {
-                @Override
-                public void onSuccess(String picUrl) {
-                    userDetails.put("profileImageUrl", picUrl);
-                    // Update Firestore with the new details
-                    db.collection("users").document(email)
-                            .update(userDetails)
-                            .addOnSuccessListener(new OnSuccessListener<Void>() {
-                                @Override
-                                public void onSuccess(Void aVoid) {
-                                    Toast.makeText(UpdateUserDetailsActivity.this, "User details updated successfully", Toast.LENGTH_SHORT).show();
-                                    Log.d("EditUserDetails", "User details updated.");
-                                    // Optionally, navigate to another activity or perform further actions upon success
-                                    Intent toy = new Intent(UpdateUserDetailsActivity.this, HomePageActivity.class);
-                                    startActivity(toy);
-                                }
-                            })
-                            .addOnFailureListener(new OnFailureListener() {
-                                @Override
-                                public void onFailure(@NonNull Exception e) {
-                                    Toast.makeText(UpdateUserDetailsActivity.this, "Failed to update user details", Toast.LENGTH_SHORT).show();
-                                    Log.e("EditUserDetails", "Error updating user details", e);
-                                }
-                            });
-                }
-            }, e -> {
-                Toast.makeText(UpdateUserDetailsActivity.this, "Upload failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-            });
+            uploadImage(userDetails);
         } else {
             // Update Firestore with the new details
-            db.collection("users").document(email)
-                    .update(userDetails)
-                    .addOnSuccessListener(new OnSuccessListener<Void>() {
-                        @Override
-                        public void onSuccess(Void aVoid) {
-                            Toast.makeText(UpdateUserDetailsActivity.this, "User details updated successfully", Toast.LENGTH_SHORT).show();
-                            Log.d("EditUserDetails", "User details updated.");
-                            // Optionally, navigate to another activity or perform further actions upon success
-                            Intent toy = new Intent(UpdateUserDetailsActivity.this, HomePageActivity.class);
-                            startActivity(toy);
-                            finish();
-                        }
-                    })
-                    .addOnFailureListener(new OnFailureListener() {
-                        @Override
-                        public void onFailure(@NonNull Exception e) {
-                            Toast.makeText(UpdateUserDetailsActivity.this, "Failed to update user details", Toast.LENGTH_SHORT).show();
-                            Log.e("EditUserDetails", "Error updating user details", e);
-                        }
-                    });
+            updateDB(userDetails);
         }
 
     }
@@ -619,6 +573,7 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
                         // Optionally, navigate to another activity or perform further actions upon success
                         Intent toy = new Intent(UpdateUserDetailsActivity.this, HomePageActivity.class);
                         startActivity(toy);
+                        finish();
                     }
                 })
                 .addOnFailureListener(new OnFailureListener() {
@@ -631,7 +586,7 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
 
     }
 
-    private void uploadImage(OnSuccessListener<String> onSuccessListener, OnFailureListener onFailureListener) {
+    private void uploadImage(Map<String, Object> userDetails) {
 
         if (imageUri != null) {
             // Delete previous profile picture if exists
@@ -639,6 +594,7 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
                 deleteUserProfileImage(picUrl);
             }
 
+            Toast.makeText(this, "Uploading...", Toast.LENGTH_SHORT).show();
             StorageReference fileReference = storageReference.child("profile_images/" + System.currentTimeMillis() + ".jpg");
             fileReference.putFile(imageUri)
                     .addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
@@ -647,8 +603,12 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
                             fileReference.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
                                 @Override
                                 public void onSuccess(Uri uri) {
+                                    Toast.makeText(UpdateUserDetailsActivity.this, "Upload successful", Toast.LENGTH_SHORT).show();
                                     picUrl = uri.toString();
-                                    changePic = true;
+                                    Toast.makeText(UpdateUserDetailsActivity.this, "2Upload successful", Toast.LENGTH_SHORT).show();
+                                    userDetails.put("profileImageUrl", picUrl);
+                                    // Update Firestore with the new details
+                                    updateDB(userDetails);
                                 }
                             });
                         }
