@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center">
+
+        <ImageView
+            android:id="@+id/star1"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:src="@drawable/star2"
+            android:padding="4dp" />
+
+        <ImageView
+            android:id="@+id/star2"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:src="@drawable/star2"
+            android:padding="4dp" />
+
+        <ImageView
+            android:id="@+id/star3"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:src="@drawable/star2"
+            android:padding="4dp" />
+
+        <ImageView
+            android:id="@+id/star4"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:src="@drawable/star2"
+            android:padding="4dp" />
+
+        <ImageView
+            android:id="@+id/star5"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:src="@drawable/star2"
+            android:padding="4dp" />
+    </LinearLayout>
+
+    <Button
+        android:id="@+id/submitButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Submit"
+        android:layout_gravity="center" />
+
+</LinearLayout>
