@@ -11,4 +11,12 @@
     <string name="user_name_description">User name displayed here</string>
     <string name="categories_title_description">Title: What Are You Looking For?</string>
     <string name="done_button_description">Button to complete category selection</string>
+
+    <string-array name="report_reasons">
+        <item>Spam</item>
+        <item>Inappropriate Content</item>
+        <item>Harassment</item>
+        <item>Other</item>
+    </string-array>
+
 </resources>

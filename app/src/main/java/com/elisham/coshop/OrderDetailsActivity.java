@@ -1,11 +1,13 @@
 package com.elisham.coshop;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.content.ContextCompat;
 
 import android.app.Dialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.drawable.Drawable;
 import android.location.Address;
@@ -21,9 +23,11 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -40,11 +44,13 @@ import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.FirebaseFirestoreException;
 import com.google.firebase.firestore.GeoPoint;
 
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -322,6 +328,7 @@ public class OrderDetailsActivity extends AppCompatActivity {
             // Handle report and rate icons
             reportImageView.setOnClickListener(v -> {
                 // Handle report user
+                showReportDialog(email);
             });
 
             rateImageView.setOnClickListener(v -> {
@@ -383,6 +390,105 @@ public class OrderDetailsActivity extends AppCompatActivity {
         });
 
         dialog.show();
+    }
+
+    private void showReportDialog(String email) {
+        Dialog dialog = new Dialog(this);
+        dialog.setContentView(R.layout.dialog_report_user);
+
+        Spinner reportReasonSpinner = dialog.findViewById(R.id.reportReasonSpinner);
+        EditText reportDetailsEditText = dialog.findViewById(R.id.reportDetailsEditText);
+        Button submitReportButton = dialog.findViewById(R.id.submitReportButton);
+
+        submitReportButton.setOnClickListener(v -> {
+            String selectedReason = reportReasonSpinner.getSelectedItem().toString();
+            String additionalDetails = reportDetailsEditText.getText().toString().trim();
+            if (selectedReason.equals("Other") && additionalDetails.isEmpty()) {
+                showAlertDialog("Please provide additional details for the report");
+                return;
+            }
+
+            submitReport(email, selectedReason, additionalDetails);
+            dialog.dismiss();
+        });
+
+        dialog.show();
+    }
+
+    private void submitReport(String reportedUserEmail, String reason, String details) {
+        if (currentUser != null) {
+            String reporterEmail = currentUser.getEmail();
+
+            Map<String, Object> reportData = new HashMap<>();
+            reportData.put("reporterEmail", reporterEmail);
+            reportData.put("reason", reason);
+            reportData.put("details", details);
+            reportData.put("timestamp", new Timestamp(new Date()));
+
+            // Create a reference to the document
+            DocumentReference docRef = db.collection("reports").document(reportedUserEmail);
+
+            docRef.get().addOnSuccessListener(documentSnapshot -> {
+                if (documentSnapshot.exists()) {
+                    // Check if there is already a report from the current user
+                    List<Map<String, Object>> reports = (List<Map<String, Object>>) documentSnapshot.get("reports");
+                    boolean alreadyReported = false;
+
+                    if (reports != null) {
+                        for (Map<String, Object> report : reports) {
+                            if (reporterEmail.equals(report.get("reporterEmail"))) {
+                                alreadyReported = true;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (alreadyReported) {
+                        showAlertDialog("You have already reported this user");
+                    } else {
+                        // Add the new report to the existing reports
+                        Map<String, Object> updateData = new HashMap<>();
+                        updateData.put("reports", FieldValue.arrayUnion(reportData));
+
+                        docRef.update(updateData)
+                                .addOnSuccessListener(aVoid -> {
+                                    Toast.makeText(this, "Report submitted successfully", Toast.LENGTH_SHORT).show();
+                                })
+                                .addOnFailureListener(e -> {
+                                    Toast.makeText(this, "Failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                                });
+                    }
+                } else {
+                    // Document does not exist, create it with the new report
+                    Map<String, Object> newDocData = new HashMap<>();
+                    newDocData.put("reports", Arrays.asList(reportData));
+
+                    docRef.set(newDocData)
+                            .addOnSuccessListener(aVoid -> {
+                                Toast.makeText(this, "Report submitted successfully", Toast.LENGTH_SHORT).show();
+                            })
+                            .addOnFailureListener(e -> {
+                                Toast.makeText(this, "Failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                            });
+                }
+            }).addOnFailureListener(e -> {
+                Toast.makeText(this, "Failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+            });
+        } else {
+            Toast.makeText(this, "You need to be logged in to report a user", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void showAlertDialog(String message) {
+        new AlertDialog.Builder(this)
+                .setMessage(message)
+                .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        // Do nothing
+                    }
+                })
+                .setIcon(android.R.drawable.ic_dialog_alert)
+                .show();
     }
 
     private void updateStarUI(ImageView[] stars, int rating) {
