@@ -429,7 +429,7 @@ public class UserDetailsActivity extends AppCompatActivity {
 
         RadioButton selectedRadioButton = findViewById(selectedId);
 
-//        userDetails.put("ratings", new ArrayList<Map<String, Object>>());
+        userDetails.put("ratings", new ArrayList<Map<String, Object>>());
         userDetails.put("email", email);
         userDetails.put("favorite categories", selectedCategories);
         userDetails.put("first name", firstName);
