@@ -95,6 +95,7 @@ public class OrderDetailsActivity extends AppCompatActivity {
         orderId = intent.getStringExtra("orderId");
         Toast.makeText(this, "Order ID: " + orderId, Toast.LENGTH_SHORT).show();
 
+        checkUserInList();
         // Fetch order details and then user details
         fetchOrderDetails(orderId, currentUser.getEmail());
 
@@ -170,7 +171,9 @@ public class OrderDetailsActivity extends AppCompatActivity {
     private void fetchAndShowUsersInOrder(List<String> userEmails, String orderCreatorEmail, String currentUserEmail) {
         // Reorder list: current user first, then order creator, then others
         List<String> reorderedList = new ArrayList<>();
-        reorderedList.add(currentUserEmail); // Add current user first
+        if (userEmails.contains(currentUserEmail)) {
+            reorderedList.add(currentUserEmail);
+        }
         if (!currentUserEmail.equals(orderCreatorEmail)) {
             reorderedList.add(orderCreatorEmail); // Add order creator if not the same as current user
         }
