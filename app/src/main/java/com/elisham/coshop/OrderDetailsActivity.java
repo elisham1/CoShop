@@ -15,6 +15,8 @@ import android.text.Spannable;
 import android.text.SpannableStringBuilder;
 import android.text.style.ImageSpan;
 import android.util.Log;
+import android.util.TypedValue;
+import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -215,7 +217,8 @@ public class OrderDetailsActivity extends AppCompatActivity {
                         userRating = String.format(Locale.getDefault(), "%.0f", averageRating);
                     } else {
                         userRating = String.format(Locale.getDefault(), "%.1f", averageRating);
-                    }                    String profilePicUrl = documentSnapshot.getString("profileImageUrl");
+                    }
+                    String profilePicUrl = documentSnapshot.getString("profileImageUrl");
                     boolean isCurrentUser = documentSnapshot.getId().equals(currentUserEmail);
                     boolean isOrderCreator = documentSnapshot.getId().equals(orderCreatorEmail) && !isCurrentUser;
 
@@ -238,15 +241,24 @@ public class OrderDetailsActivity extends AppCompatActivity {
             addUserToLayout(userDetail.email, userDetail.firstName + " " + userDetail.familyName, userDetail.userRating, userDetail.profilePicUrl, userDetail.isOrderCreator, userDetail.isCurrentUser);
         }
 
-        TextView toggleUsersTextView = new TextView(this);
-        toggleUsersTextView.setText(showAllUsers ? "Show Less Users" : "View All Users");
-        toggleUsersTextView.setTextColor(ContextCompat.getColor(this, R.color.colorPrimary));
-        toggleUsersTextView.setOnClickListener(v -> {
-            showAllUsers = !showAllUsers; // Toggle the state
-            showUsersInOrder(userDetailList);
-        });
+        if (userDetailList.size() > 3)
+        {
+            TextView toggleUsersTextView = new TextView(this);
+            toggleUsersTextView.setText(showAllUsers ? "Show Less Users" : "View All Users");
+            toggleUsersTextView.setTextColor(ContextCompat.getColor(this, R.color.black));
+            toggleUsersTextView.setBackgroundResource(R.drawable.border);
+            toggleUsersTextView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 20); // Adjust the text size to match user views
+            toggleUsersTextView.setPadding(16, 16, 16, 16); // Adjust padding to match user views
+//            toggleUsersTextView.setBackgroundResource(R.drawable.user_item_background); // Ensure the background matches the user views
+            toggleUsersTextView.setGravity(Gravity.CENTER); // Center the text
 
-        userListLayout.addView(toggleUsersTextView);
+            toggleUsersTextView.setOnClickListener(v -> {
+                showAllUsers = !showAllUsers; // Toggle the state
+                showUsersInOrder(userDetailList);
+            });
+
+            userListLayout.addView(toggleUsersTextView);
+        }
     }
 
     private static class UserDetail {
@@ -291,10 +303,10 @@ public class OrderDetailsActivity extends AppCompatActivity {
         // Set the SpannableString to the TextView
         userRatingTextView.setText(ssb);
         userNameTextView.setText(userName);
-        Toast.makeText(this,"pic" + profilePicUrl, Toast.LENGTH_SHORT).show();
         Glide.with(this)
                 .load(profilePicUrl)
                 .apply(new RequestOptions().transform(new CircleCrop()))
+                .error(R.drawable.ic_profile)
                 .into(userProfileImageView);
 
         if (isOrderCreator) {
