@@ -63,6 +63,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
@@ -152,7 +153,7 @@ public class UserDetailsActivity extends AppCompatActivity {
         profilePic.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                showImageSourceDialog();
+                showImageSourceDialog(googleProfilePicUrl);
             }
         });
 
@@ -563,24 +564,48 @@ public class UserDetailsActivity extends AppCompatActivity {
         dialog.show();
     }
 
-    private void showImageSourceDialog() {
+    private void showImageSourceDialog(String profileImageUrl) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Select Image Source");
-        builder.setItems(new CharSequence[]{"Take Photo", "Choose from Gallery"},
+        builder.setTitle("Change Profile Picture");
+        // Create a list of options
+        List<CharSequence> options = new ArrayList<>();
+        if (profileImageUrl != null) {
+            options.add("View Photo");
+        }
+        options.add("Take Photo");
+        options.add("Choose from Gallery");
+
+        CharSequence[] items = options.toArray(new CharSequence[0]);
+        builder.setItems(items,
                 new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         switch (which) {
                             case 0:
-                                checkCameraPermissionAndTakePhoto();
+                                if (profileImageUrl != null) {
+                                    // Handle viewing the photo
+                                    viewPhoto(profileImageUrl);
+                                } else {
+                                    checkCameraPermissionAndTakePhoto();
+                                }
                                 break;
                             case 1:
+                                checkCameraPermissionAndTakePhoto();
+                                break;
+                            case 2:
                                 openFileChooser();
                                 break;
                         }
                     }
                 });
         builder.show();
+    }
+
+    private void viewPhoto(String url) {
+        // Implement the logic to view the photo
+        // For example, you can start an activity that shows the image
+        ImageDialogFragment dialogFragment = ImageDialogFragment.newInstance(url);
+        dialogFragment.show(getSupportFragmentManager(), "image_dialog");
     }
 
     private void takePhoto() {
@@ -592,6 +617,7 @@ public class UserDetailsActivity extends AppCompatActivity {
 
     private void showAlertDialog(String message) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
+
         builder.setMessage(message)
                 .setCancelable(false)
                 .setPositiveButton("OK", new DialogInterface.OnClickListener() {
