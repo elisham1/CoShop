@@ -1,21 +1,42 @@
 package com.elisham.coshop;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.core.content.ContextCompat;
+
+import android.app.Dialog;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.graphics.drawable.Drawable;
 import android.location.Address;
 import android.location.Geocoder;
 import android.os.Bundle;
+import android.text.Spannable;
+import android.text.SpannableStringBuilder;
+import android.text.style.ImageSpan;
 import android.util.Log;
+import android.util.TypedValue;
+import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.ScrollView;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.bumptech.glide.request.RequestOptions;
+import com.bumptech.glide.load.resource.bitmap.CircleCrop;
+import com.google.android.gms.tasks.Task;
+import com.google.android.gms.tasks.Tasks;
 import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -23,13 +44,18 @@ import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.FirebaseFirestoreException;
 import com.google.firebase.firestore.GeoPoint;
 
 import java.io.IOException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 public class OrderDetailsActivity extends AppCompatActivity {
 
@@ -42,6 +68,11 @@ public class OrderDetailsActivity extends AppCompatActivity {
     private FirebaseUser currentUser;
     private Geocoder geocoder;
     private MenuUtils menuUtils;
+
+    private LinearLayout userListLayout;
+    private List<String> listPeopleInOrder;
+    private boolean showAllUsers = false;
+    private boolean inOrder = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -65,18 +96,22 @@ public class OrderDetailsActivity extends AppCompatActivity {
         categoryImageView = findViewById(R.id.categoryImageView);
         joinButton = findViewById(R.id.joinButton);
 
+        // Initialize userListLayout
+        userListLayout = findViewById(R.id.userListLayout);
+
         // Get the orderId from the intent
         Intent intent = getIntent();
         orderId = intent.getStringExtra("orderId");
         Toast.makeText(this, "Order ID: " + orderId, Toast.LENGTH_SHORT).show();
-        fetchOrderDetails(orderId);
 
-        // Check if the user is already in the list
         checkUserInList();
+        // Fetch order details and then user details
+        fetchOrderDetails(orderId, currentUser.getEmail());
 
         joinButton.setOnClickListener(v -> {
             if (joinButton.getText().toString().equals("Join")) {
                 addUserToOrder();
+                inOrder = true;
             } else {
                 Intent chatIntent = new Intent(OrderDetailsActivity.this, ChatActivity.class);
                 chatIntent.putExtra("orderId", orderId);
@@ -85,7 +120,7 @@ public class OrderDetailsActivity extends AppCompatActivity {
         });
     }
 
-    private void fetchOrderDetails(String orderId) {
+    private void fetchOrderDetails(String orderId, String currentUserEmail) {
         DocumentReference orderRef = db.collection("orders").document(orderId);
         orderRef.get().addOnSuccessListener(documentSnapshot -> {
             if (documentSnapshot.exists()) {
@@ -120,9 +155,6 @@ public class OrderDetailsActivity extends AppCompatActivity {
                 timeTextView.setText("");
                 titleTextView.setText(titleOfOrder);
 
-                // Fetch user details and update groupInfoTextView
-                fetchUserDetails(userEmail, numberOfPeopleInOrder, maxPeople, formattedOpenOrderTime);
-
                 // Load icon from URL
                 String iconUrl = "https://firebasestorage.googleapis.com/v0/b/coshop-6fecd.appspot.com/o/icons%2F" + categorie + ".png?alt=media";
                 Glide.with(this)
@@ -131,10 +163,403 @@ public class OrderDetailsActivity extends AppCompatActivity {
                         .placeholder(R.drawable.star)
                         .error(R.drawable.star2)
                         .into(categoryImageView);
+
+                // Fetch user details and update groupInfoTextView
+                fetchUserDetails(userEmail, numberOfPeopleInOrder, maxPeople, formattedOpenOrderTime);
+
+                // Fetch list of users in order
+                listPeopleInOrder = (List<String>) documentSnapshot.get("listPeopleInOrder");
+                if (listPeopleInOrder != null && !listPeopleInOrder.isEmpty()) {
+                    fetchAndShowUsersInOrder(listPeopleInOrder, userEmail, currentUserEmail);
+                }
             } else {
                 Toast.makeText(this, "No such document", Toast.LENGTH_SHORT).show();
             }
         }).addOnFailureListener(e -> Toast.makeText(this, "Failed to fetch document", Toast.LENGTH_SHORT).show());
+    }
+
+    private void fetchAndShowUsersInOrder(List<String> userEmails, String orderCreatorEmail, String currentUserEmail) {
+        // Reorder list: current user first, then order creator, then others
+        List<String> reorderedList = new ArrayList<>();
+        if (userEmails.contains(currentUserEmail)) {
+            reorderedList.add(currentUserEmail);
+        }
+        if (!currentUserEmail.equals(orderCreatorEmail)) {
+            reorderedList.add(orderCreatorEmail); // Add order creator if not the same as current user
+        }
+        for (String email : userEmails) {
+            if (!email.equals(currentUserEmail) && !email.equals(orderCreatorEmail)) {
+                reorderedList.add(email);
+            }
+        }
+
+        // Create a list of tasks for fetching user details
+        List<Task<DocumentSnapshot>> userDetailTasks = new ArrayList<>();
+        for (String email : reorderedList) {
+            DocumentReference userRef = db.collection("users").document(email);
+            userDetailTasks.add(userRef.get());
+        }
+
+        // Wait for all user detail tasks to complete
+        Tasks.whenAllSuccess(userDetailTasks).addOnSuccessListener(results -> {
+            List<UserDetail> userDetailList = new ArrayList<>();
+            for (int i = 0; i < results.size(); i++) {
+                DocumentSnapshot documentSnapshot = (DocumentSnapshot) results.get(i);
+                if (documentSnapshot.exists()) {
+                    String firstName = documentSnapshot.getString("first name");
+                    String familyName = documentSnapshot.getString("family name");
+                    String email = documentSnapshot.getId();
+                    List<Map<String, Object>> ratings = (List<Map<String, Object>>) documentSnapshot.get("ratings");
+
+                    double averageRating = 0.0;
+                    if (ratings != null && !ratings.isEmpty()) {
+                        int totalRating = 0;
+                        for (Map<String, Object> rating : ratings) {
+                            totalRating += ((Long) rating.get("rating")).intValue();
+                        }
+                        averageRating = (double) totalRating / ratings.size();
+                    }
+
+                    String userRating;
+                    if (averageRating == (long) averageRating) {
+                        userRating = String.format(Locale.getDefault(), "%.0f", averageRating);
+                    } else {
+                        userRating = String.format(Locale.getDefault(), "%.1f", averageRating);
+                    }
+                    String profilePicUrl = documentSnapshot.getString("profileImageUrl");
+                    boolean isCurrentUser = documentSnapshot.getId().equals(currentUserEmail);
+                    boolean isOrderCreator = documentSnapshot.getId().equals(orderCreatorEmail) && !isCurrentUser;
+
+                    userDetailList.add(new UserDetail(email, firstName, familyName, userRating, profilePicUrl, isOrderCreator, isCurrentUser));
+                }
+            }
+            // Show the users in order after fetching all details
+            showUsersInOrder(userDetailList);
+        }).addOnFailureListener(e -> {
+            Toast.makeText(this, "Failed to fetch user details", Toast.LENGTH_SHORT).show();
+        });
+    }
+
+    private void showUsersInOrder(List<UserDetail> userDetailList) {
+        userListLayout.removeAllViews();
+        int displayCount = showAllUsers ? userDetailList.size() : Math.min(userDetailList.size(), 3);
+
+        for (int i = 0; i < displayCount; i++) {
+            UserDetail userDetail = userDetailList.get(i);
+            addUserToLayout(userDetail.email, userDetail.firstName + " " + userDetail.familyName, userDetail.userRating, userDetail.profilePicUrl, userDetail.isOrderCreator, userDetail.isCurrentUser);
+        }
+
+        if (userDetailList.size() > 3)
+        {
+            TextView toggleUsersTextView = new TextView(this);
+            toggleUsersTextView.setText(showAllUsers ? "Show Less Users" : "View All Users");
+            toggleUsersTextView.setTextColor(ContextCompat.getColor(this, R.color.black));
+            toggleUsersTextView.setBackgroundResource(R.drawable.border);
+            toggleUsersTextView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 20); // Adjust the text size to match user views
+            toggleUsersTextView.setPadding(16, 16, 16, 16); // Adjust padding to match user views
+//            toggleUsersTextView.setBackgroundResource(R.drawable.user_item_background); // Ensure the background matches the user views
+            toggleUsersTextView.setGravity(Gravity.CENTER); // Center the text
+
+            toggleUsersTextView.setOnClickListener(v -> {
+                showAllUsers = !showAllUsers; // Toggle the state
+                showUsersInOrder(userDetailList);
+            });
+
+            userListLayout.addView(toggleUsersTextView);
+        }
+    }
+
+    private static class UserDetail {
+        String email;
+        String firstName;
+        String familyName;
+        String userRating;
+        String profilePicUrl;
+        boolean isOrderCreator;
+        boolean isCurrentUser;
+
+        UserDetail(String email, String firstName, String familyName, String userRating, String profilePicUrl, boolean isOrderCreator, boolean isCurrentUser) {
+            this.email = email;
+            this.firstName = firstName;
+            this.familyName = familyName;
+            this.userRating = userRating;
+            this.profilePicUrl = profilePicUrl;
+            this.isOrderCreator = isOrderCreator;
+            this.isCurrentUser = isCurrentUser;
+        }
+    }
+
+    private void addUserToLayout(String email, String userName, String userRating, String profilePicUrl, boolean isOrderCreator, boolean isCurrentUser) {
+        View userItemView = getLayoutInflater().inflate(R.layout.user_item, userListLayout, false);
+
+        TextView userNameTextView = userItemView.findViewById(R.id.userNameTextView);
+        TextView userRatingTextView = userItemView.findViewById(R.id.userRatingTextView);
+        ImageView userProfileImageView = userItemView.findViewById(R.id.userProfileImageView);
+        ImageView reportImageView = userItemView.findViewById(R.id.reportImageView);
+        ImageView rateImageView = userItemView.findViewById(R.id.rateImageView);
+
+        // Create a SpannableString that will hold the image and the text
+        SpannableStringBuilder ssb = new SpannableStringBuilder(" " + " " + userRating + "/5");
+
+        // Create an ImageSpan with the drawable
+        Drawable drawable = getResources().getDrawable(R.drawable.ic_rating_face);
+        drawable.setBounds(0, 0, drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight());
+        ImageSpan imageSpan = new ImageSpan(drawable, ImageSpan.ALIGN_CENTER);
+        // Set the ImageSpan at the beginning of the SpannableString
+        ssb.setSpan(imageSpan, 0, 1, Spannable.SPAN_INCLUSIVE_EXCLUSIVE);
+
+        // Set the SpannableString to the TextView
+        userRatingTextView.setText(ssb);
+        userNameTextView.setText(userName);
+        Glide.with(this)
+                .load(profilePicUrl)
+                .apply(new RequestOptions().transform(new CircleCrop()))
+                .error(R.drawable.ic_profile)
+                .into(userProfileImageView);
+
+        if (isOrderCreator) {
+            userItemView.setBackgroundColor(ContextCompat.getColor(this, R.color.colorAccent));
+        }
+
+        if (!inOrder)
+        {
+            reportImageView.setVisibility(View.GONE);
+            rateImageView.setVisibility(View.GONE);
+        }
+        else {
+            // Hide report and rate icons for current user
+            if (isCurrentUser) {
+                reportImageView.setVisibility(View.GONE);
+                rateImageView.setVisibility(View.GONE);
+                userNameTextView.setText("You");
+            } else {
+                // Handle report and rate icons
+                reportImageView.setOnClickListener(v -> {
+                    // Handle report user
+                    showReportDialog(email);
+                });
+
+                rateImageView.setOnClickListener(v -> {
+                    // Handle rate user
+                    showRatingDialog(email);
+                });
+            }
+        }
+
+        userListLayout.addView(userItemView);
+    }
+
+    private void showRatingDialog(String email) {
+        Dialog dialog = new Dialog(this);
+        dialog.setContentView(R.layout.dialog_rate_user);
+
+        // Initialize the stars
+        ImageView[] stars = new ImageView[5];
+        stars[0] = dialog.findViewById(R.id.star1);
+        stars[1] = dialog.findViewById(R.id.star2);
+        stars[2] = dialog.findViewById(R.id.star3);
+        stars[3] = dialog.findViewById(R.id.star4);
+        stars[4] = dialog.findViewById(R.id.star5);
+
+        final int[] selectedRating = {0};
+
+        // Fetch existing rating if any
+        DocumentReference userRef = db.collection("users").document(email);
+        userRef.get().addOnSuccessListener(documentSnapshot -> {
+            if (documentSnapshot.exists()) {
+                List<Map<String, Object>> ratings = (List<Map<String, Object>>) documentSnapshot.get("ratings");
+                if (ratings != null) {
+                    for (Map<String, Object> rating : ratings) {
+                        if (rating.get("email").equals(currentUser.getEmail())) {
+                            selectedRating[0] = ((Long) rating.get("rating")).intValue();
+                            updateStarUI(stars, selectedRating[0]);
+                            break;
+                        }
+                    }
+                }
+            }
+        }).addOnFailureListener(e -> Toast.makeText(this, "Failed to fetch existing rating", Toast.LENGTH_SHORT).show());
+
+        for (int i = 0; i < stars.length; i++) {
+            final int starIndex = i;
+            stars[i].setOnClickListener(v -> {
+                selectedRating[0] = starIndex + 1;
+                updateStarUI(stars, selectedRating[0]);
+            });
+        }
+
+        Button submitButton = dialog.findViewById(R.id.submitButton);
+        submitButton.setOnClickListener(v -> {
+            if (selectedRating[0] > 0) {
+                updateRating(email, selectedRating[0]);
+                dialog.dismiss();
+            } else {
+                Toast.makeText(this, "Please select a rating", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        dialog.show();
+    }
+
+    private void showReportDialog(String email) {
+        Dialog dialog = new Dialog(this);
+        dialog.setContentView(R.layout.dialog_report_user);
+
+        Spinner reportReasonSpinner = dialog.findViewById(R.id.reportReasonSpinner);
+        EditText reportDetailsEditText = dialog.findViewById(R.id.reportDetailsEditText);
+        Button submitReportButton = dialog.findViewById(R.id.submitReportButton);
+
+        submitReportButton.setOnClickListener(v -> {
+            String selectedReason = reportReasonSpinner.getSelectedItem().toString();
+            String additionalDetails = reportDetailsEditText.getText().toString().trim();
+            if (selectedReason.equals("Other") && additionalDetails.isEmpty()) {
+                showAlertDialog("Please provide additional details for the report");
+                return;
+            }
+
+            submitReport(email, orderId, selectedReason, additionalDetails);
+            dialog.dismiss();
+        });
+
+        dialog.show();
+    }
+
+    private void submitReport(String reportedUserEmail,String orderID, String reason, String details) {
+        if (currentUser != null) {
+            String reporterEmail = currentUser.getEmail();
+
+            Map<String, Object> reportData = new HashMap<>();
+            reportData.put("orderId", orderID);
+            reportData.put("reporterEmail", reporterEmail);
+            reportData.put("reason", reason);
+            reportData.put("details", details);
+            reportData.put("timestamp", new Timestamp(new Date()));
+
+            DocumentReference docRef = db.collection("reports").document(reportedUserEmail);
+
+            docRef.get().addOnSuccessListener(documentSnapshot -> {
+                if (documentSnapshot.exists()) {
+                    List<Map<String, Object>> reports = (List<Map<String, Object>>) documentSnapshot.get("reports");
+                    boolean alreadyReported = false;
+
+                    if (reports != null) {
+                        for (Map<String, Object> report : reports) {
+                            if (reporterEmail.equals(report.get("reporterEmail")) && orderID.equals(report.get("orderId"))) {
+                                alreadyReported = true;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (alreadyReported) {
+                        showAlertDialog("You have already reported this user in this order");
+                    } else {
+                        Map<String, Object> updateData = new HashMap<>();
+                        updateData.put("reports", FieldValue.arrayUnion(reportData));
+
+                        docRef.update(updateData)
+                                .addOnSuccessListener(aVoid -> {
+                                    Toast.makeText(this, "Report submitted successfully", Toast.LENGTH_SHORT).show();
+                                    checkAndBlockUser(reportedUserEmail, reports.size() + 1);
+                                })
+                                .addOnFailureListener(e -> {
+                                    Toast.makeText(this, "Failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                                });
+                    }
+                } else {
+                    Map<String, Object> newDocData = new HashMap<>();
+                    newDocData.put("reports", Arrays.asList(reportData));
+
+                    docRef.set(newDocData)
+                            .addOnSuccessListener(aVoid -> {
+                                Toast.makeText(this, "Report submitted successfully", Toast.LENGTH_SHORT).show();
+                                checkAndBlockUser(reportedUserEmail, 1);
+                            })
+                            .addOnFailureListener(e -> {
+                                Toast.makeText(this, "Failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                            });
+                }
+            }).addOnFailureListener(e -> {
+                Toast.makeText(this, "Failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+            });
+        } else {
+            Toast.makeText(this, "You need to be logged in to report a user", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void checkAndBlockUser(String userEmail, int reportCount) {
+        if (reportCount == 5) {
+            DocumentReference userRef = db.collection("users").document(userEmail);
+            Map<String, Object> updateData = new HashMap<>();
+            updateData.put("blocked", true);
+            updateData.put("blockedTimestamp", new Timestamp(new Date()));
+
+            userRef.update(updateData).addOnSuccessListener(aVoid -> {
+                Toast.makeText(this, "User has been blocked due to multiple reports", Toast.LENGTH_SHORT).show();
+            }).addOnFailureListener(e -> {
+                Toast.makeText(this, "Failed to block user: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+            });
+        }
+    }
+
+    private void showAlertDialog(String message) {
+        new AlertDialog.Builder(this)
+                .setMessage(message)
+                .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        // Do nothing
+                    }
+                })
+                .setIcon(android.R.drawable.ic_dialog_alert)
+                .show();
+    }
+
+    private void updateStarUI(ImageView[] stars, int rating) {
+        for (int i = 0; i < stars.length; i++) {
+            if (i < rating) {
+                stars[i].setImageResource(R.drawable.star);
+            } else {
+                stars[i].setImageResource(R.drawable.star2);
+            }
+        }
+    }
+
+    private void updateRating(String email, int newRating) {
+        DocumentReference userRef = db.collection("users").document(email);
+
+        db.runTransaction(transaction -> {
+            DocumentSnapshot snapshot = transaction.get(userRef);
+
+            // Get the current ratings
+            List<Map<String, Object>> ratings = (List<Map<String, Object>>) snapshot.get("ratings");
+            if (ratings == null) {
+                ratings = new ArrayList<>();
+            }
+
+            boolean ratingExists = false;
+            for (Map<String, Object> rating : ratings) {
+                if (rating.get("email").equals(currentUser.getEmail())) {
+                    ratingExists = true;
+                    rating.put("rating", newRating); // Update existing rating
+                    break;
+                }
+            }
+
+            if (!ratingExists) {
+                // Add new rating if not exists
+                Map<String, Object> newRatingMap = new HashMap<>();
+                newRatingMap.put("email", currentUser.getEmail());
+                newRatingMap.put("rating", newRating);
+                ratings.add(newRatingMap);
+            }
+
+            transaction.update(userRef, "ratings", ratings);
+            return null;
+        }).addOnSuccessListener(aVoid -> {
+            Toast.makeText(this, "User rated successfully", Toast.LENGTH_SHORT).show();
+            // Refresh the user list to show updated ratings
+            fetchOrderDetails(orderId, currentUser.getEmail());
+        }).addOnFailureListener(e -> Toast.makeText(this, "Failed to rate user", Toast.LENGTH_SHORT).show());
     }
 
     private String getAddressFromLatLng(double latitude, double longitude) {
@@ -180,6 +605,7 @@ public class OrderDetailsActivity extends AppCompatActivity {
             if (documentSnapshot.exists()) {
                 List<String> listPeopleInOrder = (List<String>) documentSnapshot.get("listPeopleInOrder");
                 if (listPeopleInOrder != null && listPeopleInOrder.contains(currentUser.getEmail())) {
+                    inOrder = true;
                     joinButton.setText("Chat");
                 }
             }
