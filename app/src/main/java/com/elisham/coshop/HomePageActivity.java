@@ -100,6 +100,29 @@ public class HomePageActivity extends AppCompatActivity {
                 starButton.setTag("star");
             }
         });
+        FirebaseAuth mAuth = FirebaseAuth.getInstance();
+        FirebaseUser currentUser = mAuth.getCurrentUser();
+        String userEmail = null;
+        if (currentUser != null) {
+            userEmail = currentUser.getEmail();
+        }
+
+        TextView filterBarText1 = findViewById(R.id.filterBarText1);
+
+        if (userEmail != null) {
+            db.collection("users").document(userEmail)
+                    .get()
+                    .addOnCompleteListener(task -> {
+                        if (task.isSuccessful() && task.getResult() != null) {
+                            String firstName = task.getResult().getString("first name");
+                            String familyName = task.getResult().getString("family name");
+                            if (firstName != null && familyName != null) {
+                                filterBarText1.setText("Hi " + firstName + " " + familyName);
+                            }
+                        }
+                    });
+        }
+
     }
 
     private void fetchAllOrders(GeoPoint userLocation) {
