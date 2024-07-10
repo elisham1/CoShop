@@ -429,7 +429,7 @@ public class UserDetailsActivity extends AppCompatActivity {
         }
 
         RadioButton selectedRadioButton = findViewById(selectedId);
-
+        userDetails.put("blocked", false);
         userDetails.put("ratings", new ArrayList<Map<String, Object>>());
         userDetails.put("email", email);
         userDetails.put("favorite categories", selectedCategories);

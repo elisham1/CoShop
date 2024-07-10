@@ -72,6 +72,7 @@ public class OrderDetailsActivity extends AppCompatActivity {
     private LinearLayout userListLayout;
     private List<String> listPeopleInOrder;
     private boolean showAllUsers = false;
+    private boolean inOrder = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -110,6 +111,7 @@ public class OrderDetailsActivity extends AppCompatActivity {
         joinButton.setOnClickListener(v -> {
             if (joinButton.getText().toString().equals("Join")) {
                 addUserToOrder();
+                inOrder = true;
             } else {
                 Intent chatIntent = new Intent(OrderDetailsActivity.this, ChatActivity.class);
                 chatIntent.putExtra("orderId", orderId);
@@ -319,22 +321,29 @@ public class OrderDetailsActivity extends AppCompatActivity {
             userItemView.setBackgroundColor(ContextCompat.getColor(this, R.color.colorAccent));
         }
 
-        // Hide report and rate icons for current user
-        if (isCurrentUser) {
+        if (!inOrder)
+        {
             reportImageView.setVisibility(View.GONE);
             rateImageView.setVisibility(View.GONE);
-            userNameTextView.setText("You");
-        } else {
-            // Handle report and rate icons
-            reportImageView.setOnClickListener(v -> {
-                // Handle report user
-                showReportDialog(email);
-            });
+        }
+        else {
+            // Hide report and rate icons for current user
+            if (isCurrentUser) {
+                reportImageView.setVisibility(View.GONE);
+                rateImageView.setVisibility(View.GONE);
+                userNameTextView.setText("You");
+            } else {
+                // Handle report and rate icons
+                reportImageView.setOnClickListener(v -> {
+                    // Handle report user
+                    showReportDialog(email);
+                });
 
-            rateImageView.setOnClickListener(v -> {
-                // Handle rate user
-                showRatingDialog(email);
-            });
+                rateImageView.setOnClickListener(v -> {
+                    // Handle rate user
+                    showRatingDialog(email);
+                });
+            }
         }
 
         userListLayout.addView(userItemView);
@@ -408,35 +417,34 @@ public class OrderDetailsActivity extends AppCompatActivity {
                 return;
             }
 
-            submitReport(email, selectedReason, additionalDetails);
+            submitReport(email, orderId, selectedReason, additionalDetails);
             dialog.dismiss();
         });
 
         dialog.show();
     }
 
-    private void submitReport(String reportedUserEmail, String reason, String details) {
+    private void submitReport(String reportedUserEmail,String orderID, String reason, String details) {
         if (currentUser != null) {
             String reporterEmail = currentUser.getEmail();
 
             Map<String, Object> reportData = new HashMap<>();
+            reportData.put("orderId", orderID);
             reportData.put("reporterEmail", reporterEmail);
             reportData.put("reason", reason);
             reportData.put("details", details);
             reportData.put("timestamp", new Timestamp(new Date()));
 
-            // Create a reference to the document
             DocumentReference docRef = db.collection("reports").document(reportedUserEmail);
 
             docRef.get().addOnSuccessListener(documentSnapshot -> {
                 if (documentSnapshot.exists()) {
-                    // Check if there is already a report from the current user
                     List<Map<String, Object>> reports = (List<Map<String, Object>>) documentSnapshot.get("reports");
                     boolean alreadyReported = false;
 
                     if (reports != null) {
                         for (Map<String, Object> report : reports) {
-                            if (reporterEmail.equals(report.get("reporterEmail"))) {
+                            if (reporterEmail.equals(report.get("reporterEmail")) && orderID.equals(report.get("orderId"))) {
                                 alreadyReported = true;
                                 break;
                             }
@@ -444,28 +452,28 @@ public class OrderDetailsActivity extends AppCompatActivity {
                     }
 
                     if (alreadyReported) {
-                        showAlertDialog("You have already reported this user");
+                        showAlertDialog("You have already reported this user in this order");
                     } else {
-                        // Add the new report to the existing reports
                         Map<String, Object> updateData = new HashMap<>();
                         updateData.put("reports", FieldValue.arrayUnion(reportData));
 
                         docRef.update(updateData)
                                 .addOnSuccessListener(aVoid -> {
                                     Toast.makeText(this, "Report submitted successfully", Toast.LENGTH_SHORT).show();
+                                    checkAndBlockUser(reportedUserEmail, reports.size() + 1);
                                 })
                                 .addOnFailureListener(e -> {
                                     Toast.makeText(this, "Failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                                 });
                     }
                 } else {
-                    // Document does not exist, create it with the new report
                     Map<String, Object> newDocData = new HashMap<>();
                     newDocData.put("reports", Arrays.asList(reportData));
 
                     docRef.set(newDocData)
                             .addOnSuccessListener(aVoid -> {
                                 Toast.makeText(this, "Report submitted successfully", Toast.LENGTH_SHORT).show();
+                                checkAndBlockUser(reportedUserEmail, 1);
                             })
                             .addOnFailureListener(e -> {
                                 Toast.makeText(this, "Failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
@@ -476,6 +484,21 @@ public class OrderDetailsActivity extends AppCompatActivity {
             });
         } else {
             Toast.makeText(this, "You need to be logged in to report a user", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void checkAndBlockUser(String userEmail, int reportCount) {
+        if (reportCount == 5) {
+            DocumentReference userRef = db.collection("users").document(userEmail);
+            Map<String, Object> updateData = new HashMap<>();
+            updateData.put("blocked", true);
+            updateData.put("blockedTimestamp", new Timestamp(new Date()));
+
+            userRef.update(updateData).addOnSuccessListener(aVoid -> {
+                Toast.makeText(this, "User has been blocked due to multiple reports", Toast.LENGTH_SHORT).show();
+            }).addOnFailureListener(e -> {
+                Toast.makeText(this, "Failed to block user: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+            });
         }
     }
 
@@ -582,6 +605,7 @@ public class OrderDetailsActivity extends AppCompatActivity {
             if (documentSnapshot.exists()) {
                 List<String> listPeopleInOrder = (List<String>) documentSnapshot.get("listPeopleInOrder");
                 if (listPeopleInOrder != null && listPeopleInOrder.contains(currentUser.getEmail())) {
+                    inOrder = true;
                     joinButton.setText("Chat");
                 }
             }
