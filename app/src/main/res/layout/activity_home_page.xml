@@ -4,14 +4,15 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".HomePageActivity">
+    tools:context=".HomePageActivity"
+    android:background="@android:color/transparent">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/searchBar"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_margin="8dp"
-        android:background="#CCCCCC"
+        android:background="@android:color/transparent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
@@ -23,6 +24,7 @@
             android:paddingStart="16dp"
             android:paddingTop="5dp"
             android:paddingBottom="5dp"
+            android:background="@android:color/transparent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toStartOf="@+id/searchButton"
             app:layout_constraintTop_toTopOf="parent"
@@ -35,19 +37,11 @@
                 android:text="filter by"
                 android:textColor="#000000"
                 android:textSize="20sp"
+                android:background="@android:color/transparent"
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintStart_toStartOf="parent" />
 
-            <TextView
-                android:id="@+id/filterBarText2"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="5dp"
-                android:text="location, category, URL, ..."
-                android:textColor="#000000"
-                android:textSize="15sp"
-                app:layout_constraintTop_toBottomOf="@id/filterBarText1"
-                app:layout_constraintStart_toStartOf="parent" />
+
         </androidx.constraintlayout.widget.ConstraintLayout>
 
         <ImageButton
@@ -58,9 +52,12 @@
             android:contentDescription="star"
             android:scaleType="centerInside"
             android:tag="star"
+            android:background="@android:color/transparent"
+            android:padding="10dp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent" />
+
 
         <ImageButton
             android:id="@+id/searchButton"
@@ -69,9 +66,12 @@
             android:onClick="gotofilter"
             app:srcCompat="@drawable/twotone_filter_alt_24"
             android:contentDescription="search"
+            android:background="@android:color/transparent"
+            android:padding="10dp"
             app:layout_constraintEnd_toStartOf="@id/starButton"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent" />
+
 
         <ImageButton
             android:id="@+id/filterOffButton"
@@ -80,11 +80,10 @@
             app:srcCompat="@drawable/baseline_filter_alt_off_24"
             android:contentDescription="filter off"
             android:visibility="gone"
+            android:background="@android:color/transparent"
             app:layout_constraintEnd_toStartOf="@id/searchButton"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent" />
-
-
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
@@ -93,6 +92,7 @@
         android:layout_height="0dp"
         android:layout_margin="8dp"
         android:contentDescription="Orders list"
+        android:background="@android:color/transparent"
         app:layout_constraintBottom_toTopOf="@id/addNewOrder"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="1.0"
@@ -105,7 +105,8 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="8dp" />
+            android:padding="8dp"
+            android:background="@android:color/transparent" />
 
     </ScrollView>
 
@@ -114,7 +115,7 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_margin="8dp"
-        android:background="#CCCCCC"
+        android:background="@android:color/transparent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -128,6 +129,7 @@
             android:textColor="#000000"
             android:textSize="20sp"
             android:padding="5dp"
+            android:background="@android:color/transparent"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"
@@ -141,6 +143,7 @@
             android:contentDescription="newOrder"
             android:onClick="gotoneworder"
             app:srcCompat="@drawable/baseline_add_24"
+            android:background="@android:color/transparent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent" />
