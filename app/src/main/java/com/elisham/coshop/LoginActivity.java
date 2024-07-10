@@ -20,10 +20,15 @@ import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthCredential;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.GoogleAuthProvider;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.Timestamp;
 
 public class LoginActivity extends AppCompatActivity {
     private static final int RC_SIGN_IN = 123;
     private FirebaseAuth mAuth;
+    private FirebaseFirestore db;
     String webClientId;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,6 +39,7 @@ public class LoginActivity extends AppCompatActivity {
         webClientId = res.getString(defaultWebClientId);
 
         mAuth = FirebaseAuth.getInstance();
+        db = FirebaseFirestore.getInstance();
 
         // Call signIn method when the Google Sign-In button is clicked
         findViewById(R.id.button3).setOnClickListener(view -> signIn());
@@ -86,10 +92,11 @@ public class LoginActivity extends AppCompatActivity {
                         } else {
                             // If user is not new, proceed with normal sign-in flow
                             Log.d("Firebase Auth", "signInWithCredential:success - Existing User");
-                            Toast.makeText(LoginActivity.this, "Sign in successful.", Toast.LENGTH_SHORT).show();
-                            Intent intent = new Intent(LoginActivity.this, HomePageActivity.class);
-                            startActivity(intent);
-                            finish(); // Close this activity to prevent returning to it on back press
+                            checkIfBlocked();
+//                            Toast.makeText(LoginActivity.this, "Sign in successful.", Toast.LENGTH_SHORT).show();
+//                            Intent intent = new Intent(LoginActivity.this, HomePageActivity.class);
+//                            startActivity(intent);
+//                            finish(); // Close this activity to prevent returning to it on back press
                         }
                     } else {
                         // If sign in fails, display a message to the user.
@@ -97,6 +104,61 @@ public class LoginActivity extends AppCompatActivity {
                         Toast.makeText(LoginActivity.this, "Authentication failed.", Toast.LENGTH_SHORT).show();
                     }
                 });
+    }
+
+    private void checkIfBlocked() {
+        String userEmail = mAuth.getCurrentUser().getEmail();
+        DocumentReference userRef = db.collection("users").document(userEmail);
+
+        userRef.get().addOnSuccessListener(documentSnapshot -> {
+            if (documentSnapshot.exists()) {
+                Boolean isBlocked = documentSnapshot.getBoolean("blocked");
+                Timestamp blockedTimestamp = documentSnapshot.getTimestamp("blockedTimestamp");
+
+                if (isBlocked != null && isBlocked) {
+                    long blockDuration = 48 * 60 * 60 * 1000; // 48 hours in milliseconds
+                    long currentTime = System.currentTimeMillis();
+                    long blockedTime = blockedTimestamp != null ? blockedTimestamp.toDate().getTime() : 0;
+
+                    if (currentTime - blockedTime < blockDuration) {
+                        long remainingTime = blockDuration - (currentTime - blockedTime);
+                        long hoursRemaining = remainingTime / (60 * 60 * 1000);
+                        showAlertDialog("You are blocked from the app. It will be reviewed within " + hoursRemaining + " hours.");
+                    } else {
+                        showAlertDialog("You are blocked from the app. Please contact support at coshop.supp@gmail.com.");
+                    }
+                    // Signed in with Google
+                    GoogleSignIn.getClient(this, GoogleSignInOptions.DEFAULT_SIGN_IN).signOut().addOnCompleteListener(task -> {
+                        if (task.isSuccessful()) {
+                            // Sign out from Firebase
+                            Log.d("Logout", "Google sign-out successful");
+                        } else {
+                            // Handle sign-out failure
+                            Log.e("Logout", "Google sign-out failed");
+                        }
+                    });
+                    mAuth.signOut();
+                } else {
+                    // User is not blocked, proceed to HomePageActivity
+                    Intent intent = new Intent(LoginActivity.this, HomePageActivity.class);
+                    startActivity(intent);
+                    finish(); // Close this activity to prevent returning to it on back press
+                }
+            }
+        }).addOnFailureListener(e -> {
+            Toast.makeText(this, "Failed to check block status", Toast.LENGTH_SHORT).show();
+        });
+    }
+
+    private void showAlertDialog(String message) {
+        new androidx.appcompat.app.AlertDialog.Builder(this)
+                .setMessage(message)
+                .setPositiveButton(android.R.string.ok, (dialog, which) -> {
+                    // Do nothing and stay on the login screen
+                    FirebaseAuth.getInstance().signOut();
+                })
+                .setIcon(android.R.drawable.ic_dialog_alert)
+                .show();
     }
 
     public void emailLogin() {
