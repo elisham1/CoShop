@@ -233,7 +233,7 @@ public class EmailLoginActivity extends AppCompatActivity {
                                 Toast.makeText(EmailLoginActivity.this, "Please verify your email before logging in", Toast.LENGTH_SHORT).show();
                             }
                         } else {
-                            Toast.makeText(EmailLoginActivity.this, "Login failed: " + task.getException().getMessage(), Toast.LENGTH_SHORT).show();
+                            showAlertDialog("Login failed: " + task.getException());
                         }
                     }
                 });
