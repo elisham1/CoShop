@@ -100,6 +100,29 @@ public class HomePageActivity extends AppCompatActivity {
                 starButton.setTag("star");
             }
         });
+        FirebaseAuth mAuth = FirebaseAuth.getInstance();
+        FirebaseUser currentUser = mAuth.getCurrentUser();
+        String userEmail = null;
+        if (currentUser != null) {
+            userEmail = currentUser.getEmail();
+        }
+
+        TextView filterBarText1 = findViewById(R.id.filterBarText1);
+
+        if (userEmail != null) {
+            db.collection("users").document(userEmail)
+                    .get()
+                    .addOnCompleteListener(task -> {
+                        if (task.isSuccessful() && task.getResult() != null) {
+                            String firstName = task.getResult().getString("first name");
+                            String familyName = task.getResult().getString("family name");
+                            if (firstName != null && familyName != null) {
+                                filterBarText1.setText("Hi " + firstName + " " + familyName);
+                            }
+                        }
+                    });
+        }
+
     }
 
     private void fetchAllOrders(GeoPoint userLocation) {
@@ -290,18 +313,6 @@ public class HomePageActivity extends AppCompatActivity {
             startActivity(intent);
         });
 
-        // Fetch the type of order from Firestore
-        db.collection("orders").document(orderId).get().addOnSuccessListener(documentSnapshot -> {
-            String typeOfOrder = documentSnapshot.getString("type_of_order");
-            if (typeOfOrder != null) {
-                if (typeOfOrder.equals("Consumer")) {
-                    orderLayout.setBackgroundResource(R.drawable.border_green); // Use a drawable with blue border
-                } else if (typeOfOrder.equals("Supplier")) {
-                    orderLayout.setBackgroundResource(R.drawable.border_blue); // Use a drawable with green border
-                }
-            }
-        });
-
         TextView titleTextView = new TextView(this);
         titleTextView.setText(titleOfOrder);
         titleTextView.setId(View.generateViewId());
@@ -459,17 +470,67 @@ public class HomePageActivity extends AppCompatActivity {
         locationTextView.setId(View.generateViewId());
         RelativeLayout.LayoutParams locationParams = new RelativeLayout.LayoutParams(
                 ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        locationParams.addRule(RelativeLayout.BELOW, rightSquareContainer.getId());
+        locationParams.addRule(RelativeLayout.BELOW, rightSquareContainer.getId()); // או כל אלמנט אחר מעל המיקום
         locationParams.addRule(RelativeLayout.BELOW, leftSquareLayout.getId());
-        locationParams.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
         locationParams.addRule(RelativeLayout.CENTER_HORIZONTAL);
-        locationParams.setMargins(0, dpToPx(150), 0, 0); // Add margin to prevent touching the squares
+        locationParams.setMargins(0, dpToPx(150), 0, 0); // הוספת מרווח קטן למעלה
         locationTextView.setLayoutParams(locationParams);
         orderLayout.addView(locationTextView);
+
+// Fetch the type of order from Firestore and add it below the location
+// Fetch the type of order from Firestore and add it below the location
+// Fetch the type of order from Firestore and add it below the location
+        db.collection("orders").document(orderId).get().addOnSuccessListener(documentSnapshot -> {
+            String typeOfOrder = documentSnapshot.getString("type_of_order");
+            if (typeOfOrder != null) {
+                TextView orderTypeTextView = new TextView(this);
+                orderTypeTextView.setText(typeOfOrder);
+                orderTypeTextView.setId(View.generateViewId());
+                orderTypeTextView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
+                orderTypeTextView.setGravity(Gravity.CENTER_HORIZONTAL);
+                orderTypeTextView.setTextColor(typeOfOrder.equals("Consumer") ? Color.parseColor("#00BFFF") : Color.BLUE);
+                RelativeLayout.LayoutParams orderTypeParams = new RelativeLayout.LayoutParams(
+                        ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+                orderTypeParams.addRule(RelativeLayout.BELOW, locationTextView.getId());
+                orderTypeParams.addRule(RelativeLayout.ALIGN_PARENT_END);
+                orderTypeParams.setMargins(dpToPx(20), dpToPx(5), dpToPx(10), dpToPx(0));
+
+                orderTypeTextView.setLayoutParams(orderTypeParams);
+                orderLayout.addView(orderTypeTextView);
+
+                if (typeOfOrder.equals("Consumer")) {
+                    orderLayout.setBackgroundResource(R.drawable.border_green); // Use a drawable with green border
+                } else if (typeOfOrder.equals("Supplier")) {
+                    orderLayout.setBackgroundResource(R.drawable.border_blue); // Use a drawable with blue border
+                }
+            }
+
+            // Check if the order is open or closed using existing variables
+            boolean isOrderOpen = timestamp != null && timestamp.toDate().getTime() > currentTime;
+
+            // Create and add the open/close text view
+            TextView openCloseTextView = new TextView(this);
+            openCloseTextView.setText(isOrderOpen ? "Open" : "Close");
+            openCloseTextView.setId(View.generateViewId());
+            openCloseTextView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
+            openCloseTextView.setGravity(Gravity.CENTER_HORIZONTAL);
+            openCloseTextView.setTextColor(isOrderOpen ? Color.GREEN : Color.RED); // ירוק אם פתוח, אדום אם סגור
+            RelativeLayout.LayoutParams openCloseTextParams = new RelativeLayout.LayoutParams(
+                    ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            openCloseTextParams.addRule(RelativeLayout.BELOW, locationTextView.getId());
+            openCloseTextParams.addRule(RelativeLayout.ALIGN_PARENT_START);
+            openCloseTextParams.setMargins(dpToPx(20), dpToPx(5), dpToPx(20), dpToPx(0));
+
+            openCloseTextView.setLayoutParams(openCloseTextParams);
+            orderLayout.addView(openCloseTextView);
+        });
+
+
 
         // Add the order layout to the container
         ordersContainer.addView(orderLayout);
     }
+
     private void updateTimerTextViews(LinearLayout daysContainer, TextView daysTextView, TextView colon1, LinearLayout hoursContainer, TextView hoursTextView, TextView colon2, LinearLayout minutesContainer, TextView minutesTextView, TextView colon3, LinearLayout secondsContainer, TextView secondsTextView, long millisUntilFinished) {
         long seconds = millisUntilFinished / 1000;
         long minutes = seconds / 60;
