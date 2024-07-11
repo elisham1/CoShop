@@ -14,4 +14,6 @@
     <color name="default_color">#cccccccc</color>
     <color name="colorPrimary">#3F51B5</color>
     <color name="colorAccent">#FF4081</color>
+    <color name="colorSelected">#009FBD</color>
+    <color name="colorDefault">#CCCCCC</color>
 </resources>

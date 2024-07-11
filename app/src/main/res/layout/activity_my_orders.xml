@@ -7,49 +7,61 @@
     android:padding="16dp"
     tools:context=".MyOrdersActivity">
 
-    <TextView
-        android:id="@+id/textView4"
+    <!-- Sorting options -->
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textSize="30sp"
+        android:orientation="horizontal"
+        android:gravity="center">
+
+        <Button
+            android:id="@+id/btnAllOrders"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="match_parent"
+            android:text="All My Orders"
+            android:backgroundTint="@color/colorDefault"
+            android:backgroundTintMode="src_in"/>
+
+        <Button
+            android:id="@+id/btnOpenedOrders"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="match_parent"
+            android:text="Orders I Opened"
+            android:layout_marginStart="8dp"
+            android:layout_marginEnd="8dp"
+            android:backgroundTint="@color/colorDefault"
+            android:backgroundTintMode="src_in"/>
+
+        <Button
+            android:id="@+id/btnJoinedOrders"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="match_parent"
+            android:text="Orders I Joined"
+            android:backgroundTint="@color/colorDefault"
+            android:backgroundTintMode="src_in"/>
+    </LinearLayout>
+
+    <!-- Display selected sorting option -->
+    <TextView
+        android:id="@+id/textViewSelectedOption"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textSize="20sp"
         android:gravity="center"
-        android:text="My Orders" />
+        android:text="All Orders" />
 
-    <TextView
-        android:id="@+id/textView5"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:textSize="30sp"
-        android:text="Orders I Open:" />
-
-    <!-- Scroll view for orders I opened -->
+    <!-- Scroll view for orders -->
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:contentDescription="Scrollable area for orders I opened">
-        <LinearLayout
-            android:id="@+id/openedOrdersLayout"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical" />
-    </ScrollView>
+        android:contentDescription="Scrollable area for orders">
 
-    <TextView
-        android:id="@+id/textView6"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:textSize="30sp"
-        android:text="Orders I Joined:" />
-
-    <!-- Scroll view for orders I joined -->
-    <ScrollView
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:contentDescription="Scrollable area for orders I joined">
         <LinearLayout
-            android:id="@+id/joinedOrdersLayout"
+            android:id="@+id/ordersLayout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical" />
