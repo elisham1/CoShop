@@ -39,6 +39,7 @@ public class EmailLoginActivity extends AppCompatActivity {
     private boolean isPasswordVisible = false;
     ImageButton togglePasswordVisibility;
     private TextView forgotPasswordTextView;
+    boolean firstEntry = false;
 
     private FirebaseAuth mAuth;
     private FirebaseFirestore db;
@@ -67,6 +68,7 @@ public class EmailLoginActivity extends AppCompatActivity {
                 if (source.equals("EmailSignupActivity")) {
                     email = getIntent().getStringExtra("email");
                     emailEditText.setText(email);
+                    firstEntry = getIntent().getBooleanExtra("isFirstEntry", false);
                 }
             }
         }
@@ -204,14 +206,29 @@ public class EmailLoginActivity extends AppCompatActivity {
         email = emailEditText.getText().toString().trim();
         String password = passwordEditText.getText().toString().trim();
 
+
         mAuth.signInWithEmailAndPassword(email, password)
                 .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
                     @Override
                     public void onComplete(@NonNull Task<AuthResult> task) {
                         if (task.isSuccessful()) {
                             FirebaseUser user = mAuth.getCurrentUser();
-                            if (user != null && user.isEmailVerified()) {
-                                checkIfBlocked();
+                            if (user != null) {
+                                if (!user.isEmailVerified())
+                                {
+                                    showAlertDialog("Please verify your email before logging in");
+//                                    mAuth.signOut();
+//                                    return;
+                                }
+                                else {
+                                    if (firstEntry)
+                                    {
+                                        firstEntry();
+                                    }
+                                    else {
+                                        checkIfBlocked();
+                                    }
+                                }
                             } else {
                                 Toast.makeText(EmailLoginActivity.this, "Please verify your email before logging in", Toast.LENGTH_SHORT).show();
                             }
@@ -222,59 +239,72 @@ public class EmailLoginActivity extends AppCompatActivity {
                 });
     }
 
+    private void firstEntry() {
+        Intent intent = new Intent(EmailLoginActivity.this, CategoriesActivity.class);
+        intent.putExtra("email", email);
+        intent.putExtra("firstName", getIntent().getStringExtra("firstName"));
+        intent.putExtra("familyName", getIntent().getStringExtra("familyName"));
+        intent.putExtra("source", "EmailSignupActivity");
+        intent.putExtra("email_sign_up", true);
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+        startActivity(intent);
+        finish();
+    }
+
     private void checkIfBlocked() {
-        String userEmail = mAuth.getCurrentUser().getEmail();
-        DocumentReference userRef = db.collection("users").document(userEmail);
+        FirebaseUser user = mAuth.getCurrentUser();
+        if(user != null) {
+            String userEmail = user.getEmail();
+            if(userEmail != null) {
+                DocumentReference userRef = db.collection("users").document(userEmail);
+                userRef.get().addOnSuccessListener(documentSnapshot -> {
+                    if (documentSnapshot.exists()) {
+                        Boolean isBlocked = documentSnapshot.getBoolean("blocked");
+                        Timestamp blockedTimestamp = documentSnapshot.getTimestamp("blockedTimestamp");
 
-        userRef.get().addOnSuccessListener(documentSnapshot -> {
-            if (documentSnapshot.exists()) {
-                Boolean isBlocked = documentSnapshot.getBoolean("blocked");
-                Timestamp blockedTimestamp = documentSnapshot.getTimestamp("blockedTimestamp");
+                        if (isBlocked != null && isBlocked) {
+                            long blockDuration = 48 * 60 * 60 * 1000; // 48 hours in milliseconds
+                            long currentTime = System.currentTimeMillis();
+                            long blockedTime = blockedTimestamp != null ? blockedTimestamp.toDate().getTime() : 0;
 
-                if (isBlocked != null && isBlocked) {
-                    long blockDuration = 48 * 60 * 60 * 1000; // 48 hours in milliseconds
-                    long currentTime = System.currentTimeMillis();
-                    long blockedTime = blockedTimestamp != null ? blockedTimestamp.toDate().getTime() : 0;
-
-                    if (currentTime - blockedTime < blockDuration) {
-                        long remainingTime = blockDuration - (currentTime - blockedTime);
-                        long hoursRemaining = remainingTime / (60 * 60 * 1000);
-                        showAlertDialog("You are blocked from the app. It will be reviewed within " + hoursRemaining + " hours.");
-                    } else {
-                        showAlertDialog("You are blocked from the app. Please contact support at coshop.supp@gmail.com.");
+                            if (currentTime - blockedTime < blockDuration) {
+                                long remainingTime = blockDuration - (currentTime - blockedTime);
+                                long hoursRemaining = remainingTime / (60 * 60 * 1000);
+                                showAlertDialog("You are blocked from the app. It will be reviewed within " + hoursRemaining + " hours.");
+                                Intent intent = new Intent(EmailLoginActivity.this, MainActivity.class);
+                                startActivity(intent);
+                                finish();
+                            } else {
+                                showAlertDialog("You are blocked from the app. Please contact support at coshop.supp@gmail.com.");
+                                Intent intent = new Intent(EmailLoginActivity.this, MainActivity.class);
+                                startActivity(intent);
+                                finish();
+                            }
+                        } else {
+                            // User is not blocked, proceed to HomePageActivity
+                            Intent intent = new Intent(EmailLoginActivity.this, HomePageActivity.class);
+                            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+                            startActivity(intent);
+                            finish();
+                            }
+                        }
+                    else {
+                        firstEntry();
                     }
-                } else {
-                    // User is not blocked, proceed to HomePageActivity
-                    boolean isFirstEntry = getIntent().getBooleanExtra("isFirstEntry", false);
-                    Intent intent;
-                    if (isFirstEntry) {
-                        intent = new Intent(EmailLoginActivity.this, CategoriesActivity.class);
-                        intent.putExtra("email", email);
-                        intent.putExtra("firstName", getIntent().getStringExtra("firstName"));
-                        intent.putExtra("familyName", getIntent().getStringExtra("familyName"));
-                        intent.putExtra("source", "EmailSignupActivity");
-                        intent.putExtra("email_sign_up", true);
-                    } else {
-                        intent = new Intent(EmailLoginActivity.this, HomePageActivity.class);
-                    }
-                    intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
-                    startActivity(intent);
-                    finish();
-                }
+                }).addOnFailureListener(e -> {
+                    Toast.makeText(this, "Failed to check block status", Toast.LENGTH_SHORT).show();
+                });
             }
-        }).addOnFailureListener(e -> {
-            Toast.makeText(this, "Failed to check block status", Toast.LENGTH_SHORT).show();
-        });
+        }
     }
 
     private void showAlertDialog(String message) {
         new AlertDialog.Builder(this)
-                .setMessage(message)
-                .setPositiveButton(android.R.string.ok, (dialog, which) -> {
-                    mAuth.signOut();
-                    finish();
-                })
-                .setIcon(android.R.drawable.ic_dialog_alert)
-                .show();
+            .setMessage(message)
+            .setPositiveButton(android.R.string.ok, (dialog, which) -> {
+                mAuth.signOut();
+            })
+            .setIcon(android.R.drawable.ic_dialog_alert)
+            .show();
     }
 }

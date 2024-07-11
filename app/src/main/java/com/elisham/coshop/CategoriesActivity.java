@@ -116,6 +116,12 @@ public class CategoriesActivity extends AppCompatActivity {
                             }
                         });
             }
+            else {
+                email = currentUser.getEmail();
+                firstName = "User";
+                updateHelloUser();
+                displayCategories();
+            }
 
         }
     }
