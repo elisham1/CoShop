@@ -38,12 +38,14 @@ import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
 
+
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 public class MyOrdersActivity extends AppCompatActivity {
     private FirebaseFirestore db;
@@ -284,13 +286,51 @@ public class MyOrdersActivity extends AppCompatActivity {
             float distance = calculateDistance(userLocation, orderLocation);
             Timestamp timestamp = documentSnapshot.getTimestamp("time");
 
-            // Add the order to the layout
-            addOrderToLayout(orderId, titleOfOrder, location, numberOfPeopleInOrder, maxPeople, categorie, distance, timestamp);
+            // Calculate the average rating
+            calculateAndDisplayRatings(orderId, titleOfOrder, location, numberOfPeopleInOrder, maxPeople, categorie, distance, timestamp);
+
+
 
         }
     }
 
-    private void addOrderToLayout(String orderId, String titleOfOrder, String location, long numberOfPeopleInOrder, long maxPeople, String categorie, double distance, Timestamp timestamp) {
+    private void calculateAndDisplayRatings(String orderId, String titleOfOrder, String location,
+                    long numberOfPeopleInOrder, long maxPeople, String categorie,
+                            float distance, Timestamp timestamp){
+        db.collection("orders").document(orderId).get().addOnSuccessListener(documentSnapshot -> {
+            List<Map<String, Object>> peopleInOrder = (List<Map<String, Object>>) documentSnapshot.get("listPeopleInOrder");
+            db.collection("users").get().addOnSuccessListener(queryDocumentSnapshots -> {
+                List<Map<String, Object>> allRatings = new ArrayList<>();
+                int count = 0;
+                for (DocumentSnapshot userDoc : queryDocumentSnapshots) {
+                    String email = userDoc.getString("email");
+                    if (peopleInOrder.contains(email)) {
+                        List<Map<String, Object>> userRatings = (List<Map<String, Object>>) userDoc.get("ratings");
+                        if (userRatings != null) {
+                            allRatings.addAll(userRatings);
+                            count += userRatings.size();
+                        }
+                    }
+                }
+
+                double totalRating = 0;
+                for (Map<String, Object> rating : allRatings) {
+                    totalRating += (long) rating.get("rating");
+                }
+
+                double averageRating = count > 0 ? totalRating / count : 0;
+
+                // Add the order to the layout
+                addOrderToLayout(orderId, titleOfOrder, location, numberOfPeopleInOrder, maxPeople,
+                        categorie, distance, timestamp, averageRating);
+            });
+        });
+    }
+
+    private void addOrderToLayout(String orderId, String titleOfOrder,
+                                  String location, long numberOfPeopleInOrder,
+                                  long maxPeople, String categorie, double distance,
+                                  Timestamp timestamp, double averageRating) {
         // Create a new RelativeLayout for the order
         RelativeLayout orderLayout = new RelativeLayout(this);
         RelativeLayout.LayoutParams orderLayoutParams = new RelativeLayout.LayoutParams(
@@ -518,11 +558,58 @@ public class MyOrdersActivity extends AppCompatActivity {
             orderLayout.addView(openCloseTextView);
         });
 
+// Create and add the star rating
+        LinearLayout ratingLayout = new LinearLayout(this);
+        ratingLayout.setOrientation(LinearLayout.HORIZONTAL);
+        ratingLayout.setId(View.generateViewId());
+        RelativeLayout.LayoutParams ratingLayoutParams = new RelativeLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        ratingLayoutParams.addRule(RelativeLayout.BELOW, locationTextView.getId());
+        ratingLayoutParams.addRule(RelativeLayout.CENTER_HORIZONTAL);
+        ratingLayoutParams.setMargins(0, dpToPx(5), 0, 0); // Add margin from the edge
+        ratingLayout.setLayoutParams(ratingLayoutParams);
+        orderLayout.addView(ratingLayout);
 
+        // Add star images to the rating layout
+        addStarsToLayout(ratingLayout, averageRating);
 
         // Add the order layout to the container
         ordersLayout.addView(orderLayout);
     }
+
+    private void addStarsToLayout(LinearLayout layout, double rating) {
+        Log.d("MyOrdersActivityRating", "Rating: " + rating);
+        int fullStars = (int) rating;
+        boolean hasHalfStar = rating - fullStars >= 0.5;
+        int emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
+
+        int starSize = dpToPx(16); // Adjust the size of the stars here
+
+        for (int i = 0; i < fullStars; i++) {
+            ImageView star = new ImageView(this);
+            star.setImageResource(R.drawable.star);
+            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(starSize, starSize);
+            star.setLayoutParams(params);
+            layout.addView(star);
+        }
+
+        if (hasHalfStar) {
+            ImageView star = new ImageView(this);
+            star.setImageResource(R.drawable.star_half_yellow_icon);
+            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(starSize, starSize);
+            star.setLayoutParams(params);
+            layout.addView(star);
+        }
+
+        for (int i = 0; i < emptyStars; i++) {
+            ImageView star = new ImageView(this);
+            star.setImageResource(R.drawable.star_line_yellow_icon);
+            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(starSize, starSize);
+            star.setLayoutParams(params);
+            layout.addView(star);
+        }
+    }
+
 
     private int dpToPx(int dp) {
         return (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, dp, getResources().getDisplayMetrics());
