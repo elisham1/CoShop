@@ -3,7 +3,6 @@ package com.elisham.coshop;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.content.ContextCompat;
 
 import android.app.Dialog;
@@ -26,7 +25,6 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.ScrollView;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -44,7 +42,6 @@ import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.FirebaseFirestoreException;
 import com.google.firebase.firestore.GeoPoint;
 
 import java.io.IOException;
@@ -179,19 +176,8 @@ public class OrderDetailsActivity extends AppCompatActivity {
     }
 
     private void fetchAndShowUsersInOrder(List<String> userEmails, String orderCreatorEmail, String currentUserEmail) {
-        // Reorder list: current user first, then order creator, then others
-        List<String> reorderedList = new ArrayList<>();
-        if (userEmails.contains(currentUserEmail)) {
-            reorderedList.add(currentUserEmail);
-        }
-        if (!currentUserEmail.equals(orderCreatorEmail)) {
-            reorderedList.add(orderCreatorEmail); // Add order creator if not the same as current user
-        }
-        for (String email : userEmails) {
-            if (!email.equals(currentUserEmail) && !email.equals(orderCreatorEmail)) {
-                reorderedList.add(email);
-            }
-        }
+        //Reorder list current user first, then order creator, then others
+        List<String> reorderedList = getReorderedList(userEmails, orderCreatorEmail, currentUserEmail);
 
         // Create a list of tasks for fetching user details
         List<Task<DocumentSnapshot>> userDetailTasks = new ArrayList<>();
@@ -209,6 +195,9 @@ public class OrderDetailsActivity extends AppCompatActivity {
                     String firstName = documentSnapshot.getString("first name");
                     String familyName = documentSnapshot.getString("family name");
                     String email = documentSnapshot.getId();
+
+                    //computing user rating
+                    String userRating;
                     List<Map<String, Object>> ratings = (List<Map<String, Object>>) documentSnapshot.get("ratings");
 
                     double averageRating = 0.0;
@@ -220,7 +209,6 @@ public class OrderDetailsActivity extends AppCompatActivity {
                         averageRating = (double) totalRating / ratings.size();
                     }
 
-                    String userRating;
                     if (averageRating == (long) averageRating) {
                         userRating = String.format(Locale.getDefault(), "%.0f", averageRating);
                     } else {
@@ -228,7 +216,7 @@ public class OrderDetailsActivity extends AppCompatActivity {
                     }
                     String profilePicUrl = documentSnapshot.getString("profileImageUrl");
                     boolean isCurrentUser = documentSnapshot.getId().equals(currentUserEmail);
-                    boolean isOrderCreator = documentSnapshot.getId().equals(orderCreatorEmail) && !isCurrentUser;
+                    boolean isOrderCreator = documentSnapshot.getId().equals(orderCreatorEmail);
 
                     userDetailList.add(new UserDetail(email, firstName, familyName, userRating, profilePicUrl, isOrderCreator, isCurrentUser));
                 }
@@ -238,6 +226,23 @@ public class OrderDetailsActivity extends AppCompatActivity {
         }).addOnFailureListener(e -> {
             Toast.makeText(this, "Failed to fetch user details", Toast.LENGTH_SHORT).show();
         });
+    }
+
+    //Reorder list current user first, then order creator, then others
+    private static @NonNull List<String> getReorderedList(List<String> userEmails, String orderCreatorEmail, String currentUserEmail) {
+        List<String> reorderedList = new ArrayList<>();
+        if (userEmails.contains(currentUserEmail)) {
+            reorderedList.add(currentUserEmail);
+        }
+        if (!currentUserEmail.equals(orderCreatorEmail)) {
+            reorderedList.add(orderCreatorEmail); // Add order creator if not the same as current user
+        }
+        for (String email : userEmails) {
+            if (!email.equals(currentUserEmail) && !email.equals(orderCreatorEmail)) {
+                reorderedList.add(email);
+            }
+        }
+        return reorderedList;
     }
 
     private void showUsersInOrder(List<UserDetail> userDetailList) {
@@ -257,7 +262,6 @@ public class OrderDetailsActivity extends AppCompatActivity {
             toggleUsersTextView.setBackgroundResource(R.drawable.border);
             toggleUsersTextView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 20); // Adjust the text size to match user views
             toggleUsersTextView.setPadding(16, 16, 16, 16); // Adjust padding to match user views
-//            toggleUsersTextView.setBackgroundResource(R.drawable.user_item_background); // Ensure the background matches the user views
             toggleUsersTextView.setGravity(Gravity.CENTER); // Center the text
 
             toggleUsersTextView.setOnClickListener(v -> {
@@ -370,7 +374,7 @@ public class OrderDetailsActivity extends AppCompatActivity {
                 List<Map<String, Object>> ratings = (List<Map<String, Object>>) documentSnapshot.get("ratings");
                 if (ratings != null) {
                     for (Map<String, Object> rating : ratings) {
-                        if (rating.get("email").equals(currentUser.getEmail())) {
+                        if (rating.get("email").equals(currentUser.getEmail()) && rating.get("order").equals(orderId)) {
                             selectedRating[0] = ((Long) rating.get("rating")).intValue();
                             updateStarUI(stars, selectedRating[0]);
                             break;
@@ -383,19 +387,19 @@ public class OrderDetailsActivity extends AppCompatActivity {
         for (int i = 0; i < stars.length; i++) {
             final int starIndex = i;
             stars[i].setOnClickListener(v -> {
-                selectedRating[0] = starIndex + 1;
+                if (selectedRating[0] == starIndex + 1) {
+                    selectedRating[0] = 0;
+                } else {
+                    selectedRating[0] = starIndex + 1;
+                }
                 updateStarUI(stars, selectedRating[0]);
             });
         }
 
         Button submitButton = dialog.findViewById(R.id.submitButton);
         submitButton.setOnClickListener(v -> {
-            if (selectedRating[0] > 0) {
-                updateRating(email, selectedRating[0]);
-                dialog.dismiss();
-            } else {
-                Toast.makeText(this, "Please select a rating", Toast.LENGTH_SHORT).show();
-            }
+            updateRating(email, orderId, selectedRating[0]);
+            dialog.dismiss();
         });
 
         dialog.show();
@@ -524,7 +528,7 @@ public class OrderDetailsActivity extends AppCompatActivity {
         }
     }
 
-    private void updateRating(String email, int newRating) {
+    private void updateRating(String email, String order, int newRating) {
         DocumentReference userRef = db.collection("users").document(email);
 
         db.runTransaction(transaction -> {
@@ -538,7 +542,7 @@ public class OrderDetailsActivity extends AppCompatActivity {
 
             boolean ratingExists = false;
             for (Map<String, Object> rating : ratings) {
-                if (rating.get("email").equals(currentUser.getEmail())) {
+                if (rating.get("email").equals(currentUser.getEmail()) && rating.get("order").equals(order)) {
                     ratingExists = true;
                     rating.put("rating", newRating); // Update existing rating
                     break;
@@ -549,6 +553,7 @@ public class OrderDetailsActivity extends AppCompatActivity {
                 // Add new rating if not exists
                 Map<String, Object> newRatingMap = new HashMap<>();
                 newRatingMap.put("email", currentUser.getEmail());
+                newRatingMap.put("order", order);
                 newRatingMap.put("rating", newRating);
                 ratings.add(newRatingMap);
             }

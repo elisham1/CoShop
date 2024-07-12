@@ -63,7 +63,7 @@ public class EmailSignupActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 signUpUser();
-                sendVerificationEmail();
+//                sendVerificationEmail();
             }
         });
     }
@@ -153,15 +153,28 @@ public class EmailSignupActivity extends AppCompatActivity {
                             alert.show();
                         } else {
                             if (task.getException().getMessage().contains("already in use by another account")) {
-                                Intent intent = new Intent(EmailSignupActivity.this, EmailLoginActivity.class);
-                                intent.putExtra("source", "EmailSignupActivity");
-                                intent.putExtra("isFirstEntry", false);
-                                intent.putExtra("email", email);
-                                startActivity(intent);
-                                finish();
+                                // Show a dialog asking the user to verify their email
+                                AlertDialog.Builder builder = new AlertDialog.Builder(EmailSignupActivity.this);
+                                builder.setMessage("Already in use by another account, go to login.")
+                                        .setCancelable(false)
+                                        .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                                            public void onClick(DialogInterface dialog, int id) {
+                                                dialog.dismiss();
+                                                Intent intent = new Intent(EmailSignupActivity.this, EmailLoginActivity.class);
+                                                intent.putExtra("source", "EmailSignupActivity");
+                                                intent.putExtra("isFirstEntry", false);
+                                                intent.putExtra("email", email);
+                                                startActivity(intent);
+                                                finish();
+                                            }
+                                        });
+                                AlertDialog alert = builder.create();
+                                alert.show();
+
                             } else {
                                 // If sign in fails, display a message to the user.
                                 Log.w("FirebaseAuth", "createUserWithEmail:failure", task.getException());
+                                showAlertDialog("Signup failed: " + task.getException().getMessage());
                                 Toast.makeText(EmailSignupActivity.this, "Authentication Failed: " + task.getException().getMessage(), Toast.LENGTH_LONG).show();
                                 Intent intent = new Intent(EmailSignupActivity.this, MainActivity.class);
                                 startActivity(intent);
