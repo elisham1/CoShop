@@ -2,6 +2,8 @@ package com.elisham.coshop;
 
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.view.ViewCompat;
+
 import android.content.Intent;
 import android.graphics.Color;
 import android.location.Address;
@@ -178,25 +180,37 @@ public class HomePageActivity extends AppCompatActivity {
         db.collection("orders").document(orderId).get().addOnSuccessListener(documentSnapshot -> {
             List<Map<String, Object>> peopleInOrder = (List<Map<String, Object>>) documentSnapshot.get("listPeopleInOrder");
             db.collection("users").get().addOnSuccessListener(queryDocumentSnapshots -> {
-                List<Map<String, Object>> allRatings = new ArrayList<>();
+                List<Double> allRatings = new ArrayList<>();
                 int count = 0;
+                double temp_rating = 0.0;
                 for (DocumentSnapshot userDoc : queryDocumentSnapshots) {
                     String email = userDoc.getId();
                     if (peopleInOrder.contains(email)) {
                         List<Map<String, Object>> userRatings = (List<Map<String, Object>>) userDoc.get("ratings");
                         if (userRatings != null) {
-                            allRatings.addAll(userRatings);
-                            count += userRatings.size();
+                            if (!userRatings.isEmpty()) {
+                                for (Map<String, Object> rating : userRatings) {
+                                    Object ratingValue = rating.get("rating");
+                                    if (ratingValue instanceof Double) {
+                                        temp_rating = (Double) ratingValue;
+                                    } else if (ratingValue instanceof Long) {
+                                        temp_rating = ((Long) ratingValue).doubleValue();
+                                    }
+                                }
+                                allRatings.add(temp_rating/userRatings.size());
+                            } else {
+                                allRatings.add(0.0);
+                            }
+                            Log.d("Ratings" , count + "");
                         }
                     }
 
                 }
                 double totalRating = 0;
-                for (Map<String, Object> rating : allRatings) {
-
-                    totalRating += (long) rating.get("rating");
+                for (double rating : allRatings) {
+                    totalRating += rating;
                 }
-                double averageRating = count > 0 ? totalRating / count : 0;
+                double averageRating = totalRating / peopleInOrder.size();
 
                 // Add the order to the layout
                 addOrderToLayout(orderId, titleOfOrder, location, numberOfPeopleInOrder, maxPeople,
@@ -464,6 +478,9 @@ public class HomePageActivity extends AppCompatActivity {
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
         timerView.setLayoutParams(timerViewParams);
 
+        // Ensure the timer layout is left-to-right
+        ViewCompat.setLayoutDirection(timerView, ViewCompat.LAYOUT_DIRECTION_LTR);
+
         rightSquareLayout.addView(timerView);
 
         // Get references to timer text views
@@ -576,6 +593,9 @@ public class HomePageActivity extends AppCompatActivity {
         ratingLayoutParams.setMargins(0, dpToPx(5), 0, 0); // Add margin from the edge
         ratingLayout.setLayoutParams(ratingLayoutParams);
         orderLayout.addView(ratingLayout);
+
+        // Ensure the star rating layout is left-to-right
+        ViewCompat.setLayoutDirection(ratingLayout, ViewCompat.LAYOUT_DIRECTION_LTR);
 
         // Add star images to the rating layout
         addStarsToLayout(ratingLayout, averageRating);
