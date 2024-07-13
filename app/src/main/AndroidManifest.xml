@@ -61,6 +61,7 @@
         <activity
             android:name=".FilterActivity"
             android:exported="false" />
+
         <activity
             android:name=".HomePageActivity"
             android:exported="false" />

@@ -2,7 +2,6 @@ package com.elisham.coshop;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
-import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.app.DatePickerDialog;
@@ -18,7 +17,6 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ArrayAdapter;
-import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.DatePicker;
 import android.widget.EditText;
@@ -52,7 +50,7 @@ public class FilterActivity extends AppCompatActivity {
     private ListView categoryListView;
     private FirebaseFirestore db;
     private ArrayAdapter<String> adapter;
-    private EditText timeEditText;
+    private Calendar selectedDate;
     private Calendar selectedTime;
     private RangeSlider rangeSlider;
     private EditText unlimitEditText;
@@ -75,45 +73,15 @@ public class FilterActivity extends AppCompatActivity {
         setContentView(R.layout.activity_filter);
         menuUtils = new MenuUtils(this);
 
-        timeEditText = findViewById(R.id.time);
-        timeEditText.setOnClickListener(this::showTimePickerDialog);
-        ImageButton clearTimeButton = findViewById(R.id.clear_time_button);
-
-        LinearLayout timeRow = findViewById(R.id.time_row);
-        timeRow.setOnClickListener(this::showTimePickerDialog);
-
-        clearTimeButton.setOnClickListener(v -> {
-            timeEditText.setText("");
-            clearTimeButton.setVisibility(View.GONE);
-        });
-
+        searchAddressText = findViewById(R.id.search_address_text);
+        searchAddressButton = findViewById(R.id.search_address_button);
+        editAddressButton = findViewById(R.id.edit_address_button);
         editTextURL = findViewById(R.id.editTextText2);
         clearURLButton = findViewById(R.id.clear_url_button);
-        clearURLButton.setOnClickListener(v -> editTextURL.setText(""));
-
-        editTextURL.addTextChangedListener(new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
-                clearURLButton.setVisibility(s.length() > 0 ? View.VISIBLE : View.GONE);
-                lastURL = s.toString();
-            }
-
-            @Override
-            public void afterTextChanged(Editable s) {}
-        });
-
-        LinearLayout searchRow = findViewById(R.id.search_row);
-        searchRow.setOnClickListener(v -> {
-            Intent intent = new Intent(FilterActivity.this, LocationWindow.class);
-            if (lastAddress != null && !lastAddress.isEmpty() && lastDistance > 0) {
-                intent.putExtra("address", lastAddress);
-                intent.putExtra("distance", lastDistance);
-            }
-            locationWindowLauncher.launch(intent);
-        });
+        rangeSlider = findViewById(R.id.rangeSliderPeople);
+        unlimitEditText = findViewById(R.id.unlimit_value);
+        checkBoxLimit = findViewById(R.id.checkBoxLimit);
+        checkBoxUnlimited = findViewById(R.id.checkBoxUnlimited);
 
         locationWindowLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
@@ -138,10 +106,6 @@ public class FilterActivity extends AppCompatActivity {
 
         ImageButton closeButton = findViewById(R.id.close_button);
         closeButton.setOnClickListener(v -> finish());
-
-        searchAddressText = findViewById(R.id.search_address_text);
-        searchAddressButton = findViewById(R.id.search_address_button);
-        editAddressButton = findViewById(R.id.edit_address_button);
 
         searchAddressButton.setOnClickListener(v -> {
             if (searchAddressButton.getTag() != null && searchAddressButton.getTag().equals("clear")) {
@@ -171,14 +135,31 @@ public class FilterActivity extends AppCompatActivity {
             public void afterTextChanged(Editable s) {}
         });
 
-        db = FirebaseFirestore.getInstance();
-        categoryListView = findViewById(R.id.category_list);
+        editTextURL.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
 
-        rangeSlider = findViewById(R.id.rangeSliderPeople);
-        unlimitEditText = findViewById(R.id.unlimit_value);
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                clearURLButton.setVisibility(s.length() > 0 ? View.VISIBLE : View.GONE);
+                lastURL = s.toString();
+            }
 
-        checkBoxLimit = findViewById(R.id.checkBoxLimit);
-        checkBoxUnlimited = findViewById(R.id.checkBoxUnlimited);
+            @Override
+            public void afterTextChanged(Editable s) {}
+        });
+
+        LinearLayout searchRow = findViewById(R.id.search_row);
+        searchRow.setOnClickListener(v -> {
+            Intent intent = new Intent(FilterActivity.this, LocationWindow.class);
+            if (lastAddress != null && !lastAddress.isEmpty() && lastDistance > 0) {
+                intent.putExtra("address", lastAddress);
+                intent.putExtra("distance", lastDistance);
+            }
+            locationWindowLauncher.launch(intent);
+        });
+
+        clearURLButton.setOnClickListener(v -> editTextURL.setText(""));
 
         checkBoxLimit.setOnCheckedChangeListener((buttonView, isChecked) -> {
             if (isChecked) {
@@ -201,46 +182,27 @@ public class FilterActivity extends AppCompatActivity {
 
         rangeSlider.setValueFrom(2);
         rangeSlider.setValueTo(1000);
-
         rangeSlider.setLabelFormatter(value -> String.valueOf((int) value));
-
         rangeSlider.addOnChangeListener((slider, value, fromUser) -> {
             if (fromUser) {
                 unlimitEditText.setText(String.valueOf((int) value));
             }
         });
 
+        db = FirebaseFirestore.getInstance();
+        categoryListView = findViewById(R.id.category_list);
+
         readCategoriesFromFireStore();
 
-        locationWindowLauncher = registerForActivityResult(
-                new ActivityResultContracts.StartActivityForResult(),
-                result -> {
-                    if (result.getResultCode() == RESULT_OK && result.getData() != null) {
-                        lastAddress = result.getData().getStringExtra("address");
-                        lastDistance = result.getData().getIntExtra("distance", 0);
-                        lastLatitude = result.getData().getDoubleExtra("latitude", 0);
-                        lastLongitude = result.getData().getDoubleExtra("longitude", 0);
+        ImageButton dateIcon = findViewById(R.id.date_icon);
+        TextView dateText = findViewById(R.id.date_text);
+        dateIcon.setOnClickListener(this::showDatePickerDialog);
+        dateText.setOnClickListener(this::showDatePickerDialog);
 
-                        if (lastAddress != null) {
-                            String displayText = String.format(Locale.getDefault(), "%s, %d KM", lastAddress, lastDistance);
-                            searchAddressText.setText(displayText);
-                            searchAddressButton.setVisibility(View.VISIBLE);
-                            searchAddressButton.setTag("clear");
-                            searchAddressButton.setImageResource(R.drawable.clear);
-                            editAddressButton.setVisibility(View.VISIBLE);
-                        }
-                    }
-                }
-        );
-
-        editAddressButton.setOnClickListener(v -> {
-            Intent intent = new Intent(FilterActivity.this, LocationWindow.class);
-            if (lastAddress != null && !lastAddress.isEmpty() && lastDistance > 0) {
-                intent.putExtra("address", lastAddress);
-                intent.putExtra("distance", lastDistance);
-            }
-            locationWindowLauncher.launch(intent);
-        });
+        ImageButton timeIcon = findViewById(R.id.time_icon);
+        TextView timeText = findViewById(R.id.time_text);
+        timeIcon.setOnClickListener(this::showTimePickerDialog);
+        timeText.setOnClickListener(this::showTimePickerDialog);
     }
 
     private void toggleSearchClearIcon() {
@@ -288,8 +250,18 @@ public class FilterActivity extends AppCompatActivity {
         boolean filterBySupplied = ((CheckBox) findViewById(R.id.checkBoxSupplied)).isChecked();
         boolean filterByPeopleLimit = checkBoxLimit.isChecked();
         boolean filterByUnlimitedPeople = checkBoxUnlimited.isChecked();
-        boolean filterByTime = selectedTime != null;
+        boolean filterByTime = selectedTime != null && selectedDate != null;
         int peopleLimit = 0;
+
+        if (selectedDate != null && selectedTime == null) {
+            Toast.makeText(this, "You need to select a time", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        if (selectedTime != null && selectedDate == null) {
+            Toast.makeText(this, "You need to select a date", Toast.LENGTH_SHORT).show();
+            return;
+        }
 
         if (filterByPeopleLimit) {
             String peopleLimitStr = unlimitEditText.getText().toString().trim();
@@ -305,11 +277,25 @@ public class FilterActivity extends AppCompatActivity {
             return;
         }
 
+        if (selectedDate != null && selectedTime != null) {
+            Calendar selectedDateTime = Calendar.getInstance();
+            selectedDateTime.set(Calendar.YEAR, selectedDate.get(Calendar.YEAR));
+            selectedDateTime.set(Calendar.MONTH, selectedDate.get(Calendar.MONTH));
+            selectedDateTime.set(Calendar.DAY_OF_MONTH, selectedDate.get(Calendar.DAY_OF_MONTH));
+            selectedDateTime.set(Calendar.HOUR_OF_DAY, selectedTime.get(Calendar.HOUR_OF_DAY));
+            selectedDateTime.set(Calendar.MINUTE, selectedTime.get(Calendar.MINUTE));
+
+            if (selectedDateTime.before(Calendar.getInstance())) {
+                Toast.makeText(this, "The selected date and time have already passed", Toast.LENGTH_SHORT).show();
+                return;
+            }
+        }
+
         if (filterByURLOrString) {
             if (isValidURL(urlOrString)) {
-                fetchOrdersByUrl(urlOrString, address, selectedCategories, filterByCategory, filterByConsumer, filterBySupplied, filterByPeopleLimit, peopleLimit, filterByUnlimitedPeople, filterByTime, selectedTime);
+                fetchOrdersByUrl(urlOrString, address, selectedCategories, filterByCategory, filterByConsumer, filterBySupplied, filterByPeopleLimit, peopleLimit, filterByUnlimitedPeople, filterByTime, selectedDate, selectedTime);
             } else if (isValidString(urlOrString)) {
-                fetchOrdersByString(urlOrString, address, selectedCategories, filterByCategory, filterByConsumer, filterBySupplied, filterByPeopleLimit, peopleLimit, filterByUnlimitedPeople, filterByTime, selectedTime);
+                fetchOrdersByString(urlOrString, address, selectedCategories, filterByCategory, filterByConsumer, filterBySupplied, filterByPeopleLimit, peopleLimit, filterByUnlimitedPeople, filterByTime, selectedDate, selectedTime);
             } else {
                 Toast.makeText(this, "Invalid URL or String", Toast.LENGTH_SHORT).show();
             }
@@ -322,9 +308,9 @@ public class FilterActivity extends AppCompatActivity {
                 double userLat = lastLatitude;
                 double userLon = lastLongitude;
 
-                fetchOrders(userLat, userLon, lastDistance, selectedCategories, filterByCategory, filterByConsumer, filterBySupplied, filterByPeopleLimit, peopleLimit, filterByUnlimitedPeople, filterByTime, selectedTime);
+                fetchOrders(userLat, userLon, lastDistance, selectedCategories, filterByCategory, filterByConsumer, filterBySupplied, filterByPeopleLimit, peopleLimit, filterByUnlimitedPeople, filterByTime, selectedDate, selectedTime);
             } else {
-                fetchOrders(0, 0, 0, selectedCategories, filterByCategory, filterByConsumer, filterBySupplied, filterByPeopleLimit, peopleLimit, filterByUnlimitedPeople, filterByTime, selectedTime);
+                fetchOrders(0, 0, 0, selectedCategories, filterByCategory, filterByConsumer, filterBySupplied, filterByPeopleLimit, peopleLimit, filterByUnlimitedPeople, filterByTime, selectedDate, selectedTime);
             }
         }
     }
@@ -350,16 +336,13 @@ public class FilterActivity extends AppCompatActivity {
         checkBoxUnlimited.setChecked(false);
 
         // Reset RangeSlider and EditText for people limit
-        RangeSlider rangeSlider = findViewById(R.id.rangeSliderPeople);
         rangeSlider.setValues(2f);
 
-        EditText unlimitEditText = findViewById(R.id.unlimit_value);
         unlimitEditText.setText("1000");
         rangeSlider.setEnabled(false);
         unlimitEditText.setEnabled(false);
 
         // Reset category ListView
-        ListView categoryListView = findViewById(R.id.category_list);
         for (int i = 0; i < categoryListView.getCount(); i++) {
             categoryListView.setItemChecked(i, false);
         }
@@ -370,9 +353,15 @@ public class FilterActivity extends AppCompatActivity {
         lastLongitude = 0;
         lastDistance = 0;
 
-        // Reset the time and date
-        timeEditText.setText("");
-        findViewById(R.id.clear_time_button).setVisibility(View.GONE);
+        // Reset the date and time
+        TextView dateText = findViewById(R.id.date_text);
+        dateText.setText("Select Date");
+
+        TextView timeText = findViewById(R.id.time_text);
+        timeText.setText("Select Time");
+
+        selectedDate = null;
+        selectedTime = null;
     }
 
     private boolean isValidURL(String url) {
@@ -383,6 +372,7 @@ public class FilterActivity extends AppCompatActivity {
     private boolean isValidString(String str) {
         return str.matches("[a-zA-Z ]+");
     }
+
     private String getDomainName(String url) {
         try {
             java.net.URL netUrl = new java.net.URL(url);
@@ -392,8 +382,7 @@ public class FilterActivity extends AppCompatActivity {
         }
     }
 
-
-    private void fetchOrders(double userLat, double userLon, int distance, List<String> selectedCategories, boolean filterByCategory, boolean filterByConsumer, boolean filterBySupplied, boolean filterByPeopleLimit, int peopleLimit, boolean filterByUnlimitedPeople, boolean filterByTime, Calendar selectedTime) {
+    private void fetchOrders(double userLat, double userLon, int distance, List<String> selectedCategories, boolean filterByCategory, boolean filterByConsumer, boolean filterBySupplied, boolean filterByPeopleLimit, int peopleLimit, boolean filterByUnlimitedPeople, boolean filterByTime, Calendar selectedDate, Calendar selectedTime) {
         CollectionReference ordersRef = db.collection("orders");
         ordersRef.get().addOnCompleteListener(task -> {
             if (task.isSuccessful()) {
@@ -467,9 +456,16 @@ public class FilterActivity extends AppCompatActivity {
                     }
 
                     boolean matchesTime = true;
-                    if (filterByTime) {
+                    if (filterByTime && selectedDate != null && selectedTime != null) {
+                        Calendar selectedDateTime = Calendar.getInstance();
+                        selectedDateTime.set(Calendar.YEAR, selectedDate.get(Calendar.YEAR));
+                        selectedDateTime.set(Calendar.MONTH, selectedDate.get(Calendar.MONTH));
+                        selectedDateTime.set(Calendar.DAY_OF_MONTH, selectedDate.get(Calendar.DAY_OF_MONTH));
+                        selectedDateTime.set(Calendar.HOUR_OF_DAY, selectedTime.get(Calendar.HOUR_OF_DAY));
+                        selectedDateTime.set(Calendar.MINUTE, selectedTime.get(Calendar.MINUTE));
+
                         long orderTimeInMillis = documentSnapshot.getTimestamp("time").toDate().getTime();
-                        matchesTime = orderTimeInMillis <= selectedTime.getTimeInMillis() && orderTimeInMillis > currentTimeMillis;
+                        matchesTime = orderTimeInMillis <= selectedDateTime.getTimeInMillis() && orderTimeInMillis > currentTimeMillis;
                     } else {
                         long orderTimeInMillis = documentSnapshot.getTimestamp("time").toDate().getTime();
                         matchesTime = orderTimeInMillis > currentTimeMillis; // בדיקה האם הזמן עבר
@@ -499,8 +495,7 @@ public class FilterActivity extends AppCompatActivity {
         });
     }
 
-
-    private void fetchOrdersByUrl(String url, String address, List<String> selectedCategories, boolean filterByCategory, boolean filterByConsumer, boolean filterBySupplied, boolean filterByPeopleLimit, int peopleLimit, boolean filterByUnlimitedPeople, boolean filterByTime, Calendar selectedTime) {
+    private void fetchOrdersByUrl(String url, String address, List<String> selectedCategories, boolean filterByCategory, boolean filterByConsumer, boolean filterBySupplied, boolean filterByPeopleLimit, int peopleLimit, boolean filterByUnlimitedPeople, boolean filterByTime, Calendar selectedDate, Calendar selectedTime) {
         String domainName = getDomainName(url);
         if (domainName == null) {
             Toast.makeText(this, "Invalid URL", Toast.LENGTH_SHORT).show();
@@ -562,9 +557,16 @@ public class FilterActivity extends AppCompatActivity {
                     }
 
                     boolean matchesTime = true;
-                    if (filterByTime) {
+                    if (filterByTime && selectedDate != null && selectedTime != null) {
+                        Calendar selectedDateTime = Calendar.getInstance();
+                        selectedDateTime.set(Calendar.YEAR, selectedDate.get(Calendar.YEAR));
+                        selectedDateTime.set(Calendar.MONTH, selectedDate.get(Calendar.MONTH));
+                        selectedDateTime.set(Calendar.DAY_OF_MONTH, selectedDate.get(Calendar.DAY_OF_MONTH));
+                        selectedDateTime.set(Calendar.HOUR_OF_DAY, selectedTime.get(Calendar.HOUR_OF_DAY));
+                        selectedDateTime.set(Calendar.MINUTE, selectedTime.get(Calendar.MINUTE));
+
                         long orderTimeInMillis = documentSnapshot.getTimestamp("time").toDate().getTime();
-                        matchesTime = orderTimeInMillis <= selectedTime.getTimeInMillis() && orderTimeInMillis > currentTimeMillis;
+                        matchesTime = orderTimeInMillis <= selectedDateTime.getTimeInMillis() && orderTimeInMillis > currentTimeMillis;
                     } else {
                         long orderTimeInMillis = documentSnapshot.getTimestamp("time").toDate().getTime();
                         matchesTime = orderTimeInMillis > currentTimeMillis; // בדיקה האם הזמן עבר
@@ -594,8 +596,7 @@ public class FilterActivity extends AppCompatActivity {
         });
     }
 
-
-    private void fetchOrdersByString(String str, String address, List<String> selectedCategories, boolean filterByCategory, boolean filterByConsumer, boolean filterBySupplied, boolean filterByPeopleLimit, int peopleLimit, boolean filterByUnlimitedPeople, boolean filterByTime, Calendar selectedTime) {
+    private void fetchOrdersByString(String str, String address, List<String> selectedCategories, boolean filterByCategory, boolean filterByConsumer, boolean filterBySupplied, boolean filterByPeopleLimit, int peopleLimit, boolean filterByUnlimitedPeople, boolean filterByTime, Calendar selectedDate, Calendar selectedTime) {
         CollectionReference ordersRef = db.collection("orders");
         ordersRef.whereEqualTo("URL", str).get().addOnCompleteListener(task -> {
             if (task.isSuccessful()) {
@@ -651,9 +652,16 @@ public class FilterActivity extends AppCompatActivity {
                     }
 
                     boolean matchesTime = true;
-                    if (filterByTime) {
+                    if (filterByTime && selectedDate != null && selectedTime != null) {
+                        Calendar selectedDateTime = Calendar.getInstance();
+                        selectedDateTime.set(Calendar.YEAR, selectedDate.get(Calendar.YEAR));
+                        selectedDateTime.set(Calendar.MONTH, selectedDate.get(Calendar.MONTH));
+                        selectedDateTime.set(Calendar.DAY_OF_MONTH, selectedDate.get(Calendar.DAY_OF_MONTH));
+                        selectedDateTime.set(Calendar.HOUR_OF_DAY, selectedTime.get(Calendar.HOUR_OF_DAY));
+                        selectedDateTime.set(Calendar.MINUTE, selectedTime.get(Calendar.MINUTE));
+
                         long orderTimeInMillis = documentSnapshot.getTimestamp("time").toDate().getTime();
-                        matchesTime = orderTimeInMillis <= selectedTime.getTimeInMillis() && orderTimeInMillis > currentTimeMillis;
+                        matchesTime = orderTimeInMillis <= selectedDateTime.getTimeInMillis() && orderTimeInMillis > currentTimeMillis;
                     } else {
                         long orderTimeInMillis = documentSnapshot.getTimestamp("time").toDate().getTime();
                         matchesTime = orderTimeInMillis > currentTimeMillis; // בדיקה האם הזמן עבר
@@ -695,50 +703,83 @@ public class FilterActivity extends AppCompatActivity {
         return selectedCategories;
     }
 
+    public void showDatePickerDialog(View view) {
+        Locale.setDefault(Locale.ENGLISH);
+        Calendar calendar = Calendar.getInstance();
+        DatePickerDialog datePickerDialog = new DatePickerDialog(
+                FilterActivity.this,
+                android.R.style.Theme_Holo_Light_Dialog_MinWidth, // ערכת נושא שתבטיח שהדיאלוג יהיה רחב מספיק
+                (view1, year, month, dayOfMonth) -> {
+                    Calendar selectedDate = Calendar.getInstance();
+                    selectedDate.set(year, month, dayOfMonth);
+
+                    // אם כבר נבחרה שעה, מוודאים שהשעה לא בעבר
+                    if (this.selectedTime != null) {
+                        selectedDate.set(Calendar.HOUR_OF_DAY, this.selectedTime.get(Calendar.HOUR_OF_DAY));
+                        selectedDate.set(Calendar.MINUTE, this.selectedTime.get(Calendar.MINUTE));
+                    }
+
+                    if (selectedDate.before(Calendar.getInstance())) {
+                        Toast.makeText(FilterActivity.this, "You can't choose a past date", Toast.LENGTH_SHORT).show();
+                    } else {
+                        this.selectedDate = selectedDate;
+                        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+                        String dateString = sdf.format(selectedDate.getTime());
+
+                        TextView dateText = findViewById(R.id.date_text);
+                        dateText.setText(dateString);
+
+                        ImageButton dateIcon = findViewById(R.id.date_icon);
+                        dateIcon.setImageResource(R.drawable.baseline_calendar_month_24);
+                    }
+                },
+                calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH)
+        );
+        datePickerDialog.show();
+    }
+
+    public void showTimePickerDialog(View view) {
+        Locale.setDefault(Locale.ENGLISH);
+        Calendar calendar = Calendar.getInstance();
+
+        TimePickerDialog timePickerDialog = new TimePickerDialog(
+                FilterActivity.this,
+                android.R.style.Theme_Holo_Light_Dialog_MinWidth, // ערכת נושא שתבטיח שהדיאלוג יהיה רחב מספיק
+                (view1, hourOfDay, minute) -> {
+                    Calendar selectedTime = Calendar.getInstance();
+                    selectedTime.set(Calendar.HOUR_OF_DAY, hourOfDay);
+                    selectedTime.set(Calendar.MINUTE, minute);
+
+                    // אם כבר נבחר תאריך, מוודאים שהתאריך והשעה לא בעבר
+                    if (this.selectedDate != null) {
+                        selectedTime.set(Calendar.YEAR, this.selectedDate.get(Calendar.YEAR));
+                        selectedTime.set(Calendar.MONTH, this.selectedDate.get(Calendar.MONTH));
+                        selectedTime.set(Calendar.DAY_OF_MONTH, this.selectedDate.get(Calendar.DAY_OF_MONTH));
+                    }
+
+                    if (selectedTime.before(Calendar.getInstance())) {
+                        Toast.makeText(FilterActivity.this, "You cannot select a past time", Toast.LENGTH_SHORT).show();
+                    } else {
+                        this.selectedTime = selectedTime;
+                        SimpleDateFormat sdf = new SimpleDateFormat("HH:mm", Locale.getDefault());
+                        String timeString = sdf.format(selectedTime.getTime());
+
+                        TextView timeText = findViewById(R.id.time_text);
+                        timeText.setText(timeString);
+
+                        ImageButton timeIcon = findViewById(R.id.time_icon);
+                        timeIcon.setImageResource(R.drawable.ic_baseline_access_time_24);
+                    }
+                },
+                calendar.get(Calendar.HOUR_OF_DAY), calendar.get(Calendar.MINUTE), true
+        );
+        timePickerDialog.show();
+    }
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_items, menu);
         return true;
-    }
-
-    public void showTimePickerDialog(View view) {
-        Locale.setDefault(Locale.ENGLISH); // הגדרת השפה לאנגלית
-        Calendar calendar = Calendar.getInstance();
-        DatePickerDialog datePickerDialog = new DatePickerDialog(FilterActivity.this, new DatePickerDialog.OnDateSetListener() {
-            public void onDateSet(DatePicker view, int year, int month, int dayOfMonth) {
-                Calendar currentDate = Calendar.getInstance();
-                currentDate.set(Calendar.YEAR, year);
-                currentDate.set(Calendar.MONTH, month);
-                currentDate.set(Calendar.DAY_OF_MONTH, dayOfMonth);
-
-                if (currentDate.before(Calendar.getInstance())) {
-                    Toast.makeText(FilterActivity.this, "You can't choose a past date", Toast.LENGTH_SHORT).show();
-                } else {
-                    Calendar selectedDate = Calendar.getInstance();
-                    selectedDate.set(year, month, dayOfMonth);
-
-                    TimePickerDialog timePickerDialog = new TimePickerDialog(FilterActivity.this, new TimePickerDialog.OnTimeSetListener() {
-                        public void onTimeSet(TimePicker view, int hourOfDay, int minute) {
-                            selectedDate.set(Calendar.HOUR_OF_DAY, hourOfDay);
-                            selectedDate.set(Calendar.MINUTE, minute);
-
-                            if (selectedDate.before(Calendar.getInstance())) {
-                                Toast.makeText(FilterActivity.this, "You cannot select a past time", Toast.LENGTH_SHORT).show();
-                            } else {
-                                selectedTime = selectedDate;
-                                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault());
-                                String dateTime = sdf.format(selectedDate.getTime());
-
-                                timeEditText.setText(dateTime);
-                                findViewById(R.id.clear_time_button).setVisibility(View.VISIBLE);
-                            }
-                        }
-                    }, calendar.get(Calendar.HOUR_OF_DAY), calendar.get(Calendar.MINUTE), true);
-                    timePickerDialog.show();
-                }
-            }
-        }, calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH));
-        datePickerDialog.show();
     }
 
     @Override
@@ -772,5 +813,4 @@ public class FilterActivity extends AppCompatActivity {
                 return super.onOptionsItemSelected(item);
         }
     }
-
 }

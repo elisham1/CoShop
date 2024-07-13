@@ -7,12 +7,12 @@
     android:padding="16dp"
     tools:context=".FilterActivity">
 
+    <!-- Header with title and close button -->
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center_vertical">
-
         <TextView
             android:id="@+id/filters_title"
             android:layout_width="wrap_content"
@@ -20,7 +20,7 @@
             android:layout_centerInParent="true"
             android:text="Additional filters"
             android:textSize="18sp"
-            android:textStyle="bold"/>
+            android:textStyle="bold" />
 
         <ImageButton
             android:id="@+id/close_button"
@@ -28,24 +28,26 @@
             android:layout_height="48dp"
             android:layout_alignParentEnd="true"
             android:layout_gravity="center_vertical"
+            android:layout_marginEnd="331dp"
             android:background="?android:attr/selectableItemBackground"
             android:contentDescription="Close"
-            android:src="@android:drawable/ic_menu_close_clear_cancel"
-            android:padding="10dp"/>
+            android:padding="10dp"
+            android:src="@android:drawable/ic_menu_close_clear_cancel" />
     </RelativeLayout>
 
+    <!-- Address search row -->
     <LinearLayout
         android:id="@+id/search_row"
-        android:layout_width="match_parent"
+        android:layout_width="340dp"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:layout_marginTop="16dp"
         android:layout_marginLeft="16dp"
+        android:layout_marginTop="16dp"
         android:layout_marginRight="16dp"
         android:layout_marginBottom="0dp"
+        android:background="?android:attr/selectableItemBackground"
         android:clickable="true"
         android:focusable="true"
-        android:background="?android:attr/selectableItemBackground"
+        android:orientation="horizontal"
         android:padding="8dp">
 
         <ImageButton
@@ -54,8 +56,8 @@
             android:layout_height="match_parent"
             android:background="?android:attr/selectableItemBackground"
             android:contentDescription="Edit address"
-            android:src="@drawable/edit"
             android:padding="10dp"
+            android:src="@drawable/edit"
             android:visibility="gone" />
 
         <TextView
@@ -73,20 +75,21 @@
             android:id="@+id/search_address_button"
             android:layout_width="48dp"
             android:layout_height="match_parent"
-            android:background="?android:attr/selectableItemBackground"
-            android:contentDescription="Search address"
-            android:src="@drawable/baseline_search_24"
-            android:paddingTop="8dp"
-            android:paddingBottom="8dp"
-            android:paddingLeft="0dp"
-            android:paddingRight="0dp"
-            android:scaleType="fitStart"
             android:layout_gravity="center_vertical|start"
             android:adjustViewBounds="true"
+            android:background="?android:attr/selectableItemBackground"
+            android:clickable="false"
+            android:contentDescription="Search address"
             android:focusable="false"
-            android:clickable="false" />
+            android:paddingLeft="0dp"
+            android:paddingTop="8dp"
+            android:paddingRight="0dp"
+            android:paddingBottom="8dp"
+            android:scaleType="fitStart"
+            android:src="@drawable/baseline_search_24" />
     </LinearLayout>
 
+    <!-- URL input row -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -96,7 +99,6 @@
         android:layout_marginTop="5dp"
         android:layout_marginBottom="10dp"
         android:gravity="center_vertical">
-
         <EditText
             android:id="@+id/editTextText2"
             android:layout_width="0dp"
@@ -106,7 +108,6 @@
             android:hint="Enter URL"
             android:inputType="text"
             android:minHeight="48dp" />
-
         <ImageButton
             android:id="@+id/clear_url_button"
             android:layout_width="48dp"
@@ -118,47 +119,66 @@
             android:visibility="gone" />
     </LinearLayout>
 
+    <!-- Date and Time selection row -->
     <LinearLayout
-        android:id="@+id/time_row"
+        android:id="@+id/date_time_row"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:layout_marginTop="16dp"
         android:layout_marginLeft="16dp"
         android:layout_marginRight="16dp"
-        android:layout_marginBottom="0dp"
-        android:clickable="true"
-        android:focusable="true"
-        android:background="?android:attr/selectableItemBackground"
-        android:padding="8dp"
-        android:onClick="showTimePickerDialog">
+        android:layout_marginTop="5dp"
+        android:layout_marginBottom="10dp"
+        android:gravity="center_vertical">
 
-        <EditText
-            android:id="@+id/time"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:ems="10"
-            android:inputType="none"
-            android:drawableRight="@drawable/ic_baseline_access_time_24"
-            android:hint="Select the latest time orders should be open"
-            android:textSize="15sp"
-            android:padding="12dp"
-            android:focusable="false"
-            android:clickable="false"/>
-
+        <!-- Date selection -->
         <ImageButton
-            android:id="@+id/clear_time_button"
+            android:id="@+id/date_icon"
             android:layout_width="48dp"
             android:layout_height="match_parent"
             android:background="?android:attr/selectableItemBackground"
-            android:contentDescription="Clear time"
-            android:src="@drawable/clear"
-            android:padding="10dp"
-            android:visibility="gone"
-            android:onClick="clearTime"/>
+            android:contentDescription="Select Date"
+            android:src="@drawable/baseline_calendar_month_24"
+            android:onClick="showDatePickerDialog"
+            android:padding="10dp" />
 
+        <TextView
+            android:id="@+id/date_text"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Select Date"
+            android:textSize="15sp"
+            android:gravity="center_vertical"
+            android:padding="8dp"
+            android:clickable="true"
+            android:onClick="showDatePickerDialog" />
+
+        <!-- Time selection -->
+        <ImageButton
+            android:id="@+id/time_icon"
+            android:layout_width="48dp"
+            android:layout_height="match_parent"
+            android:background="?android:attr/selectableItemBackground"
+            android:contentDescription="Select Time"
+            android:src="@drawable/ic_baseline_access_time_24"
+            android:onClick="showTimePickerDialog"
+            android:padding="10dp" />
+
+        <TextView
+            android:id="@+id/time_text"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Select Time"
+            android:textSize="15sp"
+            android:gravity="center_vertical"
+            android:padding="8dp"
+            android:clickable="true"
+            android:onClick="showTimePickerDialog" />
     </LinearLayout>
+
+    <!-- Other elements -->
 
     <ListView
         android:id="@+id/category_list"
@@ -197,7 +217,7 @@
             android:layout_height="wrap_content"
             android:minHeight="48dp"
             android:text="Consumer orders"
-            android:layout_margin="16dp"/>
+            android:layout_margin="16dp" />
     </LinearLayout>
 
     <LinearLayout
@@ -211,7 +231,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Set People Limit"
-            android:layout_margin="16dp"/>
+            android:layout_margin="16dp" />
 
         <Space
             android:layout_width="0dp"
@@ -223,7 +243,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Unlimited People"
-            android:layout_margin="16dp"/>
+            android:layout_margin="16dp" />
     </LinearLayout>
 
     <LinearLayout
