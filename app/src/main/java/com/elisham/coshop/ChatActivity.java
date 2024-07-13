@@ -14,9 +14,12 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -44,10 +47,12 @@ public class ChatActivity extends AppCompatActivity {
     private FirebaseFirestore db;
     private RecyclerView chatRecyclerView;
     private EditText messageInput;
-    private ImageView sendIcon;
+    private ImageView sendIcon, orderIcon;
+    private TextView orderTitle;
     private String orderId;
     private FirebaseAuth mAuth;
     private FirebaseUser currentUser;
+    private LinearLayout orderDetailsLayout;
 
     private ChatAdapter chatAdapter;
     private ArrayList<ChatMessage> chatMessages;
@@ -69,6 +74,9 @@ public class ChatActivity extends AppCompatActivity {
         chatRecyclerView = findViewById(R.id.chatRecyclerView);
         messageInput = findViewById(R.id.messageInput);
         sendIcon = findViewById(R.id.sendIcon);
+        orderDetailsLayout = findViewById(R.id.orderDetailsLayout);
+        orderIcon = findViewById(R.id.orderIcon);
+        orderTitle = findViewById(R.id.orderTitle);
 
         chatMessages = new ArrayList<>();
         chatAdapter = new ChatAdapter(chatMessages);
@@ -80,6 +88,27 @@ public class ChatActivity extends AppCompatActivity {
         orderId = intent.getStringExtra("orderId");
         Toast.makeText(this, "Order ID: " + orderId, Toast.LENGTH_SHORT).show();
         loadChatMessages(orderId);
+
+        orderDetailsLayout.setOnClickListener(v -> {
+            Intent orderDetailsIntent = new Intent(ChatActivity.this, OrderDetailsActivity.class);
+            orderDetailsIntent.putExtra("orderId", orderId); // תחליף ב-ID של ההזמנה שלך
+            startActivity(orderDetailsIntent);
+        });
+
+        db.collection("orders").document(orderId).get().
+                addOnSuccessListener(documentSnapshot -> {
+                    if (documentSnapshot.exists()) {
+                        orderTitle.setText(documentSnapshot.getString("titleOfOrder"));
+                        String categorie = documentSnapshot.getString("categorie");
+                        String iconUrl = "https://firebasestorage.googleapis.com/v0/b/coshop-6fecd.appspot.com/o/icons%2F" + categorie + ".png?alt=media";
+                        Glide.with(this)
+                                .load(iconUrl)
+                                .error(R.drawable.star2)
+                                .diskCacheStrategy(DiskCacheStrategy.ALL)
+                                .override(100, 100) // Adjust according to your ImageView size
+                                .into(orderIcon);
+                    }
+                });
 
         messageInput.addTextChangedListener(new TextWatcher() {
             @Override
