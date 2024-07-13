@@ -188,7 +188,7 @@ public class LocationFunctions {
                 e.printStackTrace();
             }
         }}
-    public void fetchAddressCoordinates(String address, AutoCompleteTextView distanceEditText) {
+    public void fetchAddressCoordinates(String address, String distanceStr) {
         Geocoder geocoder = new Geocoder(context, Locale.ENGLISH);
         try {
             List<Address> addresses = geocoder.getFromLocationName(address, 1);
@@ -197,7 +197,7 @@ public class LocationFunctions {
                 double lat = location.getLatitude();
                 double lon = location.getLongitude();
                 lastValidAddress = location.getAddressLine(0); // Use the address in English
-                sendResult(lastValidAddress, distanceEditText.getText().toString().replace(" KM", "").trim());
+                sendResult(lastValidAddress, distanceStr);
             } else {
                 Toast.makeText(context, "Address not found", Toast.LENGTH_SHORT).show();
             }
