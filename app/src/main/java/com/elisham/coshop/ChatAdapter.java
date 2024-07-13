@@ -104,19 +104,19 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                     if (imageUrl != null && !imageUrl.isEmpty()) {
                         Glide.with(profileImageView.getContext())
                                 .load(imageUrl)
-                                .placeholder(R.drawable.star)
+                                .placeholder(R.drawable.ic_profile)
                                 .circleCrop()
                                 .into(profileImageView);
                         profileImageView.setTag(imageUrl);
                     } else {
-                        profileImageView.setImageResource(R.drawable.star);
+                        profileImageView.setImageResource(R.drawable.ic_profile);
                         profileImageView.setTag(null);
                     }
 
                     String firstName = documentSnapshot.getString("first name");
                     nameTextView.setText(firstName);
                 } else {
-                    profileImageView.setImageResource(R.drawable.star);
+                    profileImageView.setImageResource(R.drawable.ic_profile);
                     profileImageView.setTag(null);
                 }
             });
@@ -165,19 +165,19 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                     if (imageUrl != null && !imageUrl.isEmpty()) {
                         Glide.with(profileImageView.getContext())
                                 .load(imageUrl)
-                                .placeholder(R.drawable.star)
+                                .placeholder(R.drawable.ic_profile)
                                 .circleCrop()
                                 .into(profileImageView);
                         profileImageView.setTag(imageUrl);
                     } else {
-                        profileImageView.setImageResource(R.drawable.star);
+                        profileImageView.setImageResource(R.drawable.ic_profile);
                         profileImageView.setTag(null);
                     }
 
                     String firstName = documentSnapshot.getString("first name");
                     nameTextView.setText(firstName);
                 } else {
-                    profileImageView.setImageResource(R.drawable.star);
+                    profileImageView.setImageResource(R.drawable.ic_profile);
                     profileImageView.setTag(null);
                 }
             });

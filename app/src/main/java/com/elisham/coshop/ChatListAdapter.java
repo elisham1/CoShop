@@ -11,6 +11,8 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -74,8 +76,6 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.ChatVi
         }
 
         public void bind(ChatOrder chatOrder, OnChatSelectedListener listener) {
-            // Set default image
-            orderImageView.setImageResource(R.drawable.star);
 
             // Fetch titleOfOrder and location from Firestore
             DocumentReference orderRef = db.collection("orders").document(chatOrder.getOrderId());
@@ -83,6 +83,17 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.ChatVi
                 if (documentSnapshot.exists()) {
                     String titleOfOrder = documentSnapshot.getString("titleOfOrder");
                     GeoPoint location = documentSnapshot.getGeoPoint("location");
+                    String categorie = documentSnapshot.getString("categorie");
+
+                    String iconUrl = "https://firebasestorage.googleapis.com/v0/b/coshop-6fecd.appspot.com/o/icons%2F" + categorie + ".png?alt=media";
+
+                    Glide.with(context)
+                            .load(iconUrl)
+                            .error(R.drawable.star2)
+                            .diskCacheStrategy(DiskCacheStrategy.ALL)
+                            .override(100, 100) // Adjust according to your ImageView size
+                            .into(orderImageView);
+
 
                     orderTitleTextView.setText(titleOfOrder);
 
