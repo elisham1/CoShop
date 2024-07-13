@@ -64,19 +64,59 @@
             android:minHeight="48dp"
             android:padding="12dp"/>
 
-        <EditText
-            android:id="@+id/address"
-            android:layout_width="match_parent"
+        <LinearLayout
+            android:id="@+id/search_row"
+            android:layout_width="340dp"
             android:layout_height="wrap_content"
-            android:ems="10"
-            android:inputType="text"
-            android:hint="Enter shipping address"
-            android:textSize="15sp"
-            android:layout_below="@id/category"
-            android:layout_marginBottom="10dp"
-            android:drawableEnd="@drawable/location"
-            android:minHeight="48dp"
-            android:padding="12dp"/>
+            android:layout_marginLeft="16dp"
+            android:layout_marginTop="16dp"
+            android:layout_marginRight="16dp"
+            android:layout_marginBottom="0dp"
+            android:background="?android:attr/selectableItemBackground"
+            android:clickable="true"
+            android:focusable="true"
+            android:orientation="horizontal"
+            android:padding="8dp"
+            android:layout_below="@id/category">
+
+            <ImageButton
+                android:id="@+id/edit_address_button"
+                android:layout_width="48dp"
+                android:layout_height="match_parent"
+                android:background="?android:attr/selectableItemBackground"
+                android:contentDescription="Edit address"
+                android:padding="10dp"
+                android:src="@drawable/edit"
+                android:visibility="gone" />
+
+            <TextView
+                android:id="@+id/search_address_text"
+                android:layout_width="0dp"
+                android:layout_height="38dp"
+                android:layout_gravity="end"
+                android:layout_weight="1"
+                android:gravity="center_vertical|end"
+                android:hint="Search address"
+                android:paddingStart="12dp"
+                android:textSize="15sp" />
+
+            <ImageButton
+                android:id="@+id/search_address_button"
+                android:layout_width="48dp"
+                android:layout_height="match_parent"
+                android:layout_gravity="center_vertical|start"
+                android:adjustViewBounds="true"
+                android:background="?android:attr/selectableItemBackground"
+                android:clickable="false"
+                android:contentDescription="Search address"
+                android:focusable="false"
+                android:paddingLeft="0dp"
+                android:paddingTop="8dp"
+                android:paddingRight="0dp"
+                android:paddingBottom="8dp"
+                android:scaleType="fitStart"
+                android:src="@drawable/baseline_search_24" />
+        </LinearLayout>
 
         <EditText
             android:id="@+id/description"
@@ -86,7 +126,7 @@
             android:inputType="text"
             android:hint="Describe your order"
             android:textSize="15sp"
-            android:layout_below="@id/address"
+            android:layout_below="@id/search_row"
             android:layout_marginBottom="10dp"
             android:minHeight="48dp"
             android:padding="12dp"/>
@@ -122,7 +162,6 @@
             android:layout_marginEnd="16dp"
             android:minHeight="48dp"
             android:padding="12dp"/>
-
     </RelativeLayout>
 
     <ImageButton
