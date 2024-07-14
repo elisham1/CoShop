@@ -176,5 +176,32 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/userListLayout"
             app:layout_constraintVertical_bias="0.948" />
+
+        <!-- אייקונים בצד השמאלי -->
+        <ImageView
+            android:id="@+id/shareIcon"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:layout_marginTop="16dp"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="10dp"
+        android:src="@drawable/share"
+        android:contentDescription="Share Icon"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
+        <ImageView
+            android:id="@+id/chatIcon"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:layout_marginTop="16dp"
+            android:layout_marginStart="10dp"
+        android:layout_marginEnd="10dp"
+        android:src="@drawable/chat_icon"
+        android:contentDescription="Chat Icon"
+        android:visibility="gone"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toEndOf="@id/shareIcon"/>
+
     </androidx.constraintlayout.widget.ConstraintLayout>
 </ScrollView>
