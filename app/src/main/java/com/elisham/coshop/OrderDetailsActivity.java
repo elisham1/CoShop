@@ -11,6 +11,7 @@ import android.content.Intent;
 import android.graphics.drawable.Drawable;
 import android.location.Address;
 import android.location.Geocoder;
+import android.net.Uri;
 import android.os.Bundle;
 import android.text.Spannable;
 import android.text.SpannableStringBuilder;
@@ -38,6 +39,8 @@ import com.google.android.gms.tasks.Tasks;
 import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.dynamiclinks.FirebaseDynamicLinks;
+import com.google.firebase.dynamiclinks.ShortDynamicLink;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FieldValue;
@@ -70,6 +73,7 @@ public class OrderDetailsActivity extends AppCompatActivity {
     private List<String> listPeopleInOrder;
     private boolean showAllUsers = false;
     private boolean inOrder = false;
+    private ImageView chatIcon;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -91,19 +95,26 @@ public class OrderDetailsActivity extends AppCompatActivity {
         titleTextView = findViewById(R.id.titleTextView);
         groupInfoTextView = findViewById(R.id.groupInfoTextView);
         categoryImageView = findViewById(R.id.categoryImageView);
+        chatIcon = findViewById(R.id.chatIcon);
         joinButton = findViewById(R.id.joinButton);
 
         // Initialize userListLayout
         userListLayout = findViewById(R.id.userListLayout);
 
+        // Handle incoming deep link
+        handleIncomingDeepLink();
+
         // Get the orderId from the intent
         Intent intent = getIntent();
         orderId = intent.getStringExtra("orderId");
-        Toast.makeText(this, "Order ID: " + orderId, Toast.LENGTH_SHORT).show();
 
-        checkUserInList();
-        // Fetch order details and then user details
-        fetchOrderDetails(orderId, currentUser.getEmail());
+        if (orderId != null) {
+            checkUserInList();
+            // Fetch order details and then user details
+            fetchOrderDetails(orderId, currentUser.getEmail());
+        } else {
+            Toast.makeText(this, "Order ID is null", Toast.LENGTH_SHORT).show();
+        }
 
         joinButton.setOnClickListener(v -> {
             if (joinButton.getText().toString().equals("Join")) {
@@ -115,6 +126,110 @@ public class OrderDetailsActivity extends AppCompatActivity {
                 startActivity(chatIntent);
             }
         });
+
+        chatIcon.setOnClickListener(v -> {
+            Intent chatIntent = new Intent(OrderDetailsActivity.this, ChatActivity.class);
+            chatIntent.putExtra("orderId", orderId);
+            startActivity(chatIntent);
+        });
+
+        ImageView shareIcon = findViewById(R.id.shareIcon);
+        shareIcon.setOnClickListener(v -> {
+            Log.d("OrderDetailsActivity", "Share icon clicked");
+            shareOrderDetails();
+        });
+    }
+
+    private void handleIncomingDeepLink() {
+        FirebaseDynamicLinks.getInstance()
+                .getDynamicLink(getIntent())
+                .addOnSuccessListener(this, pendingDynamicLinkData -> {
+                    if (pendingDynamicLinkData != null) {
+                        Uri deepLink = pendingDynamicLinkData.getLink();
+                        if (deepLink != null) {
+                            String orderIdFromLink = deepLink.getQueryParameter("orderId");
+                            if (orderIdFromLink != null) {
+                                // Open OrderDetailsActivity with the orderId
+                                Intent intent = new Intent(this, OrderDetailsActivity.class);
+                                intent.putExtra("orderId", orderIdFromLink);
+                                startActivity(intent);
+                                finish(); // End current activity
+                            }
+                        }
+                    }
+                })
+                .addOnFailureListener(this, e -> Log.w("OrderDetailsActivity", "getDynamicLink:onFailure", e));
+    }
+
+    private void shareOrderDetails() {
+        createDynamicLink(orderId, shortLink -> {
+            if (shortLink != null) {
+                String shareText = buildShareText(shortLink);
+                Intent shareIntent = new Intent();
+                shareIntent.setAction(Intent.ACTION_SEND);
+                shareIntent.putExtra(Intent.EXTRA_TEXT, shareText);
+                shareIntent.setType("text/plain");
+
+                Intent chooser = Intent.createChooser(shareIntent, "Share Order Details");
+                if (shareIntent.resolveActivity(getPackageManager()) != null) {
+                    startActivity(chooser);
+                }
+            } else {
+                Toast.makeText(OrderDetailsActivity.this, "Failed to create shareable link", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private String buildShareText(String shortLink) {
+        String title = titleTextView.getText().toString();
+        String category = categoryTextView.getText().toString();
+        Timestamp timestamp = getTimestampFromTextView(timeTextView);
+        String time = timestamp != null ? convertTimestampToString(timestamp) : "N/A";
+        String address = addressTextView.getText().toString();
+
+        return "Order Details:\n\n" +
+                "Title: " + title + "\n" +
+                "Category: " + category + "\n" +
+                "End Time: " + time + "\n" +
+                "Address: " + address + "\n\n" +
+                "Join the order: " + shortLink;
+    }
+
+    private Timestamp getTimestampFromTextView(TextView textView) {
+        // Fetch timestamp from TextView if it's stored in a tag or another way
+        Object tag = textView.getTag();
+        return tag instanceof Timestamp ? (Timestamp) tag : null;
+    }
+
+    private String convertTimestampToString(Timestamp timestamp) {
+        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault());
+        Date date = timestamp.toDate();
+        return sdf.format(date);
+    }
+
+
+    private void createDynamicLink(String orderId, DynamicLinkCallback callback) {
+        String domainUriPrefix = "https://coshopapp.page.link";
+        String deepLink = "https://coshopapp.page.link/order?orderId=" + orderId;
+
+        FirebaseDynamicLinks.getInstance().createDynamicLink()
+                .setLongLink(Uri.parse(domainUriPrefix + "/?" +
+                        "link=" + Uri.encode(deepLink) +
+                        "&apn=" + getPackageName()))
+                .buildShortDynamicLink()
+                .addOnCompleteListener(this, task -> {
+                    if (task.isSuccessful()) {
+                        Uri shortLink = task.getResult().getShortLink();
+                        callback.onLinkCreated(shortLink.toString());
+                    } else {
+                        Log.e("DynamicLink", "Error creating short link", task.getException());
+                        callback.onLinkCreated(null);
+                    }
+                });
+    }
+
+    interface DynamicLinkCallback {
+        void onLinkCreated(String shortLink);
     }
 
     private void fetchOrderDetails(String orderId, String currentUserEmail) {
@@ -137,19 +252,19 @@ public class OrderDetailsActivity extends AppCompatActivity {
                 String siteUrl = documentSnapshot.getString("URL");
 
                 // Convert timestamps to Date objects
-                Date date = timestamp.toDate();
-                Date openOrderDate = openOrderTime.toDate();
+                Date date = timestamp != null ? timestamp.toDate() : null;
+                Date openOrderDate = openOrderTime != null ? openOrderTime.toDate() : null;
                 SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm");
-                String formattedTime = sdf.format(date);
-                String formattedOpenOrderTime = sdf.format(openOrderDate);
+                String formattedTime = date != null ? sdf.format(date) : "N/A";
+                String formattedOpenOrderTime = openOrderDate != null ? sdf.format(openOrderDate) : "N/A";
 
                 // Update TextViews and ImageView with order details
                 descriptionTextView.setText("Group description:\n" + description);
                 siteTextView.setText("Url/Site: " + siteUrl);
                 categoryTextView.setText(categorie);
                 addressTextView.setText("Address: " + address);
-                // Hide timeTextView and peopleTextView by not setting text
-                timeTextView.setText("");
+                timeTextView.setText(formattedTime);
+                timeTextView.setTag(timestamp); // Store the timestamp in the tag
                 titleTextView.setText(titleOfOrder);
 
                 // Load icon from URL
@@ -254,8 +369,7 @@ public class OrderDetailsActivity extends AppCompatActivity {
             addUserToLayout(userDetail.email, userDetail.firstName + " " + userDetail.familyName, userDetail.userRating, userDetail.profilePicUrl, userDetail.isOrderCreator, userDetail.isCurrentUser);
         }
 
-        if (userDetailList.size() > 3)
-        {
+        if (userDetailList.size() > 3) {
             TextView toggleUsersTextView = new TextView(this);
             toggleUsersTextView.setText(showAllUsers ? "Show Less Users" : "View All Users");
             toggleUsersTextView.setTextColor(ContextCompat.getColor(this, R.color.black));
@@ -325,12 +439,10 @@ public class OrderDetailsActivity extends AppCompatActivity {
             userItemView.setBackgroundColor(ContextCompat.getColor(this, R.color.colorAccent));
         }
 
-        if (!inOrder)
-        {
+        if (!inOrder) {
             reportImageView.setVisibility(View.GONE);
             rateImageView.setVisibility(View.GONE);
-        }
-        else {
+        } else {
             // Hide report and rate icons for current user
             if (isCurrentUser) {
                 reportImageView.setVisibility(View.GONE);
@@ -428,7 +540,7 @@ public class OrderDetailsActivity extends AppCompatActivity {
         dialog.show();
     }
 
-    private void submitReport(String reportedUserEmail,String orderID, String reason, String details) {
+    private void submitReport(String reportedUserEmail, String orderID, String reason, String details) {
         if (currentUser != null) {
             String reporterEmail = currentUser.getEmail();
 
@@ -506,7 +618,8 @@ public class OrderDetailsActivity extends AppCompatActivity {
         }
     }
 
-    private void showAlertDialog(String message) {
+
+        private void showAlertDialog(String message) {
         new AlertDialog.Builder(this)
                 .setMessage(message)
                 .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
@@ -611,7 +724,8 @@ public class OrderDetailsActivity extends AppCompatActivity {
                 List<String> listPeopleInOrder = (List<String>) documentSnapshot.get("listPeopleInOrder");
                 if (listPeopleInOrder != null && listPeopleInOrder.contains(currentUser.getEmail())) {
                     inOrder = true;
-                    joinButton.setText("Chat");
+                    joinButton.setVisibility(View.GONE); // Hide the join button
+                    chatIcon.setVisibility(View.VISIBLE); // Show the chat icon
                 }
             }
         }).addOnFailureListener(e -> Toast.makeText(this, "Failed to check user in list", Toast.LENGTH_SHORT).show());
@@ -630,7 +744,8 @@ public class OrderDetailsActivity extends AppCompatActivity {
             return null;
         }).addOnSuccessListener(aVoid -> {
             Toast.makeText(this, "Added to order", Toast.LENGTH_SHORT).show();
-            joinButton.setText("Chat");
+            joinButton.setVisibility(View.GONE); // Hide the join button
+            chatIcon.setVisibility(View.VISIBLE); // Show the chat icon
             Intent chatIntent = new Intent(OrderDetailsActivity.this, ChatActivity.class);
             chatIntent.putExtra("orderId", orderId);
             startActivity(chatIntent);
