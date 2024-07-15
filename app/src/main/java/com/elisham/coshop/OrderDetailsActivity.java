@@ -62,7 +62,7 @@ public class OrderDetailsActivity extends AppCompatActivity {
     private FirebaseFirestore db;
     private TextView descriptionTextView, siteTextView, categoryTextView, addressTextView, timeTextView, titleTextView, groupInfoTextView;
     private ImageView categoryImageView;
-    private Button joinButton;
+    private ImageView joinIcon;
     private String orderId;
     private FirebaseAuth mAuth;
     private FirebaseUser currentUser;
@@ -96,7 +96,7 @@ public class OrderDetailsActivity extends AppCompatActivity {
         groupInfoTextView = findViewById(R.id.groupInfoTextView);
         categoryImageView = findViewById(R.id.categoryImageView);
         chatIcon = findViewById(R.id.chatIcon);
-        joinButton = findViewById(R.id.joinButton);
+        joinIcon = findViewById(R.id.joinIcon);
 
         // Initialize userListLayout
         userListLayout = findViewById(R.id.userListLayout);
@@ -116,8 +116,8 @@ public class OrderDetailsActivity extends AppCompatActivity {
             Toast.makeText(this, "Order ID is null", Toast.LENGTH_SHORT).show();
         }
 
-        joinButton.setOnClickListener(v -> {
-            if (joinButton.getText().toString().equals("Join")) {
+        joinIcon.setOnClickListener(v -> {
+            if (joinIcon.getContentDescription().toString().equals("Join Icon")) {
                 addUserToOrder();
                 inOrder = true;
             } else {
@@ -206,7 +206,6 @@ public class OrderDetailsActivity extends AppCompatActivity {
         Date date = timestamp.toDate();
         return sdf.format(date);
     }
-
 
     private void createDynamicLink(String orderId, DynamicLinkCallback callback) {
         String domainUriPrefix = "https://coshopapp.page.link";
@@ -619,7 +618,7 @@ public class OrderDetailsActivity extends AppCompatActivity {
     }
 
 
-        private void showAlertDialog(String message) {
+    private void showAlertDialog(String message) {
         new AlertDialog.Builder(this)
                 .setMessage(message)
                 .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
@@ -631,7 +630,8 @@ public class OrderDetailsActivity extends AppCompatActivity {
                 .show();
     }
 
-    private void updateStarUI(ImageView[] stars, int rating) {
+
+                private void updateStarUI(ImageView[] stars, int rating) {
         for (int i = 0; i < stars.length; i++) {
             if (i < rating) {
                 stars[i].setImageResource(R.drawable.star);
@@ -693,6 +693,7 @@ public class OrderDetailsActivity extends AppCompatActivity {
         return "N/A";
     }
 
+
     private void fetchUserDetails(String userEmail, int numberOfPeopleInOrder, int maxPeople, String formattedOpenOrderTime) {
         DocumentReference userRef = db.collection("users").document(userEmail);
         userRef.get().addOnSuccessListener(documentSnapshot -> {
@@ -724,7 +725,7 @@ public class OrderDetailsActivity extends AppCompatActivity {
                 List<String> listPeopleInOrder = (List<String>) documentSnapshot.get("listPeopleInOrder");
                 if (listPeopleInOrder != null && listPeopleInOrder.contains(currentUser.getEmail())) {
                     inOrder = true;
-                    joinButton.setVisibility(View.GONE); // Hide the join button
+                    joinIcon.setVisibility(View.GONE); // Hide the join icon
                     chatIcon.setVisibility(View.VISIBLE); // Show the chat icon
                 }
             }
@@ -744,7 +745,7 @@ public class OrderDetailsActivity extends AppCompatActivity {
             return null;
         }).addOnSuccessListener(aVoid -> {
             Toast.makeText(this, "Added to order", Toast.LENGTH_SHORT).show();
-            joinButton.setVisibility(View.GONE); // Hide the join button
+            joinIcon.setVisibility(View.GONE); // Hide the join icon
             chatIcon.setVisibility(View.VISIBLE); // Show the chat icon
             Intent chatIntent = new Intent(OrderDetailsActivity.this, ChatActivity.class);
             chatIntent.putExtra("orderId", orderId);
@@ -790,3 +791,5 @@ public class OrderDetailsActivity extends AppCompatActivity {
         }
     }
 }
+
+
