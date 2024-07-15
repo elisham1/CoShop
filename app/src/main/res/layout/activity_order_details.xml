@@ -1,4 +1,4 @@
-<ScrollView
+<androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
@@ -6,202 +6,210 @@
     android:layout_height="match_parent"
     tools:context=".OrderDetailsActivity">
 
-    <androidx.constraintlayout.widget.ConstraintLayout
+    <ScrollView
+        android:id="@+id/scrollView"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
-
-        <!-- עיגול עם תמונת הקטגוריה -->
-        <com.elisham.coshop.CircularImageView
-            android:id="@+id/categoryImageView"
-            android:layout_width="136dp"
-            android:layout_height="136dp"
-            android:layout_marginTop="16dp"
-            android:background="@drawable/circle_background"
-            android:scaleType="centerCrop"
-            app:layout_constraintDimensionRatio="1:1"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
-
-        <!-- שם הקטגוריה מתחת לתמונה -->
-        <TextView
-            android:id="@+id/categoryTextView"
-            style="@style/CustomTextViewStyle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:gravity="center"
-            android:layout_marginTop="8dp"
-            app:layout_constraintTop_toBottomOf="@id/categoryImageView"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"/>
-
-        <!-- הכותרת מתחת לשם הקטגוריה -->
-        <TextView
-            android:id="@+id/titleTextView"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textSize="24sp"
-            android:textStyle="bold"
-            android:textColor="#000000"
-            android:gravity="center"
-            app:layout_constraintTop_toBottomOf="@id/categoryTextView"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            android:layout_marginTop="8dp"/>
-
-        <!-- פרטים מתחת לכותרת -->
-        <TextView
-            android:id="@+id/groupInfoTextView"
-            style="@style/CustomTextViewStyle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:gravity="center"
-            app:layout_constraintTop_toBottomOf="@id/titleTextView"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            android:layout_marginTop="4dp"/>
-
-        <!-- קו מתחת לתאריך -->
-        <View
-            android:id="@+id/underlineView"
-            android:layout_width="0dp"
-            android:layout_height="1dp"
-            android:layout_marginTop="4dp"
-            android:background="#000000"
-            app:layout_constraintTop_toBottomOf="@id/groupInfoTextView"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"/>
-
-        <!-- Group description -->
-        <TextView
-            android:id="@+id/descriptionTextView"
-            style="@style/CustomTextViewStyle"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:gravity="start"
-            android:layout_marginTop="16dp"
-            android:paddingStart="13dp"
-            android:paddingEnd="13dp"
-            app:layout_constraintTop_toBottomOf="@id/underlineView"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"/>
-
-        <!-- URL מתחת ל-description -->
-        <TextView
-            android:id="@+id/siteTextView"
-            style="@style/CustomTextViewStyle"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:gravity="start"
-            android:layout_marginTop="4dp"
-            android:paddingStart="13dp"
-            android:paddingEnd="13dp"
-            app:layout_constraintTop_toBottomOf="@id/descriptionTextView"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"/>
-
-        <!-- קו מתחת ל-URL -->
-        <View
-            android:id="@+id/descriptionUnderlineView"
-            android:layout_width="0dp"
-            android:layout_height="1dp"
-            android:layout_marginTop="4dp"
-            android:background="#000000"
-            app:layout_constraintTop_toBottomOf="@id/siteTextView"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"/>
-
-        <!-- שאר האלמנטים -->
-        <TextView
-            android:id="@+id/addressTextView"
-            style="@style/CustomTextViewStyle"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:gravity="start"
-            android:layout_marginTop="8dp"
-            android:paddingStart="13dp"
-            android:paddingEnd="13dp"
-            app:layout_constraintTop_toBottomOf="@id/descriptionUnderlineView"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"/>
-
-        <!-- קו מתחת לכתובת -->
-        <View
-            android:id="@+id/addressUnderlineView"
-            android:layout_width="0dp"
-            android:layout_height="1dp"
-            android:layout_marginTop="4dp"
-            android:background="#000000"
-            app:layout_constraintTop_toBottomOf="@id/addressTextView"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"/>
-
-        <!-- TextView שמוסתר -->
-        <TextView
-            android:id="@+id/timeTextView"
-            style="@style/CustomTextViewStyle"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:gravity="start"
-            android:layout_marginTop="8dp"
-            android:paddingStart="13dp"
-            android:paddingEnd="13dp"
-            android:visibility="gone"
-            app:layout_constraintTop_toBottomOf="@id/addressUnderlineView"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"/>
-
-        <!-- LinearLayout for User List -->
-        <LinearLayout
-            android:id="@+id/userListLayout"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:orientation="vertical"
-            android:padding="16dp"
-            app:layout_constraintTop_toBottomOf="@id/timeTextView"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"/>
-
-        <!-- כפתור join/chat בתחתית הדף -->
-        <Button
-            android:id="@+id/joinButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:text="Join"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="0.498"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/userListLayout"
-            app:layout_constraintVertical_bias="0.948" />
-
-        <!-- אייקונים בצד השמאלי -->
-        <ImageView
-            android:id="@+id/shareIcon"
-            android:layout_width="30dp"
-            android:layout_height="30dp"
-            android:layout_marginTop="16dp"
-            android:layout_marginStart="16dp"
-            android:layout_marginEnd="10dp"
-        android:src="@drawable/share"
-        android:contentDescription="Share Icon"
+        android:layout_height="0dp"
         app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/joinIcon">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <!-- עיגול עם תמונת הקטגוריה -->
+            <com.elisham.coshop.CircularImageView
+                android:id="@+id/categoryImageView"
+                android:layout_width="136dp"
+                android:layout_height="136dp"
+                android:layout_marginTop="16dp"
+                android:background="@drawable/circle_background"
+                android:scaleType="centerCrop"
+                app:layout_constraintDimensionRatio="1:1"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <!-- שם הקטגוריה מתחת לתמונה -->
+            <TextView
+                android:id="@+id/categoryTextView"
+                style="@style/CustomTextViewStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:layout_marginTop="8dp"
+                app:layout_constraintTop_toBottomOf="@id/categoryImageView"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"/>
+
+            <!-- הכותרת מתחת לשם הקטגוריה -->
+            <TextView
+                android:id="@+id/titleTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="24sp"
+                android:textStyle="bold"
+                android:textColor="#000000"
+                android:gravity="center"
+                app:layout_constraintTop_toBottomOf="@id/categoryTextView"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                android:layout_marginTop="8dp"/>
+
+            <!-- פרטים מתחת לכותרת -->
+            <TextView
+                android:id="@+id/groupInfoTextView"
+                style="@style/CustomTextViewStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                app:layout_constraintTop_toBottomOf="@id/titleTextView"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                android:layout_marginTop="4dp"/>
+
+            <!-- קו מתחת לתאריך -->
+            <View
+                android:id="@+id/underlineView"
+                android:layout_width="0dp"
+                android:layout_height="1dp"
+                android:layout_marginTop="4dp"
+                android:background="#000000"
+                app:layout_constraintTop_toBottomOf="@id/groupInfoTextView"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"/>
+
+            <!-- Group description -->
+            <TextView
+                android:id="@+id/descriptionTextView"
+                style="@style/CustomTextViewStyle"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:gravity="start"
+                android:layout_marginTop="16dp"
+                android:paddingStart="13dp"
+                android:paddingEnd="13dp"
+                app:layout_constraintTop_toBottomOf="@id/underlineView"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"/>
+
+            <!-- URL מתחת ל-description -->
+            <TextView
+                android:id="@+id/siteTextView"
+                style="@style/CustomTextViewStyle"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:gravity="start"
+                android:layout_marginTop="4dp"
+                android:paddingStart="13dp"
+                android:paddingEnd="13dp"
+                app:layout_constraintTop_toBottomOf="@id/descriptionTextView"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"/>
+
+            <!-- קו מתחת ל-URL -->
+            <View
+                android:id="@+id/descriptionUnderlineView"
+                android:layout_width="0dp"
+                android:layout_height="1dp"
+                android:layout_marginTop="4dp"
+                android:background="#000000"
+                app:layout_constraintTop_toBottomOf="@id/siteTextView"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"/>
+
+            <!-- שאר האלמנטים -->
+            <TextView
+                android:id="@+id/addressTextView"
+                style="@style/CustomTextViewStyle"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:gravity="start"
+                android:layout_marginTop="8dp"
+                android:paddingStart="13dp"
+                android:paddingEnd="13dp"
+                app:layout_constraintTop_toBottomOf="@id/descriptionUnderlineView"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"/>
+
+            <!-- קו מתחת לכתובת -->
+            <View
+                android:id="@+id/addressUnderlineView"
+                android:layout_width="0dp"
+                android:layout_height="1dp"
+                android:layout_marginTop="4dp"
+                android:background="#000000"
+                app:layout_constraintTop_toBottomOf="@id/addressTextView"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"/>
+
+            <!-- TextView שמוסתר -->
+            <TextView
+                android:id="@+id/timeTextView"
+                style="@style/CustomTextViewStyle"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:gravity="start"
+                android:layout_marginTop="8dp"
+                android:paddingStart="13dp"
+                android:paddingEnd="13dp"
+                android:visibility="gone"
+                app:layout_constraintTop_toBottomOf="@id/addressUnderlineView"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"/>
+
+            <!-- LinearLayout for User List -->
+            <LinearLayout
+                android:id="@+id/userListLayout"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:orientation="vertical"
+                android:padding="16dp"
+                app:layout_constraintTop_toBottomOf="@id/timeTextView"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"/>
+
+            <!-- אייקונים בצד השמאלי -->
+            <ImageView
+                android:id="@+id/shareIcon"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:layout_marginTop="16dp"
+                android:layout_marginStart="16dp"
+                android:layout_marginEnd="10dp"
+                android:src="@drawable/share"
+                android:contentDescription="Share Icon"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintStart_toStartOf="parent" />
+
+            <ImageView
+                android:id="@+id/chatIcon"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:layout_marginTop="16dp"
+                android:layout_marginStart="10dp"
+                android:layout_marginEnd="10dp"
+                android:src="@drawable/chat_icon"
+                android:contentDescription="Chat Icon"
+                android:visibility="gone"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintStart_toEndOf="@id/shareIcon"/>
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+    </ScrollView>
+
+    <!-- אייקון join בתחתית הדף -->
+    <ImageView
+        android:id="@+id/joinIcon"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:layout_margin="16dp"
+        android:src="@drawable/join"
+        android:contentDescription="Join Icon"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent" />
 
-        <ImageView
-            android:id="@+id/chatIcon"
-            android:layout_width="30dp"
-            android:layout_height="30dp"
-            android:layout_marginTop="16dp"
-            android:layout_marginStart="10dp"
-        android:layout_marginEnd="10dp"
-        android:src="@drawable/chat_icon"
-        android:contentDescription="Chat Icon"
-        android:visibility="gone"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintStart_toEndOf="@id/shareIcon"/>
-
-    </androidx.constraintlayout.widget.ConstraintLayout>
-</ScrollView>
+</androidx.constraintlayout.widget.ConstraintLayout>
