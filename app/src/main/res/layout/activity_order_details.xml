@@ -68,6 +68,174 @@
                 app:layout_constraintEnd_toEndOf="parent"
                 android:layout_marginTop="4dp"/>
 
+            <!-- The timer layout -->
+            <LinearLayout
+                android:id="@+id/timerContainer"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center"
+                android:visibility="gone"
+                app:layout_constraintTop_toBottomOf="@id/groupInfoTextView"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent">
+
+                <LinearLayout
+                    android:id="@+id/daysContainer"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:gravity="center"
+                    android:visibility="gone">
+
+                    <FrameLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content">
+
+                        <TextView
+                            android:id="@+id/daysTextView"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:background="@android:color/black"
+                            android:textSize="10sp"
+                            android:textColor="@android:color/white"
+                            android:padding="4dp" />
+                    </FrameLayout>
+
+                    <TextView
+                        android:id="@+id/daysLabel"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Day"
+                        android:textSize="8sp"
+                        android:textColor="@android:color/black"
+                        android:padding="2dp" />
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/colon1"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text=":"
+                    android:textSize="10sp"
+                    android:textColor="@android:color/black"
+                    android:padding="2dp"
+                    android:visibility="gone" />
+
+                <LinearLayout
+                    android:id="@+id/hoursContainer"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:gravity="center">
+
+                    <FrameLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content">
+
+                        <TextView
+                            android:id="@+id/hoursTextView"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:background="@android:color/black"
+                            android:textSize="10sp"
+                            android:textColor="@android:color/white"
+                            android:padding="4dp" />
+                    </FrameLayout>
+
+                    <TextView
+                        android:id="@+id/hoursLabel"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Hour"
+                        android:textSize="8sp"
+                        android:textColor="@android:color/black"
+                        android:padding="2dp" />
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/colon2"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text=":"
+                    android:textSize="10sp"
+                    android:textColor="@android:color/black"
+                    android:padding="2dp" />
+
+                <LinearLayout
+                    android:id="@+id/minutesContainer"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:gravity="center">
+
+                    <FrameLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content">
+
+                        <TextView
+                            android:id="@+id/minutesTextView"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:background="@android:color/black"
+                            android:textSize="10sp"
+                            android:textColor="@android:color/white"
+                            android:padding="4dp" />
+                    </FrameLayout>
+
+                    <TextView
+                        android:id="@+id/minutesLabel"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Min"
+                        android:textSize="8sp"
+                        android:textColor="@android:color/black"
+                        android:padding="2dp" />
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/colon3"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text=":"
+                    android:textSize="10sp"
+                    android:textColor="@android:color/black"
+                    android:padding="2dp"
+                    android:visibility="gone" />
+
+                <LinearLayout
+                    android:id="@+id/secondsContainer"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:gravity="center"
+                    android:visibility="gone">
+
+                    <FrameLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content">
+
+                        <TextView
+                            android:id="@+id/secondsTextView"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:background="@android:color/black"
+                            android:textSize="10sp"
+                            android:textColor="@android:color/white"
+                            android:padding="4dp" />
+                    </FrameLayout>
+
+                    <TextView
+                        android:id="@+id/secondsLabel"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Sec"
+                        android:textSize="8sp"
+                        android:textColor="@android:color/black"
+                        android:padding="2dp" />
+                </LinearLayout>
+            </LinearLayout>
+
             <!-- קו מתחת לתאריך -->
             <View
                 android:id="@+id/underlineView"
@@ -75,7 +243,7 @@
                 android:layout_height="1dp"
                 android:layout_marginTop="4dp"
                 android:background="#000000"
-                app:layout_constraintTop_toBottomOf="@id/groupInfoTextView"
+                app:layout_constraintTop_toBottomOf="@id/timerContainer"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"/>
 

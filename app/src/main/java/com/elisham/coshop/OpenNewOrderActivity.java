@@ -222,8 +222,21 @@ public class OpenNewOrderActivity extends AppCompatActivity {
                         if (document.exists()) {
                             List<String> categoriesList = (List<String>) document.get("categories");
                             if (categoriesList != null) {
-                                int numberOfItemsInList = categoriesList.size();
-                                addOtherCategory(categoriesList, numberOfItemsInList);
+                                ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, categoriesList);
+                                adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+                                categorySpinner.setAdapter(adapter);
+
+                                categorySpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+                                    @Override
+                                    public void onItemSelected(AdapterView<?> adapterView, View view, int position, long id) {
+                                        saveNewCategorieName = (String) adapterView.getItemAtPosition(position);
+                                        Log.d("Selected Category", saveNewCategorieName);
+                                    }
+
+                                    @Override
+                                    public void onNothingSelected(AdapterView<?> adapterView) {
+                                    }
+                                });
                             }
                         }
                     } else {
@@ -232,90 +245,8 @@ public class OpenNewOrderActivity extends AppCompatActivity {
                 });
     }
 
-    public void addOtherCategory(List<String> categoriesList, int numberOfItemsInList) {
-        categoriesList.add("Other");
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, categoriesList);
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        categorySpinner.setAdapter(adapter);
 
-        categorySpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> adapterView, View view, int position, long id) {
-                String selectedCategory = (String) adapterView.getItemAtPosition(position);
-                saveNewCategorieName = selectedCategory;
-                Log.d("Selected Category", saveNewCategorieName);
-                if (selectedCategory.equals("Other")) {
-                    showNewCategoryDialog(categoriesList, numberOfItemsInList);
-                }
-            }
 
-            @Override
-            public void onNothingSelected(AdapterView<?> adapterView) {
-            }
-        });
-    }
-
-    public void showNewCategoryDialog(List<String> categoriesList, int numberOfItemsInList) {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Enter New Category");
-
-        final EditText input = new EditText(this);
-        input.setInputType(InputType.TYPE_CLASS_TEXT);
-        builder.setView(input);
-
-        builder.setPositiveButton("OK", (dialog, which) -> {
-            String newCategory = input.getText().toString();
-            saveNewCategorieName = newCategory;
-            Log.d("New Category", saveNewCategorieName);
-            if (!newCategory.equalsIgnoreCase("Other") && !newCategory.trim().isEmpty()) {
-                addCategoryToFirestore(newCategory, categoriesList, numberOfItemsInList);
-            } else {
-                showNewCategoryDialog(categoriesList, numberOfItemsInList);
-                Toast.makeText(OpenNewOrderActivity.this, "You cannot enter that! Enter again.", Toast.LENGTH_SHORT).show();
-            }
-        });
-        builder.setNegativeButton("Cancel", (dialog, which) -> {
-            dialog.cancel();
-            readCategoriesFromFireStore();
-        });
-
-        builder.show();
-    }
-
-    public void addCategoryToFirestore(String newCategory, List<String> categoriesList, int numberOfItemsInList) {
-        String saveCategory = newCategory;
-        String lowercaseCategory = newCategory.toLowerCase();
-
-        db.collection("categories").document("jQ4hXL6kr1AbKwPvEdXl")
-                .get()
-                .addOnSuccessListener(documentSnapshot -> {
-                    if (categoriesList != null) {
-                        if (!containsIgnoreCase(categoriesList, lowercaseCategory)) {
-                            Log.d("Category Size", String.valueOf(numberOfItemsInList));
-                            Log.d("Category List Size", String.valueOf(categoriesList.size()));
-
-                            if ((numberOfItemsInList + 1) < categoriesList.size()) {
-                                categoriesList.remove(categoriesList.size() - 1);
-                            }
-                            categoriesList.add(saveCategory);
-                            categorySpinner.setSelection(categoriesList.indexOf(saveCategory));
-                        } else {
-                            Toast.makeText(OpenNewOrderActivity.this, "Category already exists", Toast.LENGTH_SHORT).show();
-                            String correctCasedCategory = null;
-                            for (String category : categoriesList) {
-                                if (category.equalsIgnoreCase(newCategory)) {
-                                    correctCasedCategory = category;
-                                    break;
-                                }
-                            }
-                            categorySpinner.setSelection(categoriesList.indexOf(correctCasedCategory));
-                        }
-                    }
-                })
-                .addOnFailureListener(e -> {
-                    Log.e("Firestore", "Error getting categories: " + e.getMessage());
-                });
-    }
 
     private boolean containsIgnoreCase(List<String> list, String str) {
         for (String s : list) {

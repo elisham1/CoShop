@@ -13,6 +13,7 @@ import android.location.Address;
 import android.location.Geocoder;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.CountDownTimer;
 import android.text.Spannable;
 import android.text.SpannableStringBuilder;
 import android.text.style.ImageSpan;
@@ -259,7 +260,12 @@ public class OrderDetailsActivity extends AppCompatActivity {
 
                 // Update TextViews and ImageView with order details
                 descriptionTextView.setText("Group description:\n" + description);
-                siteTextView.setText("Url/Site: " + siteUrl);
+                if (siteUrl != null && !siteUrl.isEmpty()) {
+                    siteTextView.setText("Url/Site: " + siteUrl);
+                    siteTextView.setVisibility(View.VISIBLE);
+                } else {
+                    siteTextView.setVisibility(View.GONE);
+                }
                 categoryTextView.setText(categorie);
                 addressTextView.setText("Address: " + address);
                 timeTextView.setText(formattedTime);
@@ -277,6 +283,11 @@ public class OrderDetailsActivity extends AppCompatActivity {
 
                 // Fetch user details and update groupInfoTextView
                 fetchUserDetails(userEmail, numberOfPeopleInOrder, maxPeople, formattedOpenOrderTime);
+
+                // Update the timer
+                if (timestamp != null) {
+                    startCountdownTimer(timestamp);
+                }
 
                 // Fetch list of users in order
                 listPeopleInOrder = (List<String>) documentSnapshot.get("listPeopleInOrder");
@@ -716,6 +727,78 @@ public class OrderDetailsActivity extends AppCompatActivity {
             Log.e("OrderDetailsActivity", "Failed to fetch user details", e);
             Toast.makeText(this, "Failed to fetch user details", Toast.LENGTH_SHORT).show();
         });
+    }
+    private void updateTimerTextViews(LinearLayout daysContainer, TextView daysTextView, TextView colon1, LinearLayout hoursContainer, TextView hoursTextView, TextView colon2, LinearLayout minutesContainer, TextView minutesTextView, TextView colon3, LinearLayout secondsContainer, TextView secondsTextView, long millisUntilFinished) {
+        long seconds = millisUntilFinished / 1000;
+        long minutes = seconds / 60;
+        long hours = minutes / 60;
+        long days = hours / 24;
+
+        seconds = seconds % 60;
+        minutes = minutes % 60;
+        hours = hours % 24;
+
+        if (days > 0) {
+            daysContainer.setVisibility(View.VISIBLE);
+            colon1.setVisibility(View.VISIBLE);
+            secondsContainer.setVisibility(View.GONE);
+            colon3.setVisibility(View.GONE);
+
+            daysTextView.setText(String.format(Locale.getDefault(), "%02d", days));
+            hoursTextView.setText(String.format(Locale.getDefault(), "%02d", hours));
+            minutesTextView.setText(String.format(Locale.getDefault(), "%02d", minutes));
+        } else {
+            daysContainer.setVisibility(View.GONE);
+            colon1.setVisibility(View.GONE);
+            secondsContainer.setVisibility(View.VISIBLE);
+            colon3.setVisibility(View.VISIBLE);
+
+            hoursTextView.setText(String.format(Locale.getDefault(), "%02d", hours));
+            minutesTextView.setText(String.format(Locale.getDefault(), "%02d", minutes));
+            secondsTextView.setText(String.format(Locale.getDefault(), "%02d", seconds));
+        }
+    }
+
+    private void startCountdownTimer(Timestamp timestamp) {
+        LinearLayout timerContainer = findViewById(R.id.timerContainer);
+        LinearLayout daysContainer = findViewById(R.id.daysContainer);
+        TextView daysTextView = findViewById(R.id.daysTextView);
+        TextView colon1 = findViewById(R.id.colon1);
+        LinearLayout hoursContainer = findViewById(R.id.hoursContainer);
+        TextView hoursTextView = findViewById(R.id.hoursTextView);
+        TextView colon2 = findViewById(R.id.colon2);
+        LinearLayout minutesContainer = findViewById(R.id.minutesContainer);
+        TextView minutesTextView = findViewById(R.id.minutesTextView);
+        TextView colon3 = findViewById(R.id.colon3);
+        LinearLayout secondsContainer = findViewById(R.id.secondsContainer);
+        TextView secondsTextView = findViewById(R.id.secondsTextView);
+
+        long currentTime = System.currentTimeMillis();
+        Date date = timestamp.toDate();
+        long timeRemaining = date.getTime() - currentTime;
+
+        if (timeRemaining > 0) {
+            timerContainer.setVisibility(View.VISIBLE);
+            new CountDownTimer(timeRemaining, 1000) {
+
+                public void onTick(long millisUntilFinished) {
+                    updateTimerTextViews(daysContainer, daysTextView, colon1, hoursContainer, hoursTextView, colon2, minutesContainer, minutesTextView, colon3, secondsContainer, secondsTextView, millisUntilFinished);
+                }
+
+                public void onFinish() {
+                    daysTextView.setText("00");
+                    hoursTextView.setText("00");
+                    minutesTextView.setText("00");
+                    secondsTextView.setText("00");
+                }
+            }.start();
+        } else {
+            timerContainer.setVisibility(View.GONE);
+            daysTextView.setText("00");
+            hoursTextView.setText("00");
+            minutesTextView.setText("00");
+            secondsTextView.setText("00");
+        }
     }
 
     private void checkUserInList() {
