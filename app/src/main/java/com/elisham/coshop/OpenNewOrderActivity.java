@@ -358,7 +358,7 @@ public class OpenNewOrderActivity extends AppCompatActivity {
                 checkAndNotifyUsers(saveNewCategorieName, lastLatitude, lastLongitude)
                         .addOnCompleteListener(notificationTask -> {
                             if (notificationTask.isSuccessful()) {
-                                sendNotification("הזמנה חדשה", "נוספה הזמנה חדשה בתחום שמעניין אותך!", orderId);
+                                sendNotification("New Order", "There is a new order in the field that interests you!", orderId);
                                 Intent intent = new Intent(OpenNewOrderActivity.this, MyOrdersActivity.class);
                                 startActivity(intent);
                             } else {
@@ -459,22 +459,41 @@ public class OpenNewOrderActivity extends AppCompatActivity {
 
                         if (favoriteCategories.contains(category) && isWithinDistance(orderLocation, userLocation, maxDistance)) {
                             String userEmail = userDocument.getString("email");
-                            String notificationMessage = "הזמנה חדשה בתחום שמעניין אותך!";
+                            String notificationMessage = "There is a new order in the field that interests you!";
                             Log.d("OpenNewOrderActivity", "Sending notification to: " + userEmail);
 
                             CollectionReference notificationsRef = usersRef.document(userDocument.getId()).collection("notifications");
-                            Map<String, Object> notificationData = new HashMap<>();
-                            notificationData.put("message", notificationMessage);
-                            notificationData.put("userEmail", userEmail);
-                            notificationData.put("timestamp", com.google.firebase.firestore.FieldValue.serverTimestamp());
+                            notificationsRef.get().addOnCompleteListener(notificationTask -> {
+                                if (notificationTask.isSuccessful() && notificationTask.getResult().isEmpty()) {
+                                    // אוסף התראות לא קיים, צור אותו ולאחר מכן הוסף את ההתראה
+                                    Map<String, Object> notificationData = new HashMap<>();
+                                    notificationData.put("message", notificationMessage);
+                                    notificationData.put("userEmail", userEmail);
+                                    notificationData.put("timestamp", FieldValue.serverTimestamp());
 
-                            notificationsRef.add(notificationData)
-                                    .addOnSuccessListener(documentReference -> {
-                                        Log.d("Firestore", "Notification added successfully for user: " + userEmail);
-                                    })
-                                    .addOnFailureListener(e -> {
-                                        Log.w("Firestore", "Error adding notification for user: " + userEmail, e);
-                                    });
+                                    notificationsRef.add(notificationData)
+                                            .addOnSuccessListener(documentReference -> {
+                                                Log.d("Firestore", "Notification added successfully for user: " + userEmail);
+                                            })
+                                            .addOnFailureListener(e -> {
+                                                Log.w("Firestore", "Error adding notification for user: " + userEmail, e);
+                                            });
+                                } else {
+                                    // אוסף התראות קיים, הוסף את ההתראה
+                                    Map<String, Object> notificationData = new HashMap<>();
+                                    notificationData.put("message", notificationMessage);
+                                    notificationData.put("userEmail", userEmail);
+                                    notificationData.put("timestamp", FieldValue.serverTimestamp());
+
+                                    notificationsRef.add(notificationData)
+                                            .addOnSuccessListener(documentReference -> {
+                                                Log.d("Firestore", "Notification added successfully for user: " + userEmail);
+                                            })
+                                            .addOnFailureListener(e -> {
+                                                Log.w("Firestore", "Error adding notification for user: " + userEmail, e);
+                                            });
+                                }
+                            });
                         }
                     } else {
                         Log.w("Firestore", "User document does not contain a GeoPoint address");
@@ -495,7 +514,7 @@ public class OpenNewOrderActivity extends AppCompatActivity {
         JSONObject notificationBody = new JSONObject();
 
         try {
-            notificationBody.put("title", "הזמנה חדשה");
+            notificationBody.put("title", "New Order");
             notificationBody.put("message", message);
 
             notification.put("to", fcmToken);
