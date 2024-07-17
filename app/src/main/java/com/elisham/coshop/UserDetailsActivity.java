@@ -31,7 +31,6 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.cardview.widget.CardView;
@@ -54,8 +53,6 @@ import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 
-import org.w3c.dom.Text;
-
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -64,7 +61,6 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 
 public class UserDetailsActivity extends AppCompatActivity {
@@ -75,11 +71,9 @@ public class UserDetailsActivity extends AppCompatActivity {
     private String lastAddress;
     private double lastLatitude;
     private double lastLongitude;
-    private int lastDistance;
-    private TextView fullNameTextView, emailEditText;
+    private TextView fullNameTextView;
     private String email, firstName, familyName, picUrl;
     private String newFirstName, newFamilyName, googleProfilePicUrl;
-    private boolean changeName = false;
     private GeoPoint address;
     private ArrayList<String> selectedCategories;
     private RadioGroup choiceRadioGroup;
@@ -106,7 +100,7 @@ public class UserDetailsActivity extends AppCompatActivity {
 
         profileImageView = findViewById(R.id.profileImageView);
 
-        emailEditText = findViewById(R.id.emailText);
+        TextView emailEditText = findViewById(R.id.emailText);
         fullNameTextView = findViewById(R.id.fullName);
         choiceRadioGroup = findViewById(R.id.choiceLinearLayout);
 
@@ -134,11 +128,14 @@ public class UserDetailsActivity extends AppCompatActivity {
             GoogleSignInAccount account = GoogleSignIn.getLastSignedInAccount(this);
             if (account != null) {
                 googleProfilePicUrl = account.getPhotoUrl().toString();
-//                downloadAndUploadGoogleProfilePic(googleProfilePicUrl);
                 Glide.with(this)
                         .load(googleProfilePicUrl)
                         .into(profileImageView);
             }
+        }
+        else
+        {
+            profileImageView.setImageResource(R.drawable.ic_profile);
         }
 
 
@@ -248,7 +245,6 @@ public class UserDetailsActivity extends AppCompatActivity {
         }
     }
 
-
     private void checkCameraPermissionAndTakePhoto() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA}, TAKE_PHOTO_REQUEST);
@@ -287,7 +283,6 @@ public class UserDetailsActivity extends AppCompatActivity {
                     Bitmap bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), imageUri);
                     bitmap = rotateImageIfRequired(bitmap, imageUri);
                     profileImageView.setImageBitmap(bitmap);
-//                    uploadImage();
                     changePic = true;
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -298,16 +293,13 @@ public class UserDetailsActivity extends AppCompatActivity {
                 try {
                     bitmap = rotateImageIfRequired(bitmap, imageUri);
                     profileImageView.setImageBitmap(bitmap);
-//                    uploadImage();
                     changePic = true;
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
             }
-
         }
     }
-
 
     private Uri getImageUri(Bitmap bitmap) {
         // Create a file for the image
@@ -327,7 +319,6 @@ public class UserDetailsActivity extends AppCompatActivity {
         // Use FileProvider to get the content URI
         return FileProvider.getUriForFile(this, BuildConfig.APPLICATION_ID + ".provider", imageFile);
     }
-
 
     private Bitmap rotateImageIfRequired(Bitmap img, Uri selectedImage) throws IOException {
         InputStream input = getContentResolver().openInputStream(selectedImage);
@@ -402,7 +393,6 @@ public class UserDetailsActivity extends AppCompatActivity {
                 });
     }
 
-
     public void editUserDetails() {
         Map<String, Object> userDetails = new HashMap<>();
 
@@ -451,8 +441,6 @@ public class UserDetailsActivity extends AppCompatActivity {
         }
 
         if (isGoogleSignUp && !changePic) {
-            Toast.makeText(UserDetailsActivity.this, "1", Toast.LENGTH_SHORT).show();
-
             // If Google Sign Up, download the Google profile picture and upload it to Firebase
             downloadAndUploadGoogleProfilePic(googleProfilePicUrl, new OnSuccessListener<String>() {
                 @Override
@@ -475,10 +463,10 @@ public class UserDetailsActivity extends AppCompatActivity {
                                     saveUserDetailsToFirestore(userDetails);
                                 })
                                 .addOnFailureListener(e -> {
-                                    Toast.makeText(UserDetailsActivity.this, "3 Upload failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                                    Log.e("Firestore", "Error getting download URL: " + e.getMessage());
                                 }))
                         .addOnFailureListener(e -> {
-                            Toast.makeText(UserDetailsActivity.this, "4 Upload failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                            Log.e("Firestore", "Error uploading image: " + e.getMessage());
                         });
             } else {
                 Toast.makeText(UserDetailsActivity.this, "5 No file selected", Toast.LENGTH_SHORT).show();
@@ -500,7 +488,6 @@ public class UserDetailsActivity extends AppCompatActivity {
                     showAlertDialog("Error adding user details: " + e.getMessage());
                 });
     }
-
 
     private void showNameEditDialog() {
         android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(this);
@@ -542,7 +529,6 @@ public class UserDetailsActivity extends AppCompatActivity {
                         // Update UI with new names
                         String fullName = newFirstName + " " + newFamilyName;
                         fullNameTextView.setText(fullName);
-                        changeName = true;
 
                         // Dismiss dialog
                         dialog.dismiss();
@@ -564,31 +550,41 @@ public class UserDetailsActivity extends AppCompatActivity {
         builder.setTitle("Change Profile Picture");
         // Create a list of options
         List<CharSequence> options = new ArrayList<>();
-        if (profileImageUrl != null) {
-            options.add("View Photo");
-        }
         options.add("Take Photo");
         options.add("Choose from Gallery");
+        if (profileImageUrl != null) {
+            options.add("View Photo");
+            options.add("Delete Photo");
+        }
 
         CharSequence[] items = options.toArray(new CharSequence[0]);
         builder.setItems(items,
                 new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
+                        Log.d("ImageSourceDialog", "Selected option: " + which);
                         switch (which) {
                             case 0:
+                                Log.d("ImageSourceDialog", "Take Photo");
+                                checkCameraPermissionAndTakePhoto();
+                                break;
+                            case 1:
+                                Log.d("ImageSourceDialog", "Choose from Gallery");
+                                openFileChooser();
+                                break;
+                            case 2:
                                 if (profileImageUrl != null) {
                                     // Handle viewing the photo
                                     viewPhoto(profileImageUrl);
-                                } else {
-                                    checkCameraPermissionAndTakePhoto();
                                 }
                                 break;
-                            case 1:
-                                checkCameraPermissionAndTakePhoto();
-                                break;
-                            case 2:
-                                openFileChooser();
+                            case 3:
+                                if (profileImageUrl != null) {
+                                    // Handle deleting the photo
+                                    googleProfilePicUrl = null;
+                                    changePic = true;
+                                    profileImageView.setImageResource(R.drawable.ic_profile);
+                                }
                                 break;
                         }
                     }
@@ -640,45 +636,4 @@ public class UserDetailsActivity extends AppCompatActivity {
         finish();
     }
 
-
-    public void deleteAccount(View v) {
-        MenuUtils logout = new MenuUtils(this);
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setMessage("Are you sure you want to delete your account?")
-                .setCancelable(true)
-                .setPositiveButton("YES", new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int id) {
-                        if (currentUser != null) {
-                            currentUser.delete()
-                                    .addOnSuccessListener(new OnSuccessListener<Void>() {
-                                        @Override
-                                        public void onSuccess(Void aVoid) {
-                                            showAlertDialog("Account successfully deleted! 1");
-                                            Toast.makeText(UserDetailsActivity.this, "Account successfully deleted! 111", Toast.LENGTH_SHORT).show();
-                                            Log.d("MainActivity", "User account deleted.");
-                                            logout.logOut();
-                                        }
-                                    })
-                                    .addOnFailureListener(new OnFailureListener() {
-                                        @Override
-                                        public void onFailure(@NonNull Exception e) {
-                                            Toast.makeText(UserDetailsActivity.this, "Error deleting user" + e, Toast.LENGTH_SHORT).show();
-                                            Log.e("MainActivity", "Error deleting user", e);
-                                        }
-                                    });
-//
-                        } else {
-                            Log.d("MainActivity", "No user is currently signed in.");
-                        }
-                        dialog.dismiss();
-                    }
-                });
-        AlertDialog alert = builder.create();
-        alert.show();
-    }
-
-    public void changePassword(View v) {
-        Intent toy = new Intent(UserDetailsActivity.this, ChangePasswordActivity.class);
-        startActivity(toy);
-    }
 }

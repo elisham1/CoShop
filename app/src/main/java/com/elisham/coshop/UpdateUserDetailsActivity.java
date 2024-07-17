@@ -120,7 +120,6 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
 
         emailTextView = findViewById(R.id.emailText);
         fullNameTextView = findViewById(R.id.fullName);
-//        addressEditText = findViewById(R.id.addressText);
         typeOfUserTextView = findViewById(R.id.type_of_user);
         profileImageView = findViewById(R.id.profileImage);
 
@@ -143,6 +142,10 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
         profilePic.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                if (picUrl == null)
+                {
+                    profileImageView.setImageResource(R.drawable.ic_profile);
+                }
                 showImageSourceDialog(picUrl);
             }
         });
@@ -268,41 +271,51 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
         }
     }
 
-    private void showImageSourceDialog(final String profileImageUrl) {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+    private void showImageSourceDialog(String profileImageUrl) {
+        androidx.appcompat.app.AlertDialog.Builder builder = new androidx.appcompat.app.AlertDialog.Builder(this);
         builder.setTitle("Change Profile Picture");
-
         // Create a list of options
         List<CharSequence> options = new ArrayList<>();
-        if (profileImageUrl != null) {
-            options.add("View Photo");
-        }
         options.add("Take Photo");
         options.add("Choose from Gallery");
+        if (profileImageUrl != null) {
+            options.add("View Photo");
+            options.add("Delete Photo");
+        }
 
         CharSequence[] items = options.toArray(new CharSequence[0]);
-
-        builder.setItems(items, new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                switch (which) {
-                    case 0:
-                        if (profileImageUrl != null) {
-                            // Handle viewing the photo
-                            viewPhoto(profileImageUrl);
-                        } else {
-                            checkCameraPermissionAndTakePhoto();
+        builder.setItems(items,
+                new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        Log.d("ImageSourceDialog", "Selected option: " + which);
+                        switch (which) {
+                            case 0:
+                                Log.d("ImageSourceDialog", "Take Photo");
+                                checkCameraPermissionAndTakePhoto();
+                                break;
+                            case 1:
+                                Log.d("ImageSourceDialog", "Choose from Gallery");
+                                openFileChooser();
+                                break;
+                            case 2:
+                                if (profileImageUrl != null) {
+                                    // Handle viewing the photo
+                                    viewPhoto(profileImageUrl);
+                                }
+                                break;
+                            case 3:
+                                if (profileImageUrl != null) {
+                                    // Handle deleting the photo
+                                    deleteUserProfileImage(profileImageUrl);
+                                    picUrl = null;
+                                    changePic = true;
+                                    profileImageView.setImageResource(R.drawable.ic_profile);
+                                }
+                                break;
                         }
-                        break;
-                    case 1:
-                        checkCameraPermissionAndTakePhoto();
-                        break;
-                    case 2:
-                        openFileChooser();
-                        break;
-                }
-            }
-        });
+                    }
+                });
         builder.show();
     }
 
