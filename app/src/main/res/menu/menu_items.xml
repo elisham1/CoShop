@@ -28,6 +28,12 @@
         android:title="Log Out"/>
 
     <item
+        android:id="@+id/chat_notification"
+        android:icon="@drawable/baseline_circle_notifications_24"
+        android:title="Cart"
+        app:showAsAction="always" />
+
+    <item
         android:id="@+id/chat_icon"
         android:icon="@drawable/chat"
         android:title="Cart"

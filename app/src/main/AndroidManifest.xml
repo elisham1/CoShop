@@ -98,6 +98,9 @@
             android:name=".AllChatOfUserActivity"
             android:exported="false" />
         <activity
+            android:name=".notificationActivity"
+            android:exported="false" />
+        <activity
             android:name=".MainActivity"
             android:exported="true">
             <intent-filter>

@@ -764,6 +764,9 @@ public class MyOrdersActivity extends AppCompatActivity {
             case R.id.chat_icon:
                 menuUtils.allChats();
                 return true;
+            case R.id.chat_notification:
+                menuUtils.chat_notification();
+                return true;
             default:
                 return super.onOptionsItemSelected(item);
         }
