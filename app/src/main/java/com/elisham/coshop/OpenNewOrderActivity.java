@@ -47,6 +47,7 @@ import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.TaskCompletionSource;
+import com.google.android.gms.tasks.Tasks;
 import com.google.android.libraries.places.api.Places;
 import com.google.android.libraries.places.api.model.AutocompletePrediction;
 import com.google.android.libraries.places.api.net.PlacesClient;
@@ -246,6 +247,10 @@ public class OpenNewOrderActivity extends AppCompatActivity {
         }
     }
 
+    private int getUniqueNotificationId() {
+        return (int) System.currentTimeMillis();
+    }
+
     private void sendNotification(String title, String message, String orderId) {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) {
             createDynamicLink(orderId, shortLink -> {
@@ -262,7 +267,7 @@ public class OpenNewOrderActivity extends AppCompatActivity {
                             .setAutoCancel(true);
 
                     NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this);
-                    int notificationId = 1;
+                    int notificationId = getUniqueNotificationId(); // שימוש בפונקציה ליצירת id ייחודי להודעה
                     notificationManager.notify(notificationId, builder.build());
                 } else {
                     Toast.makeText(this, "Failed to create notification link", Toast.LENGTH_SHORT).show();
@@ -604,6 +609,7 @@ public class OpenNewOrderActivity extends AppCompatActivity {
             userEmail = currentUser.getEmail();
         } else {
             Toast.makeText(this, "User not logged in", Toast.LENGTH_SHORT).show();
+            return Tasks.forException(new Exception("User not logged in"));
         }
 
         String finalUserEmail = userEmail;
@@ -611,36 +617,54 @@ public class OpenNewOrderActivity extends AppCompatActivity {
         String finalDescription = description;
         String finalTitle = title;
 
-        Map<String, Object> order = new HashMap<>();
-        order.put("URL", finalUrl);
-        order.put("description", finalDescription);
-        order.put("categorie", saveNewCategorieName);
-        order.put("user_email", finalUserEmail);
-        order.put("max_people", max_people_in_order);
-        order.put("type_of_order", "regular"); // לדוגמה, סוג הזמנה רגיל
-        order.put("titleOfOrder", finalTitle);
-        order.put("time", new Timestamp(selectedTime.getTime()));
-        order.put("openOrderTime", new Timestamp(new Date()));
-        order.put("NumberOfPeopleInOrder", 1);
-
-        GeoPoint geoPoint = new GeoPoint(lastLatitude, lastLongitude);
-        order.put("location", geoPoint);
-
-        ArrayList<String> listPeopleInOrder = new ArrayList<>();
-        listPeopleInOrder.add(finalUserEmail);
-        order.put("listPeopleInOrder", listPeopleInOrder);
-
         TaskCompletionSource<String> taskCompletionSource = new TaskCompletionSource<>();
 
-        db.collection("orders")
-                .add(order)
-                .addOnSuccessListener(documentReference -> {
-                    taskCompletionSource.setResult(documentReference.getId());
-                    Toast.makeText(OpenNewOrderActivity.this, "Order added successfully", Toast.LENGTH_SHORT).show();
-                })
-                .addOnFailureListener(e -> {
-                    taskCompletionSource.setException(e);
-                    Toast.makeText(OpenNewOrderActivity.this, "Failed to add order: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+        // תחילה מקבלים את ה-type_of_order מפיירבייס
+        db.collection("users").document(finalUserEmail)
+                .get()
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        DocumentSnapshot document = task.getResult();
+                        if (document.exists()) {
+                            String userType = document.getString("type of user");
+
+                            Map<String, Object> order = new HashMap<>();
+                            order.put("URL", finalUrl);
+                            order.put("description", finalDescription);
+                            order.put("categorie", saveNewCategorieName);
+                            order.put("user_email", finalUserEmail);
+                            order.put("max_people", max_people_in_order);
+                            order.put("type_of_order", userType); // שימוש ב-type_of_order מהפיירבייס
+                            order.put("titleOfOrder", finalTitle);
+                            order.put("time", new Timestamp(selectedTime.getTime()));
+                            order.put("openOrderTime", new Timestamp(new Date()));
+                            order.put("NumberOfPeopleInOrder", 1);
+
+                            GeoPoint geoPoint = new GeoPoint(lastLatitude, lastLongitude);
+                            order.put("location", geoPoint);
+
+                            ArrayList<String> listPeopleInOrder = new ArrayList<>();
+                            listPeopleInOrder.add(finalUserEmail);
+                            order.put("listPeopleInOrder", listPeopleInOrder);
+
+                            db.collection("orders")
+                                    .add(order)
+                                    .addOnSuccessListener(documentReference -> {
+                                        taskCompletionSource.setResult(documentReference.getId());
+                                        Toast.makeText(OpenNewOrderActivity.this, "Order added successfully", Toast.LENGTH_SHORT).show();
+                                    })
+                                    .addOnFailureListener(e -> {
+                                        taskCompletionSource.setException(e);
+                                        Toast.makeText(OpenNewOrderActivity.this, "Failed to add order: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                                    });
+                        } else {
+                            Log.d("Firestore", "No such document");
+                            taskCompletionSource.setException(new Exception("No such document"));
+                        }
+                    } else {
+                        Log.d("Firestore", "get failed with ", task.getException());
+                        taskCompletionSource.setException(task.getException());
+                    }
                 });
 
         return taskCompletionSource.getTask();
