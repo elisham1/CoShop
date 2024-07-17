@@ -227,24 +227,33 @@ public class LocationWindow extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 String address = addressEditText.getText().toString();
-                String distanceStr = distanceEditText.getText().toString().replace(" KM", "").trim();
+                boolean hideDistanceLayout = getIntent().getBooleanExtra("hideDistanceLayout", false);
+                String distanceStr = hideDistanceLayout ? "0" : distanceEditText.getText().toString().replace(" KM", "").trim();
 
-                if (!address.isEmpty() && !distanceStr.isEmpty()) {
+                if (!address.isEmpty() && (hideDistanceLayout || !distanceStr.isEmpty())) {
                     if (lastValidAddress == null) {
-                        locationFunctions.fetchAddressCoordinates(address, distanceEditText);
+                        locationFunctions.fetchAddressCoordinates(address, distanceStr);
                     } else {
                         locationFunctions.sendResult(address, distanceStr);
                     }
                 } else {
-                    Toast.makeText(LocationWindow.this, "Please enter a valid address and distance", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(LocationWindow.this, "Please enter a valid address" + (hideDistanceLayout ? "" : " and distance"), Toast.LENGTH_SHORT).show();
                 }
             }
         });
 
+
         Intent intent = getIntent();
         if (intent != null) {
+            boolean hideDistanceLayout = intent.getBooleanExtra("hideDistanceLayout", false);
             String address = intent.getStringExtra("address");
             int distance = intent.getIntExtra("distance", 0);
+
+            if (hideDistanceLayout) {
+                distanceEditText.setVisibility(View.GONE);
+                numberPicker.setVisibility(View.GONE);
+            }
+
             if (address != null && !address.isEmpty()) {
                 addressEditText.setText(address);
                 lastValidAddress = address;
@@ -367,6 +376,9 @@ public class LocationWindow extends AppCompatActivity {
                 return true;
             case R.id.chat_icon: // הוספת המקרה עבור אייקון ה-chat
                 menuUtils.allChats();
+                return true;
+            case R.id.chat_notification:
+                menuUtils.chat_notification();
                 return true;
             default:
                 return super.onOptionsItemSelected(item);

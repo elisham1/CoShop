@@ -1,150 +1,107 @@
 package com.elisham.coshop;
 
-import androidx.appcompat.app.ActionBar;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
-import android.annotation.SuppressLint;
 import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
 import android.content.Intent;
 import android.os.Bundle;
 import android.text.Editable;
+import android.text.InputType;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.DatePicker;
-import android.widget.RadioGroup;
+import android.widget.EditText;
+import android.widget.ImageButton;
+import android.widget.LinearLayout;
 import android.widget.Spinner;
+import android.widget.TextView;
+import android.widget.TimePicker;
+import android.widget.Toast;
 
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.tasks.Task;
+import com.google.android.gms.tasks.TaskCompletionSource;
+import com.google.android.libraries.places.api.Places;
+import com.google.android.libraries.places.api.model.AutocompletePrediction;
+import com.google.android.libraries.places.api.net.PlacesClient;
+import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FieldValue;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.GeoPoint;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
-import androidx.appcompat.app.AlertDialog;
-import java.text.SimpleDateFormat;
-
-import android.content.DialogInterface;
-import android.text.InputType;
-import android.widget.AdapterView;
-import android.widget.EditText;
-import android.widget.TimePicker;
-import android.widget.Toast;
-import com.google.firebase.firestore.FieldValue;
-import com.google.firebase.firestore.GeoPoint;
-
+import java.util.Locale;
 import java.util.Map;
 
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
-import java.util.Calendar;
-
-import android.Manifest;
-import android.content.Context;
-import android.content.pm.PackageManager;
-import android.location.Address;
-import android.location.Geocoder;
-import android.location.Location;
-import android.location.LocationListener;
-import android.location.LocationManager;
-import java.util.Locale;
-import android.text.TextWatcher;
-import android.view.MotionEvent;
-
-public class OpenNewOrderActivity extends AppCompatActivity implements LocationListener {
-
-    private MenuUtils menuUtils;
-    private static final int LOCATION_PERMISSION_REQUEST_CODE = 100;
-    FirebaseFirestore db;
-    Spinner categorySpinner;
+public class OpenNewOrderActivity extends AppCompatActivity {
+    private FirebaseFirestore db;
+    private Spinner categorySpinner;
     private EditText urlEditText;
     private EditText descriptionEditText;
-    private EditText addressEditText;
     private EditText titleEditText;
     private EditText timeEditText;
     private Calendar selectedTime = null;
-    LocationManager locationManager;
-    String saveNewCategorieName;
-    private double latitude;
-    private double longitude;
     private int max_people_in_order;
     private EditText maxPeopleEditText;
-    private boolean isAddressManuallyEdited = false; // Flag to track manual edits
-    private long lastClickTime = 0; // Variable to store the time of the last click
+    private String saveNewCategorieName;
+    private TextView searchAddressText;
+    private String lastAddress;
+    private double lastLatitude;
+    private double lastLongitude;
+    private ImageButton searchAddressButton;
+    private ImageButton editAddressButton;
+    private FusedLocationProviderClient fusedLocationClient;
+    private PlacesClient placesClient;
+    private ArrayAdapter<String> addressAdapter;
+    private List<AutocompletePrediction> predictionList = new ArrayList<>();
+    private ActivityResultLauncher<Intent> locationWindowLauncher;
+    private MenuUtils menuUtils;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_open_new_order);
         menuUtils = new MenuUtils(this);
-        // Initialize Firestore
+
         db = FirebaseFirestore.getInstance();
-        // Get references to the EditText fields
+        categorySpinner = findViewById(R.id.category);
         urlEditText = findViewById(R.id.url);
         descriptionEditText = findViewById(R.id.description);
-        addressEditText = findViewById(R.id.address);
         titleEditText = findViewById(R.id.title);
         timeEditText = findViewById(R.id.time);
-        // Initialize Spinner
-        categorySpinner = findViewById(R.id.category);
-        // Read categories from Firestore and populate Spinner
+        searchAddressText = findViewById(R.id.search_address_text);
+        searchAddressButton = findViewById(R.id.search_address_button);
+        editAddressButton = findViewById(R.id.edit_address_button);
+
         readCategoriesFromFireStore();
 
-        // Add a click listener to the address EditText
-        addressEditText.setOnTouchListener(new View.OnTouchListener() {
-            @Override
-            public boolean onTouch(View v, MotionEvent event) {
-                if (event.getAction() == MotionEvent.ACTION_DOWN) {
-                    long clickTime = System.currentTimeMillis();
-                    if (clickTime - lastClickTime < 500) { // Double click detected
-                        isAddressManuallyEdited = false;
-                        checkLocationPermission();
-                    } else {
-                        isAddressManuallyEdited = true;
-                    }
-                    lastClickTime = clickTime;
-                }
-                return false;
-            }
-        });
-
-        // Track manual edits to the address field
-        addressEditText.addTextChangedListener(new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-                // No action needed before text is changed
-            }
-
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
-                isAddressManuallyEdited = true; // User manually edited the address
-            }
-
-            @Override
-            public void afterTextChanged(Editable s) {
-                // No action needed after text is changed
-            }
-        });
-
-        // Initialize views
         maxPeopleEditText = findViewById(R.id.maxPeopleEditText);
-
         maxPeopleEditText.addTextChangedListener(new TextWatcher() {
             @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-                // No action needed before text is changed
-            }
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
 
             @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
-                // No action needed on text change
-            }
+            public void onTextChanged(CharSequence s, int start, int before, int count) {}
 
             @Override
             public void afterTextChanged(Editable s) {
@@ -156,14 +113,10 @@ public class OpenNewOrderActivity extends AppCompatActivity implements LocationL
 
         titleEditText.addTextChangedListener(new TextWatcher() {
             @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-                // No action needed before text is changed
-            }
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
 
             @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
-                // No action needed on text change
-            }
+            public void onTextChanged(CharSequence s, int start, int before, int count) {}
 
             @Override
             public void afterTextChanged(Editable s) {
@@ -173,6 +126,85 @@ public class OpenNewOrderActivity extends AppCompatActivity implements LocationL
                 }
             }
         });
+
+        locationWindowLauncher = registerForActivityResult(
+                new ActivityResultContracts.StartActivityForResult(),
+                result -> {
+                    if (result.getResultCode() == RESULT_OK && result.getData() != null) {
+                        lastAddress = result.getData().getStringExtra("address");
+                        lastLatitude = result.getData().getDoubleExtra("latitude", 0);
+                        lastLongitude = result.getData().getDoubleExtra("longitude", 0);
+
+                        if (lastAddress != null) {
+                            searchAddressText.setText(lastAddress);
+                            searchAddressButton.setVisibility(View.VISIBLE);
+                            searchAddressButton.setTag("clear");
+                            searchAddressButton.setImageResource(R.drawable.clear);
+                            editAddressButton.setVisibility(View.VISIBLE);
+                        }
+                    }
+                }
+        );
+
+        searchAddressButton.setOnClickListener(v -> {
+            if (searchAddressButton.getTag() != null && searchAddressButton.getTag().equals("clear")) {
+                searchAddressText.setText("");
+                searchAddressButton.setTag("search");
+                searchAddressButton.setImageResource(R.drawable.baseline_search_24);
+                editAddressButton.setVisibility(View.GONE);
+
+                lastAddress = null;
+                lastLatitude = 0;
+                lastLongitude = 0;
+            }
+        });
+
+        searchAddressText.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                toggleSearchClearIcon();
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {}
+        });
+
+        LinearLayout searchRow = findViewById(R.id.search_row);
+        searchRow.setOnClickListener(v -> {
+            Intent intent = new Intent(OpenNewOrderActivity.this, LocationWindow.class);
+            intent.putExtra("hideDistanceLayout", true); // העברת פרמטר להסתרת ה-KM
+            if (lastAddress != null && !lastAddress.isEmpty()) {
+                intent.putExtra("address", lastAddress);
+            }
+            locationWindowLauncher.launch(intent);
+        });
+
+
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
+
+        String apiKey = "AIzaSyCCEZAKwn0TCA-XvVpDKTOVrdiM__RfwCI"; // החלף במפתח ה-API שלך
+
+        // Initialize Places
+        Places.initialize(getApplicationContext(), apiKey);
+        placesClient = Places.createClient(this);
+
+        addressAdapter = new ArrayAdapter<>(this, android.R.layout.simple_dropdown_item_1line);
+    }
+
+    private void toggleSearchClearIcon() {
+        String address = searchAddressText.getText().toString();
+        if (!address.isEmpty()) {
+            searchAddressButton.setTag("clear");
+            searchAddressButton.setImageResource(R.drawable.clear);
+            editAddressButton.setVisibility(View.VISIBLE);
+        } else {
+            searchAddressButton.setTag("search");
+            searchAddressButton.setImageResource(R.drawable.baseline_search_24);
+            editAddressButton.setVisibility(View.GONE);
+        }
     }
 
     public int maxPeople() {
@@ -187,68 +219,6 @@ public class OpenNewOrderActivity extends AppCompatActivity implements LocationL
         }
     }
 
-    public void onMaxPeopleEditTextClick(View view) {
-        int numberOfPeople = maxPeople();
-        Log.d("Max People", "Max People: " + numberOfPeople);
-        max_people_in_order = numberOfPeople;
-    }
-
-    private void checkLocationPermission() {
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, LOCATION_PERMISSION_REQUEST_CODE);
-        } else {
-            getLocation();
-        }
-    }
-
-    @SuppressLint("MissingPermission")
-    private void getLocation() {
-        locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-        if (locationManager != null) {
-            if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER) || locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)) {
-                locationManager.requestSingleUpdate(LocationManager.GPS_PROVIDER, this, null);
-                locationManager.requestSingleUpdate(LocationManager.NETWORK_PROVIDER, this, null);
-            } else {
-                Toast.makeText(this, "Please enable location services", Toast.LENGTH_SHORT).show();
-                startActivity(new Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS));
-            }
-        }
-    }
-
-    @Override
-    public void onLocationChanged(Location location) {
-        if (location != null && !isAddressManuallyEdited) { // Only update if not manually edited
-            latitude = location.getLatitude();
-            longitude = location.getLongitude();
-            Toast.makeText(this, "Latitude: " + latitude + ", Longitude: " + longitude, Toast.LENGTH_SHORT).show();
-            Log.d("Location Info", "Latitude: " + latitude + ", Longitude: " + longitude);
-
-            try {
-                Geocoder geocoder = new Geocoder(this, Locale.getDefault());
-                List<Address> addresses = geocoder.getFromLocation(latitude, longitude, 1);
-                if (addresses != null && !addresses.isEmpty()) {
-                    String address = addresses.get(0).getAddressLine(0);
-                    Log.d("Location Address", address);
-                    addressEditText.setText(address);
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
-            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                getLocation();
-            } else {
-                Toast.makeText(this, "Permission denied", Toast.LENGTH_SHORT).show();
-            }
-        }
-    }
-
     public void readCategoriesFromFireStore() {
         db.collection("categories").document("jQ4hXL6kr1AbKwPvEdXl")
                 .get()
@@ -258,8 +228,21 @@ public class OpenNewOrderActivity extends AppCompatActivity implements LocationL
                         if (document.exists()) {
                             List<String> categoriesList = (List<String>) document.get("categories");
                             if (categoriesList != null) {
-                                int numberOfItemsInList = categoriesList.size();
-                                addOtherCategory(categoriesList, numberOfItemsInList);
+                                ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, categoriesList);
+                                adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+                                categorySpinner.setAdapter(adapter);
+
+                                categorySpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+                                    @Override
+                                    public void onItemSelected(AdapterView<?> adapterView, View view, int position, long id) {
+                                        saveNewCategorieName = (String) adapterView.getItemAtPosition(position);
+                                        Log.d("Selected Category", saveNewCategorieName);
+                                    }
+
+                                    @Override
+                                    public void onNothingSelected(AdapterView<?> adapterView) {
+                                    }
+                                });
                             }
                         }
                     } else {
@@ -268,96 +251,8 @@ public class OpenNewOrderActivity extends AppCompatActivity implements LocationL
                 });
     }
 
-    public void addOtherCategory(List<String> categoriesList, int numberOfItemsInList) {
-        categoriesList.add("Other");
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, categoriesList);
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        categorySpinner.setAdapter(adapter);
 
-        categorySpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> adapterView, View view, int position, long id) {
-                String selectedCategory = (String) adapterView.getItemAtPosition(position);
-                saveNewCategorieName = selectedCategory;
-                Log.d("Selected Category", saveNewCategorieName);
-                if (selectedCategory.equals("Other")) {
-                    showNewCategoryDialog(categoriesList, numberOfItemsInList);
-                }
-            }
 
-            @Override
-            public void onNothingSelected(AdapterView<?> adapterView) {
-            }
-        });
-    }
-
-    public void showNewCategoryDialog(List<String> categoriesList, int numberOfItemsInList) {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Enter New Category");
-
-        final EditText input = new EditText(this);
-        input.setInputType(InputType.TYPE_CLASS_TEXT);
-        builder.setView(input);
-
-        builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                String newCategory = input.getText().toString();
-                saveNewCategorieName = newCategory;
-                Log.d("New Category", saveNewCategorieName);
-                if (!newCategory.equalsIgnoreCase("Other") && !newCategory.trim().isEmpty()) {
-                    addCategoryToFirestore(newCategory, categoriesList, numberOfItemsInList);
-                } else {
-                    showNewCategoryDialog(categoriesList, numberOfItemsInList);
-                    Toast.makeText(OpenNewOrderActivity.this, "You cannot enter that! Enter again.", Toast.LENGTH_SHORT).show();
-                }
-            }
-        });
-        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                dialog.cancel();
-                readCategoriesFromFireStore();
-            }
-        });
-
-        builder.show();
-    }
-
-    public void addCategoryToFirestore(String newCategory, List<String> categoriesList, int numberOfItemsInList) {
-        String saveCategory = newCategory;
-        String lowercaseCategory = newCategory.toLowerCase();
-
-        db.collection("categories").document("jQ4hXL6kr1AbKwPvEdXl")
-                .get()
-                .addOnSuccessListener(documentSnapshot -> {
-                    if (categoriesList != null) {
-                        if (!containsIgnoreCase(categoriesList, lowercaseCategory)) {
-                            Log.d("Category Size", String.valueOf(numberOfItemsInList));
-                            Log.d("Category List Size", String.valueOf(categoriesList.size()));
-
-                            if ((numberOfItemsInList + 1) < categoriesList.size()) {
-                                categoriesList.remove(categoriesList.size() - 1);
-                            }
-                            categoriesList.add(saveCategory);
-                            categorySpinner.setSelection(categoriesList.indexOf(saveCategory));
-                        } else {
-                            Toast.makeText(OpenNewOrderActivity.this, "Category already exists", Toast.LENGTH_SHORT).show();
-                            String correctCasedCategory = null;
-                            for (String category : categoriesList) {
-                                if (category.equalsIgnoreCase(newCategory)) {
-                                    correctCasedCategory = category;
-                                    break;
-                                }
-                            }
-                            categorySpinner.setSelection(categoriesList.indexOf(correctCasedCategory));
-                        }
-                    }
-                })
-                .addOnFailureListener(e -> {
-                    Log.e("Firestore", "Error getting categories: " + e.getMessage());
-                });
-    }
 
     private boolean containsIgnoreCase(List<String> list, String str) {
         for (String s : list) {
@@ -368,50 +263,11 @@ public class OpenNewOrderActivity extends AppCompatActivity implements LocationL
         return false;
     }
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.menu_items, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case R.id.Personal_info:
-                menuUtils.personalInfo();
-                return true;
-            case R.id.My_Orders:
-                menuUtils.myOrders();
-                return true;
-            case R.id.About_Us:
-                menuUtils.aboutUs();
-                return true;
-            case R.id.Contact_Us:
-                menuUtils.contactUs();
-                return true;
-            case R.id.Log_Out:
-                menuUtils.logOut();
-                return true;
-            case R.id.list_icon:
-                menuUtils.basket();
-                return true;
-            case R.id.home:
-                menuUtils.home();
-                return true;
-            case R.id.chat_icon:
-                menuUtils.allChats();
-                return true;
-            default:
-                return super.onOptionsItemSelected(item);
-        }
-    }
-
     public void goToMyOrders(View v) {
         String url = urlEditText.getText().toString().trim();
         String description = descriptionEditText.getText().toString().trim();
         String title = titleEditText.getText().toString().trim();
         String time = timeEditText.getText().toString().trim();
-        String address = addressEditText.getText().toString().trim();
         int maxPeople = maxPeople();
 
         if (url.isEmpty()) {
@@ -431,7 +287,7 @@ public class OpenNewOrderActivity extends AppCompatActivity implements LocationL
             return;
         }
 
-        if (latitude == 0.0 && longitude == 0.0) {
+        if (lastLatitude == 0.0 && lastLongitude == 0.0) {
             Toast.makeText(this, "Location is required", Toast.LENGTH_SHORT).show();
             return;
         }
@@ -452,9 +308,83 @@ public class OpenNewOrderActivity extends AppCompatActivity implements LocationL
         }
 
         addCategorieToDataBase();
-        saveOrder(url, description, title, time, address, maxPeople);
-        Intent intent = new Intent(OpenNewOrderActivity.this, MyOrdersActivity.class);
-        startActivity(intent);
+        saveOrder(url, description, title, maxPeople);
+
+        checkAndNotifyUsers(saveNewCategorieName, lastLatitude, lastLongitude)
+                .addOnCompleteListener(task -> {
+                    Intent intent = new Intent(OpenNewOrderActivity.this, MyOrdersActivity.class);
+                    startActivity(intent);
+                });
+    }
+
+    private Task<Void> checkAndNotifyUsers(String category, double latitude, double longitude) {
+        TaskCompletionSource<Void> taskCompletionSource = new TaskCompletionSource<>();
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        CollectionReference usersRef = db.collection("users");
+        GeoPoint orderLocation = new GeoPoint(latitude, longitude);
+
+        usersRef.get().addOnCompleteListener(task -> {
+            if (task.isSuccessful()) {
+                for (QueryDocumentSnapshot userDocument : task.getResult()) {
+                    List<String> favoriteCategories = (List<String>) userDocument.get("favorite categories");
+                    Log.d("OpenNewOrderActivity", "User favorite categories: " + favoriteCategories);
+
+                    if (userDocument.get("address") instanceof GeoPoint) {
+                        GeoPoint userLocation = userDocument.getGeoPoint("address");
+                        Log.d("OpenNewOrderActivity", "User location: " + userLocation);
+                        double maxDistance = 10.0;
+
+                        if (favoriteCategories.contains(category) && isWithinDistance(orderLocation, userLocation, maxDistance)) {
+                            String userEmail = userDocument.getString("email");
+                            String notificationMessage = "הזמנה חדשה בתחום שמעניין אותך!";
+                            Log.d("OpenNewOrderActivity", "Sending notification to: " + userEmail);
+
+                            CollectionReference notificationsRef = usersRef.document(userDocument.getId()).collection("notifications");
+                            Map<String, Object> notificationData = new HashMap<>();
+                            notificationData.put("message", notificationMessage);
+                            notificationData.put("userEmail", userEmail);
+                            notificationData.put("timestamp", com.google.firebase.firestore.FieldValue.serverTimestamp());
+
+                            notificationsRef.add(notificationData)
+                                    .addOnSuccessListener(documentReference -> {
+                                        Log.d("Firestore", "Notification added successfully for user: " + userEmail);
+                                    })
+                                    .addOnFailureListener(e -> {
+                                        Log.w("Firestore", "Error adding notification for user: " + userEmail, e);
+                                    });
+                        }
+                    } else {
+                        Log.w("Firestore", "User document does not contain a GeoPoint address");
+                    }
+                }
+                taskCompletionSource.setResult(null);
+            } else {
+                Log.w("Firestore", "Error getting documents.", task.getException());
+                taskCompletionSource.setException(task.getException());
+            }
+        });
+
+        return taskCompletionSource.getTask();
+    }
+
+    private boolean isWithinDistance(GeoPoint point1, GeoPoint point2, double maxDistance) {
+        double lat1 = point1.getLatitude();
+        double lon1 = point1.getLongitude();
+        double lat2 = point2.getLatitude();
+        double lon2 = point2.getLongitude();
+
+        double distance = haversine(lat1, lon1, lat2, lon2);
+        Log.d("OpenNewOrderActivity", "Calculated distance: " + distance);
+        return distance <= maxDistance;
+    }
+
+    private double haversine(double lat1, double lon1, double lat2, double lon2) {
+        final int R = 6371;
+        double dLat = Math.toRadians(lat2 - lat1);
+        double dLon = Math.toRadians(lon2 - lon1);
+        double a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return R * c;
     }
 
     private boolean validateFields() {
@@ -462,7 +392,7 @@ public class OpenNewOrderActivity extends AppCompatActivity implements LocationL
         String url = urlEditText.getText().toString().trim();
         String description = descriptionEditText.getText().toString().trim();
         String category = saveNewCategorieName;
-        String address = addressEditText.getText().toString().trim();
+        String address = searchAddressText.getText().toString().trim();
         String title = titleEditText.getText().toString().trim();
         boolean valid = true;
 
@@ -482,7 +412,7 @@ public class OpenNewOrderActivity extends AppCompatActivity implements LocationL
         }
 
         if (address.isEmpty()) {
-            addressEditText.setError("Address is required");
+            searchAddressText.setError("Address is required");
             valid = false;
         }
 
@@ -517,13 +447,7 @@ public class OpenNewOrderActivity extends AppCompatActivity implements LocationL
                 });
     }
 
-    private void saveOrder(String url, String description, String title, String time, String address, int maxPeople) {
-        if (url.isEmpty()) {
-            url = "";
-        } else if (!url.contains("://")) {
-            urlEditText.setError("Invalid URL. Please enter a valid URL");
-        }
-
+    private void saveOrder(String url, String description, String title, int maxPeople) {
         FirebaseAuth mAuth = FirebaseAuth.getInstance();
         FirebaseUser currentUser = mAuth.getCurrentUser();
         String userEmail = null;
@@ -534,15 +458,11 @@ public class OpenNewOrderActivity extends AppCompatActivity implements LocationL
             return;
         }
 
-        // שמירת המשתנים כ- final או effectively final
         String finalUserEmail = userEmail;
         String finalUrl = url;
         String finalDescription = description;
         String finalTitle = title;
-        String finalTime = time;
-        String finalAddress = address;
 
-        // קריאה ל-Firestore כדי לקבל את ה-type of user
         db.collection("users").document(finalUserEmail)
                 .get()
                 .addOnCompleteListener(task -> {
@@ -551,20 +471,19 @@ public class OpenNewOrderActivity extends AppCompatActivity implements LocationL
                         if (document.exists()) {
                             String userType = document.getString("type of user");
 
-                            // המשך הוספת ההזמנה לאחר קבלת ה-type of user
                             Map<String, Object> order = new HashMap<>();
                             order.put("URL", finalUrl);
                             order.put("description", finalDescription);
                             order.put("categorie", saveNewCategorieName);
                             order.put("user_email", finalUserEmail);
                             order.put("max_people", max_people_in_order);
-                            order.put("type_of_order", userType); // הוספת ה-type of user להזמנה
+                            order.put("type_of_order", userType);
                             order.put("titleOfOrder", finalTitle);
-                            order.put("time", finalTime);
-                            order.put("address", finalAddress);
-                            order.put("NumberOfPeopleInOrder",1);
+                            order.put("time", new Timestamp(selectedTime.getTime()));
+                            order.put("openOrderTime", new Timestamp(new Date()));
+                            order.put("NumberOfPeopleInOrder", 1);
 
-                            GeoPoint geoPoint = new GeoPoint(latitude, longitude);
+                            GeoPoint geoPoint = new GeoPoint(lastLatitude, lastLongitude);
                             order.put("location", geoPoint);
 
                             ArrayList<String> listPeopleInOrder = new ArrayList<>();
@@ -627,5 +546,46 @@ public class OpenNewOrderActivity extends AppCompatActivity implements LocationL
             }
         }, calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH));
         datePickerDialog.show();
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_items, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.Personal_info:
+                menuUtils.personalInfo();
+                return true;
+            case R.id.My_Orders:
+                menuUtils.myOrders();
+                return true;
+            case R.id.About_Us:
+                menuUtils.aboutUs();
+                return true;
+            case R.id.Contact_Us:
+                menuUtils.contactUs();
+                return true;
+            case R.id.Log_Out:
+                menuUtils.logOut();
+                return true;
+            case R.id.list_icon:
+                menuUtils.basket();
+                return true;
+            case R.id.home:
+                menuUtils.home();
+                return true;
+            case R.id.chat_icon:
+                menuUtils.allChats();
+                return true;
+            case R.id.chat_notification:
+                menuUtils.chat_notification();
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
     }
 }

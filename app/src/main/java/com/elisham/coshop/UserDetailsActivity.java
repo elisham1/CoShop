@@ -175,13 +175,11 @@ public class UserDetailsActivity extends AppCompatActivity {
                 result -> {
                     if (result.getResultCode() == RESULT_OK && result.getData() != null) {
                         lastAddress = result.getData().getStringExtra("address");
-                        lastDistance = result.getData().getIntExtra("distance", 0);
                         lastLatitude = result.getData().getDoubleExtra("latitude", 0);
                         lastLongitude = result.getData().getDoubleExtra("longitude", 0);
 
                         if (lastAddress != null) {
-                            String displayText = String.format(Locale.getDefault(), "%s, %d KM", lastAddress, lastDistance);
-                            searchAddressText.setText(displayText);
+                            searchAddressText.setText(lastAddress);
                             searchAddressButton.setVisibility(View.VISIBLE);
                             searchAddressButton.setTag("clear");
                             searchAddressButton.setImageResource(R.drawable.clear);
@@ -194,10 +192,9 @@ public class UserDetailsActivity extends AppCompatActivity {
         LinearLayout searchRow = findViewById(R.id.search_row);
         searchRow.setOnClickListener(v -> {
             Intent intent = new Intent(UserDetailsActivity.this, LocationWindow.class);
-            intent.putExtra("hideDistanceLayout", true);
-            if (lastAddress != null && !lastAddress.isEmpty() && lastDistance > 0) {
+            intent.putExtra("hideDistanceLayout", true); // העברת פרמטר להסתרת ה-KM
+            if (lastAddress != null && !lastAddress.isEmpty()) {
                 intent.putExtra("address", lastAddress);
-                intent.putExtra("distance", lastDistance);
             }
             locationWindowLauncher.launch(intent);
         });
@@ -209,9 +206,7 @@ public class UserDetailsActivity extends AppCompatActivity {
                 searchAddressButton.setImageResource(R.drawable.baseline_search_24);
                 editAddressButton.setVisibility(View.GONE);
 
-                // איפוס הערכים האחרונים
                 lastAddress = null;
-                lastDistance = 0;
                 lastLatitude = 0;
                 lastLongitude = 0;
             }
@@ -232,10 +227,9 @@ public class UserDetailsActivity extends AppCompatActivity {
 
         editAddressButton.setOnClickListener(v -> {
             Intent intent = new Intent(UserDetailsActivity.this, LocationWindow.class);
-            intent.putExtra("hideDistanceLayout", true);
-            if (lastAddress != null && !lastAddress.isEmpty() && lastDistance > 0) {
+            intent.putExtra("hideDistanceLayout", true); // העברת פרמטר להסתרת ה-KM
+            if (lastAddress != null && !lastAddress.isEmpty()) {
                 intent.putExtra("address", lastAddress);
-                intent.putExtra("distance", lastDistance);
             }
             locationWindowLauncher.launch(intent);
         });
@@ -243,7 +237,7 @@ public class UserDetailsActivity extends AppCompatActivity {
 
     private void toggleSearchClearIcon() {
         String address = searchAddressText.getText().toString();
-        if (!address.isEmpty() && lastDistance > 0) {
+        if (!address.isEmpty()) {
             searchAddressButton.setTag("clear");
             searchAddressButton.setImageResource(R.drawable.clear);
             editAddressButton.setVisibility(View.VISIBLE);
@@ -253,6 +247,7 @@ public class UserDetailsActivity extends AppCompatActivity {
             editAddressButton.setVisibility(View.GONE);
         }
     }
+
 
     private void checkCameraPermissionAndTakePhoto() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
