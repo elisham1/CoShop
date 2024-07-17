@@ -88,5 +88,9 @@ public class MenuUtils {
         Intent intent = new Intent(context, AllChatOfUserActivity.class);
         context.startActivity(intent);
     }
+    public void chat_notification(){
+        Intent intent = new Intent(context, notificationActivity.class);
+        context.startActivity(intent);
+    }
 
 }

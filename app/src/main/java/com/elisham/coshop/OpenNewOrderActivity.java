@@ -29,16 +29,20 @@ import android.widget.Toast;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.tasks.Task;
+import com.google.android.gms.tasks.TaskCompletionSource;
 import com.google.android.libraries.places.api.Places;
 import com.google.android.libraries.places.api.model.AutocompletePrediction;
 import com.google.android.libraries.places.api.net.PlacesClient;
 import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.GeoPoint;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -171,11 +175,13 @@ public class OpenNewOrderActivity extends AppCompatActivity {
         LinearLayout searchRow = findViewById(R.id.search_row);
         searchRow.setOnClickListener(v -> {
             Intent intent = new Intent(OpenNewOrderActivity.this, LocationWindow.class);
+            intent.putExtra("hideDistanceLayout", true); // העברת פרמטר להסתרת ה-KM
             if (lastAddress != null && !lastAddress.isEmpty()) {
                 intent.putExtra("address", lastAddress);
             }
             locationWindowLauncher.launch(intent);
         });
+
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
 
@@ -303,8 +309,82 @@ public class OpenNewOrderActivity extends AppCompatActivity {
 
         addCategorieToDataBase();
         saveOrder(url, description, title, maxPeople);
-        Intent intent = new Intent(OpenNewOrderActivity.this, MyOrdersActivity.class);
-        startActivity(intent);
+
+        checkAndNotifyUsers(saveNewCategorieName, lastLatitude, lastLongitude)
+                .addOnCompleteListener(task -> {
+                    Intent intent = new Intent(OpenNewOrderActivity.this, MyOrdersActivity.class);
+                    startActivity(intent);
+                });
+    }
+
+    private Task<Void> checkAndNotifyUsers(String category, double latitude, double longitude) {
+        TaskCompletionSource<Void> taskCompletionSource = new TaskCompletionSource<>();
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        CollectionReference usersRef = db.collection("users");
+        GeoPoint orderLocation = new GeoPoint(latitude, longitude);
+
+        usersRef.get().addOnCompleteListener(task -> {
+            if (task.isSuccessful()) {
+                for (QueryDocumentSnapshot userDocument : task.getResult()) {
+                    List<String> favoriteCategories = (List<String>) userDocument.get("favorite categories");
+                    Log.d("OpenNewOrderActivity", "User favorite categories: " + favoriteCategories);
+
+                    if (userDocument.get("address") instanceof GeoPoint) {
+                        GeoPoint userLocation = userDocument.getGeoPoint("address");
+                        Log.d("OpenNewOrderActivity", "User location: " + userLocation);
+                        double maxDistance = 10.0;
+
+                        if (favoriteCategories.contains(category) && isWithinDistance(orderLocation, userLocation, maxDistance)) {
+                            String userEmail = userDocument.getString("email");
+                            String notificationMessage = "הזמנה חדשה בתחום שמעניין אותך!";
+                            Log.d("OpenNewOrderActivity", "Sending notification to: " + userEmail);
+
+                            CollectionReference notificationsRef = usersRef.document(userDocument.getId()).collection("notifications");
+                            Map<String, Object> notificationData = new HashMap<>();
+                            notificationData.put("message", notificationMessage);
+                            notificationData.put("userEmail", userEmail);
+                            notificationData.put("timestamp", com.google.firebase.firestore.FieldValue.serverTimestamp());
+
+                            notificationsRef.add(notificationData)
+                                    .addOnSuccessListener(documentReference -> {
+                                        Log.d("Firestore", "Notification added successfully for user: " + userEmail);
+                                    })
+                                    .addOnFailureListener(e -> {
+                                        Log.w("Firestore", "Error adding notification for user: " + userEmail, e);
+                                    });
+                        }
+                    } else {
+                        Log.w("Firestore", "User document does not contain a GeoPoint address");
+                    }
+                }
+                taskCompletionSource.setResult(null);
+            } else {
+                Log.w("Firestore", "Error getting documents.", task.getException());
+                taskCompletionSource.setException(task.getException());
+            }
+        });
+
+        return taskCompletionSource.getTask();
+    }
+
+    private boolean isWithinDistance(GeoPoint point1, GeoPoint point2, double maxDistance) {
+        double lat1 = point1.getLatitude();
+        double lon1 = point1.getLongitude();
+        double lat2 = point2.getLatitude();
+        double lon2 = point2.getLongitude();
+
+        double distance = haversine(lat1, lon1, lat2, lon2);
+        Log.d("OpenNewOrderActivity", "Calculated distance: " + distance);
+        return distance <= maxDistance;
+    }
+
+    private double haversine(double lat1, double lon1, double lat2, double lon2) {
+        final int R = 6371;
+        double dLat = Math.toRadians(lat2 - lat1);
+        double dLon = Math.toRadians(lon2 - lon1);
+        double a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return R * c;
     }
 
     private boolean validateFields() {
@@ -378,13 +458,11 @@ public class OpenNewOrderActivity extends AppCompatActivity {
             return;
         }
 
-        // שמירת המשתנים כ- final או effectively final
         String finalUserEmail = userEmail;
         String finalUrl = url;
         String finalDescription = description;
         String finalTitle = title;
 
-        // קריאה ל-Firestore כדי לקבל את ה-type of user
         db.collection("users").document(finalUserEmail)
                 .get()
                 .addOnCompleteListener(task -> {
@@ -393,18 +471,17 @@ public class OpenNewOrderActivity extends AppCompatActivity {
                         if (document.exists()) {
                             String userType = document.getString("type of user");
 
-                            // המשך הוספת ההזמנה לאחר קבלת ה-type of user
                             Map<String, Object> order = new HashMap<>();
                             order.put("URL", finalUrl);
                             order.put("description", finalDescription);
                             order.put("categorie", saveNewCategorieName);
                             order.put("user_email", finalUserEmail);
                             order.put("max_people", max_people_in_order);
-                            order.put("type_of_order", userType); // הוספת ה-type of user להזמנה
+                            order.put("type_of_order", userType);
                             order.put("titleOfOrder", finalTitle);
                             order.put("time", new Timestamp(selectedTime.getTime()));
-                            order.put("openOrderTime", new Timestamp(new Date())); // הוספת הזמן הנוכחי כ-openOrderTime
-                            order.put("NumberOfPeopleInOrder",1);
+                            order.put("openOrderTime", new Timestamp(new Date()));
+                            order.put("NumberOfPeopleInOrder", 1);
 
                             GeoPoint geoPoint = new GeoPoint(lastLatitude, lastLongitude);
                             order.put("location", geoPoint);
@@ -503,6 +580,9 @@ public class OpenNewOrderActivity extends AppCompatActivity {
                 return true;
             case R.id.chat_icon:
                 menuUtils.allChats();
+                return true;
+            case R.id.chat_notification:
+                menuUtils.chat_notification();
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
