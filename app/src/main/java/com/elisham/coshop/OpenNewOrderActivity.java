@@ -5,9 +5,16 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.Manifest;
 import android.app.DatePickerDialog;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.TimePickerDialog;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.InputType;
@@ -27,22 +34,36 @@ import android.widget.TextView;
 import android.widget.TimePicker;
 import android.widget.Toast;
 
+import androidx.core.app.ActivityCompat;
+import androidx.core.app.NotificationCompat;
+import androidx.core.app.NotificationManagerCompat;
+import androidx.core.content.ContextCompat;
+
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.Volley;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.TaskCompletionSource;
+import com.google.android.gms.tasks.Tasks;
 import com.google.android.libraries.places.api.Places;
 import com.google.android.libraries.places.api.model.AutocompletePrediction;
 import com.google.android.libraries.places.api.net.PlacesClient;
 import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.dynamiclinks.FirebaseDynamicLinks;
 import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.GeoPoint;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -75,6 +96,7 @@ public class OpenNewOrderActivity extends AppCompatActivity {
     private ArrayAdapter<String> addressAdapter;
     private List<AutocompletePrediction> predictionList = new ArrayList<>();
     private ActivityResultLauncher<Intent> locationWindowLauncher;
+    private ActivityResultLauncher<String> requestPermissionLauncher;
     private MenuUtils menuUtils;
 
     @Override
@@ -92,6 +114,9 @@ public class OpenNewOrderActivity extends AppCompatActivity {
         searchAddressText = findViewById(R.id.search_address_text);
         searchAddressButton = findViewById(R.id.search_address_button);
         editAddressButton = findViewById(R.id.edit_address_button);
+
+        createNotificationChannel();
+        requestNotificationPermission();
 
         readCategoriesFromFireStore();
 
@@ -182,10 +207,9 @@ public class OpenNewOrderActivity extends AppCompatActivity {
             locationWindowLauncher.launch(intent);
         });
 
-
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
 
-        String apiKey = "AIzaSyCCEZAKwn0TCA-XvVpDKTOVrdiM__RfwCI"; // החלף במפתח ה-API שלך
+        String apiKey = "YOUR_API_KEY"; // החלף במפתח ה-API שלך
 
         // Initialize Places
         Places.initialize(getApplicationContext(), apiKey);
@@ -194,6 +218,158 @@ public class OpenNewOrderActivity extends AppCompatActivity {
         addressAdapter = new ArrayAdapter<>(this, android.R.layout.simple_dropdown_item_1line);
     }
 
+    private void requestNotificationPermission() {
+        requestPermissionLauncher = registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
+            if (isGranted) {
+                Log.d("Permission", "Notification permission granted");
+            } else {
+                Toast.makeText(this, "Notification permission is required for this app", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        // Check and request notification permission if needed
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS);
+            }
+        }
+    }
+
+    private void createNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            CharSequence name = "Example Channel";
+            String description = "This is an example channel";
+            int importance = NotificationManager.IMPORTANCE_DEFAULT;
+            NotificationChannel channel = new NotificationChannel("example_channel_id", name, importance);
+            channel.setDescription(description);
+            NotificationManager notificationManager = getSystemService(NotificationManager.class);
+            notificationManager.createNotificationChannel(channel);
+        }
+    }
+
+    private int getUniqueNotificationId() {
+        return (int) System.currentTimeMillis();
+    }
+
+    private void sendNotification(String title, String message, String orderId) {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) {
+            createDynamicLink(orderId, shortLink -> {
+                if (shortLink != null) {
+                    Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(shortLink));
+                    PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+
+                    NotificationCompat.Builder builder = new NotificationCompat.Builder(this, "example_channel_id")
+                            .setSmallIcon(R.drawable.coshop2)
+                            .setContentTitle(title)
+                            .setContentText(message)
+                            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                            .setContentIntent(pendingIntent)
+                            .setAutoCancel(true);
+
+                    NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this);
+                    int notificationId = getUniqueNotificationId(); // שימוש בפונקציה ליצירת id ייחודי להודעה
+                    notificationManager.notify(notificationId, builder.build());
+                } else {
+                    Toast.makeText(this, "Failed to create notification link", Toast.LENGTH_SHORT).show();
+                    Log.d("Notification", "Failed to create notification link");
+                }
+            });
+        } else {
+            Toast.makeText(this, "Notification permission is required to send notifications", Toast.LENGTH_SHORT).show();
+            Log.d("Notification Permission", "Notification permission is not granted");
+        }
+    }
+
+    private void createDynamicLink(String orderId, DynamicLinkCallback callback) {
+        String domainUriPrefix = "https://coshopapp.page.link";
+        String deepLink = "https://coshopapp.page.link/order?orderId=" + orderId;
+
+        FirebaseDynamicLinks.getInstance().createDynamicLink()
+                .setLongLink(Uri.parse(domainUriPrefix + "/?" +
+                        "link=" + Uri.encode(deepLink) +
+                        "&apn=" + getPackageName()))
+                .buildShortDynamicLink()
+                .addOnCompleteListener(this, task -> {
+                    if (task.isSuccessful()) {
+                        Uri shortLink = task.getResult().getShortLink();
+                        callback.onLinkCreated(shortLink.toString());
+                    } else {
+                        Log.e("DynamicLink", "Error creating short link", task.getException());
+                        callback.onLinkCreated(null);
+                    }
+                });
+    }
+
+    interface DynamicLinkCallback {
+        void onLinkCreated(String shortLink);
+    }
+
+
+
+    public void goToMyOrders(View v) {
+        String url = urlEditText.getText().toString().trim();
+        String description = descriptionEditText.getText().toString().trim();
+        String title = titleEditText.getText().toString().trim();
+        String time = timeEditText.getText().toString().trim();
+        int maxPeople = maxPeople();
+
+        if (url.isEmpty()) {
+            url = "";
+        } else if (!url.contains("://")) {
+            Toast.makeText(this, "Invalid URL. Please enter a valid URL", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        if (title.isEmpty()) {
+            Toast.makeText(this, "Title is required", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        if (saveNewCategorieName.isEmpty() || saveNewCategorieName.equals("Choose Categorie")) {
+            Toast.makeText(this, "Category is required", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        if (lastLatitude == 0.0 && lastLongitude == 0.0) {
+            Toast.makeText(this, "Location is required", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        if (description.isEmpty()) {
+            Toast.makeText(this, "Description is required", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        if (time.isEmpty()) {
+            Toast.makeText(this, "Time is required", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        if (maxPeople == 0) {
+            Toast.makeText(this, "Maximum people is required", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        addCategorieToDataBase();
+
+        saveOrder(url, description, title, maxPeople).addOnCompleteListener(task -> {
+            if (task.isSuccessful()) {
+                String orderId = task.getResult();
+                checkAndNotifyUsers(saveNewCategorieName, lastLatitude, lastLongitude)
+                        .addOnCompleteListener(notificationTask -> {
+                            if (notificationTask.isSuccessful()) {
+                                sendNotification("New Order", "There is a new order in the field that interests you!", orderId);
+                                Intent intent = new Intent(OpenNewOrderActivity.this, MyOrdersActivity.class);
+                                startActivity(intent);
+                            } else {
+                                Toast.makeText(this, "Error in notification process", Toast.LENGTH_SHORT).show();
+                            }
+                        });
+            } else {
+                Toast.makeText(this, "Failed to save order", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
     private void toggleSearchClearIcon() {
         String address = searchAddressText.getText().toString();
         if (!address.isEmpty()) {
@@ -263,59 +439,6 @@ public class OpenNewOrderActivity extends AppCompatActivity {
         return false;
     }
 
-    public void goToMyOrders(View v) {
-        String url = urlEditText.getText().toString().trim();
-        String description = descriptionEditText.getText().toString().trim();
-        String title = titleEditText.getText().toString().trim();
-        String time = timeEditText.getText().toString().trim();
-        int maxPeople = maxPeople();
-
-        if (url.isEmpty()) {
-            url = "";
-        } else if (!url.contains("://")) {
-            Toast.makeText(this, "Invalid URL. Please enter a valid URL", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        if (title.isEmpty()) {
-            Toast.makeText(this, "Title is required", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        if (saveNewCategorieName.isEmpty() || saveNewCategorieName.equals("Choose Categorie")) {
-            Toast.makeText(this, "Category is required", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        if (lastLatitude == 0.0 && lastLongitude == 0.0) {
-            Toast.makeText(this, "Location is required", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        if (description.isEmpty()) {
-            Toast.makeText(this, "Description is required", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        if (time.isEmpty()) {
-            Toast.makeText(this, "Time is required", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        if (maxPeople == 0) {
-            Toast.makeText(this, "Maximum people is required", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        addCategorieToDataBase();
-        saveOrder(url, description, title, maxPeople);
-
-        checkAndNotifyUsers(saveNewCategorieName, lastLatitude, lastLongitude)
-                .addOnCompleteListener(task -> {
-                    Intent intent = new Intent(OpenNewOrderActivity.this, MyOrdersActivity.class);
-                    startActivity(intent);
-                });
-    }
 
     private Task<Void> checkAndNotifyUsers(String category, double latitude, double longitude) {
         TaskCompletionSource<Void> taskCompletionSource = new TaskCompletionSource<>();
@@ -336,22 +459,41 @@ public class OpenNewOrderActivity extends AppCompatActivity {
 
                         if (favoriteCategories.contains(category) && isWithinDistance(orderLocation, userLocation, maxDistance)) {
                             String userEmail = userDocument.getString("email");
-                            String notificationMessage = "הזמנה חדשה בתחום שמעניין אותך!";
+                            String notificationMessage = "There is a new order in the field that interests you!";
                             Log.d("OpenNewOrderActivity", "Sending notification to: " + userEmail);
 
                             CollectionReference notificationsRef = usersRef.document(userDocument.getId()).collection("notifications");
-                            Map<String, Object> notificationData = new HashMap<>();
-                            notificationData.put("message", notificationMessage);
-                            notificationData.put("userEmail", userEmail);
-                            notificationData.put("timestamp", com.google.firebase.firestore.FieldValue.serverTimestamp());
+                            notificationsRef.get().addOnCompleteListener(notificationTask -> {
+                                if (notificationTask.isSuccessful() && notificationTask.getResult().isEmpty()) {
+                                    // אוסף התראות לא קיים, צור אותו ולאחר מכן הוסף את ההתראה
+                                    Map<String, Object> notificationData = new HashMap<>();
+                                    notificationData.put("message", notificationMessage);
+                                    notificationData.put("userEmail", userEmail);
+                                    notificationData.put("timestamp", FieldValue.serverTimestamp());
 
-                            notificationsRef.add(notificationData)
-                                    .addOnSuccessListener(documentReference -> {
-                                        Log.d("Firestore", "Notification added successfully for user: " + userEmail);
-                                    })
-                                    .addOnFailureListener(e -> {
-                                        Log.w("Firestore", "Error adding notification for user: " + userEmail, e);
-                                    });
+                                    notificationsRef.add(notificationData)
+                                            .addOnSuccessListener(documentReference -> {
+                                                Log.d("Firestore", "Notification added successfully for user: " + userEmail);
+                                            })
+                                            .addOnFailureListener(e -> {
+                                                Log.w("Firestore", "Error adding notification for user: " + userEmail, e);
+                                            });
+                                } else {
+                                    // אוסף התראות קיים, הוסף את ההתראה
+                                    Map<String, Object> notificationData = new HashMap<>();
+                                    notificationData.put("message", notificationMessage);
+                                    notificationData.put("userEmail", userEmail);
+                                    notificationData.put("timestamp", FieldValue.serverTimestamp());
+
+                                    notificationsRef.add(notificationData)
+                                            .addOnSuccessListener(documentReference -> {
+                                                Log.d("Firestore", "Notification added successfully for user: " + userEmail);
+                                            })
+                                            .addOnFailureListener(e -> {
+                                                Log.w("Firestore", "Error adding notification for user: " + userEmail, e);
+                                            });
+                                }
+                            });
                         }
                     } else {
                         Log.w("Firestore", "User document does not contain a GeoPoint address");
@@ -365,6 +507,37 @@ public class OpenNewOrderActivity extends AppCompatActivity {
         });
 
         return taskCompletionSource.getTask();
+    }
+    private void sendPushNotification(String fcmToken, String message) {
+        String serverKey = "YOUR_SERVER_KEY"; // החלף במפתח השרת שלך מ-Firebase Console
+        JSONObject notification = new JSONObject();
+        JSONObject notificationBody = new JSONObject();
+
+        try {
+            notificationBody.put("title", "New Order");
+            notificationBody.put("message", message);
+
+            notification.put("to", fcmToken);
+            notification.put("data", notificationBody);
+
+        } catch (JSONException e) {
+            Log.e("FCM", "Error creating notification JSON", e);
+        }
+
+        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.POST, "https://fcm.googleapis.com/fcm/send", notification,
+                response -> Log.d("FCM", "Notification sent successfully"),
+                error -> Log.e("FCM", "Error sending notification", error)) {
+            @Override
+            public Map<String, String> getHeaders() {
+                Map<String, String> headers = new HashMap<>();
+                headers.put("Authorization", "key=" + serverKey);
+                headers.put("Content-Type", "application/json");
+                return headers;
+            }
+        };
+
+        RequestQueue requestQueue = Volley.newRequestQueue(this);
+        requestQueue.add(jsonObjectRequest);
     }
 
     private boolean isWithinDistance(GeoPoint point1, GeoPoint point2, double maxDistance) {
@@ -447,7 +620,7 @@ public class OpenNewOrderActivity extends AppCompatActivity {
                 });
     }
 
-    private void saveOrder(String url, String description, String title, int maxPeople) {
+    private Task<String> saveOrder(String url, String description, String title, int maxPeople) {
         FirebaseAuth mAuth = FirebaseAuth.getInstance();
         FirebaseUser currentUser = mAuth.getCurrentUser();
         String userEmail = null;
@@ -455,7 +628,7 @@ public class OpenNewOrderActivity extends AppCompatActivity {
             userEmail = currentUser.getEmail();
         } else {
             Toast.makeText(this, "User not logged in", Toast.LENGTH_SHORT).show();
-            return;
+            return Tasks.forException(new Exception("User not logged in"));
         }
 
         String finalUserEmail = userEmail;
@@ -463,6 +636,9 @@ public class OpenNewOrderActivity extends AppCompatActivity {
         String finalDescription = description;
         String finalTitle = title;
 
+        TaskCompletionSource<String> taskCompletionSource = new TaskCompletionSource<>();
+
+        // תחילה מקבלים את ה-type_of_order מפיירבייס
         db.collection("users").document(finalUserEmail)
                 .get()
                 .addOnCompleteListener(task -> {
@@ -477,7 +653,7 @@ public class OpenNewOrderActivity extends AppCompatActivity {
                             order.put("categorie", saveNewCategorieName);
                             order.put("user_email", finalUserEmail);
                             order.put("max_people", max_people_in_order);
-                            order.put("type_of_order", userType);
+                            order.put("type_of_order", userType); // שימוש ב-type_of_order מהפיירבייס
                             order.put("titleOfOrder", finalTitle);
                             order.put("time", new Timestamp(selectedTime.getTime()));
                             order.put("openOrderTime", new Timestamp(new Date()));
@@ -493,19 +669,24 @@ public class OpenNewOrderActivity extends AppCompatActivity {
                             db.collection("orders")
                                     .add(order)
                                     .addOnSuccessListener(documentReference -> {
+                                        taskCompletionSource.setResult(documentReference.getId());
                                         Toast.makeText(OpenNewOrderActivity.this, "Order added successfully", Toast.LENGTH_SHORT).show();
                                     })
                                     .addOnFailureListener(e -> {
-                                        Log.e("Firestore", "Error adding order: " + e.getMessage());
-                                        Toast.makeText(OpenNewOrderActivity.this, "Failed to add order", Toast.LENGTH_SHORT).show();
+                                        taskCompletionSource.setException(e);
+                                        Toast.makeText(OpenNewOrderActivity.this, "Failed to add order: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                                     });
                         } else {
                             Log.d("Firestore", "No such document");
+                            taskCompletionSource.setException(new Exception("No such document"));
                         }
                     } else {
                         Log.d("Firestore", "get failed with ", task.getException());
+                        taskCompletionSource.setException(task.getException());
                     }
                 });
+
+        return taskCompletionSource.getTask();
     }
 
     public void showTimePickerDialog(View view) {
