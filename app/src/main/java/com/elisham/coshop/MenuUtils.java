@@ -46,11 +46,6 @@ public class MenuUtils {
         context.startActivity(intent);
     }
 
-    public void basket() {
-        Intent intent = new Intent(context, BasketActivity.class);
-        context.startActivity(intent);
-    }
-
     public void logOut() {
         if (googleSignInAccount != null) {
             // Signed in with Google

@@ -695,9 +695,6 @@ public class HomePageActivity extends AppCompatActivity {
             case R.id.Log_Out:
                 menuUtils.logOut();
                 return true;
-            case R.id.list_icon:
-                menuUtils.basket();
-                return true;
             case R.id.home:
                 menuUtils.home();
                 return true;

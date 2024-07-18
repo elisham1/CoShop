@@ -40,9 +40,7 @@
         <activity
             android:name=".EmailSignupActivity"
             android:exported="false" />
-        <activity
-            android:name=".Users_providers_rating"
-            android:exported="false" />
+
         <activity
             android:name=".OrderDetailsActivity"
             android:exported="true">
@@ -57,9 +55,6 @@
             </intent-filter>
         </activity>
 
-        <activity
-            android:name=".BasketActivity"
-            android:exported="false" />
         <activity
             android:name=".MyOrdersActivity"
             android:exported="false" />
