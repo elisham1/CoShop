@@ -279,6 +279,7 @@ public class UserDetailsActivity extends AppCompatActivity {
         if (resultCode == RESULT_OK) {
             if (requestCode == PICK_IMAGE_REQUEST && data != null && data.getData() != null) {
                 imageUri = data.getData();
+                googleProfilePicUrl = imageUri.toString();
                 try {
                     Bitmap bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), imageUri);
                     bitmap = rotateImageIfRequired(bitmap, imageUri);
@@ -290,6 +291,7 @@ public class UserDetailsActivity extends AppCompatActivity {
             } else if (requestCode == TAKE_PHOTO_REQUEST && data != null && data.getExtras() != null) {
                 Bitmap bitmap = (Bitmap) data.getExtras().get("data");
                 imageUri = getImageUri(bitmap);
+                googleProfilePicUrl = imageUri.toString();
                 try {
                     bitmap = rotateImageIfRequired(bitmap, imageUri);
                     profileImageView.setImageBitmap(bitmap);
