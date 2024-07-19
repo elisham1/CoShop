@@ -66,6 +66,8 @@ public class FilterActivity extends AppCompatActivity {
     private ImageButton clearURLButton;
     private String lastURL;
     private MenuUtils menuUtils;
+    private boolean isCategoryListVisible = false;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -237,7 +239,19 @@ public class FilterActivity extends AppCompatActivity {
                     }
                 });
     }
-
+    public void toggleCategoryVisibility(View view) {
+        ListView categoryListView = findViewById(R.id.category_list);
+        if (isCategoryListVisible) {
+            categoryListView.setVisibility(View.GONE);
+            ((TextView)((LinearLayout)view).getChildAt(0)).setText("Open Category list");
+            ((ImageButton)((LinearLayout)view).getChildAt(1)).setImageResource(R.drawable.baseline_add_24);
+        } else {
+            categoryListView.setVisibility(View.VISIBLE);
+            ((TextView)((LinearLayout)view).getChildAt(0)).setText("Close Category list");
+            ((ImageButton)((LinearLayout)view).getChildAt(1)).setImageResource(R.drawable.baseline_clear_24);
+        }
+        isCategoryListVisible = !isCategoryListVisible;
+    }
     public void OrderFiltering(View v) {
         String address = searchAddressText.getText().toString();
         String urlOrString = editTextURL.getText().toString();
