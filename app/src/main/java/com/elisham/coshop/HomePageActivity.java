@@ -412,7 +412,7 @@ public class HomePageActivity extends AppCompatActivity {
         // Create and add the people count
         TextView peopleTextView = new TextView(this);
         if (maxPeople == 0) {
-            peopleTextView.setText("unlimit people");
+            peopleTextView.setText("∞");
         } else {
             peopleTextView.setText(numberOfPeopleInOrder + "/" + maxPeople);
         }
