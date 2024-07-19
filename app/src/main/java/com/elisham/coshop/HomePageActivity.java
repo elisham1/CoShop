@@ -6,11 +6,16 @@ import androidx.core.view.ViewCompat;
 
 import android.content.Intent;
 import android.graphics.Color;
+import android.graphics.Typeface;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
 import android.os.Bundle;
 import android.os.CountDownTimer;
+import android.text.Spannable;
+import android.text.SpannableString;
+import android.text.style.ForegroundColorSpan;
+import android.text.style.StyleSpan;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.Gravity;
@@ -99,10 +104,10 @@ public class HomePageActivity extends AppCompatActivity {
         ImageButton starButton = findViewById(R.id.starButton);
         starButton.setOnClickListener(v -> {
             if (starButton.getTag().equals("star")) {
-                starButton.setImageResource(R.drawable.star2);
+                starButton.setImageResource(R.drawable.star);
                 starButton.setTag("star2");
             } else {
-                starButton.setImageResource(R.drawable.star);
+                starButton.setImageResource(R.drawable.star2);
                 starButton.setTag("star");
             }
         });
@@ -123,8 +128,18 @@ public class HomePageActivity extends AppCompatActivity {
                             String firstName = task.getResult().getString("first name");
                             String familyName = task.getResult().getString("family name");
                             if (firstName != null && familyName != null) {
-                                filterBarText1.setText("Hi " + firstName + " " + familyName);
+                                String greeting = "Hi " + firstName + " " + familyName;
+                                SpannableString spannableString = new SpannableString(greeting);
+
+                                // Set the style to bold
+                                spannableString.setSpan(new StyleSpan(Typeface.BOLD), 0, greeting.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+
+                                // Set the color to black
+                                spannableString.setSpan(new ForegroundColorSpan(Color.BLACK), 0, greeting.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+
+                                filterBarText1.setText(spannableString);
                             }
+
                         }
                     });
         }
@@ -349,10 +364,7 @@ public class HomePageActivity extends AppCompatActivity {
         });
     }
 
-    private void addOrderToLayout(String orderId, String titleOfOrder,
-                                  String location, long numberOfPeopleInOrder,
-                                  long maxPeople, String categorie, double distance,
-                                  Timestamp timestamp, double averageRating) {
+    private void addOrderToLayout(String orderId, String titleOfOrder, String location, long numberOfPeopleInOrder, long maxPeople, String categorie, double distance, Timestamp timestamp, double averageRating) {
         // Create a new RelativeLayout for the order
         RelativeLayout orderLayout = new RelativeLayout(this);
         RelativeLayout.LayoutParams orderLayoutParams = new RelativeLayout.LayoutParams(
@@ -372,25 +384,29 @@ public class HomePageActivity extends AppCompatActivity {
         TextView titleTextView = new TextView(this);
         titleTextView.setText(titleOfOrder);
         titleTextView.setId(View.generateViewId());
-        titleTextView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
         RelativeLayout.LayoutParams titleTextParams = new RelativeLayout.LayoutParams(
                 ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         titleTextParams.addRule(RelativeLayout.ALIGN_PARENT_END);
         titleTextParams.addRule(RelativeLayout.ALIGN_PARENT_TOP);
         titleTextParams.setMargins(dpToPx(20), dpToPx(10), dpToPx(10), dpToPx(5)); // Add margin from the edge
         titleTextView.setLayoutParams(titleTextParams);
+        titleTextView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14); // Increase text size
+        titleTextView.setTypeface(null, Typeface.BOLD); // Bold text
+        titleTextView.setTextColor(Color.BLACK); // Set text color to black
         orderLayout.addView(titleTextView);
 
         TextView distanceTextView = new TextView(this);
         distanceTextView.setText(String.format("%.2f km", distance));
         distanceTextView.setId(View.generateViewId());
-        distanceTextView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
         RelativeLayout.LayoutParams distanceTextParams = new RelativeLayout.LayoutParams(
                 ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         distanceTextParams.addRule(RelativeLayout.ALIGN_PARENT_START);
         distanceTextParams.addRule(RelativeLayout.ALIGN_PARENT_TOP);
         distanceTextParams.setMargins(dpToPx(10), dpToPx(10), dpToPx(20), dpToPx(5)); // Add margin from the edge
         distanceTextView.setLayoutParams(distanceTextParams);
+        distanceTextView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14); // Increase text size
+        distanceTextView.setTypeface(null, Typeface.BOLD); // Bold text
+        distanceTextView.setTextColor(Color.BLACK); // Set text color to black
         orderLayout.addView(distanceTextView);
 
         // Create and add the people count
@@ -406,6 +422,9 @@ public class HomePageActivity extends AppCompatActivity {
         peopleTextParams.addRule(RelativeLayout.CENTER_IN_PARENT); // Center horizontally and vertically
         peopleTextView.setLayoutParams(peopleTextParams);
         peopleTextParams.setMargins(0, dpToPx(10), 0, dpToPx(10)); // Add margin between title and people count
+        peopleTextView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 18); // Increase text size
+        peopleTextView.setTypeface(null, Typeface.BOLD); // Bold text
+        peopleTextView.setTextColor(Color.BLACK); // Set text color to black
         orderLayout.addView(peopleTextView);
 
         // Create and add the left square with category
@@ -432,15 +451,17 @@ public class HomePageActivity extends AppCompatActivity {
         Glide.with(this)
                 .load(iconUrl)
                 .diskCacheStrategy(DiskCacheStrategy.ALL) // Enable caching
-                .placeholder(R.drawable.star) // Optional: Add a placeholder image
-                .error(R.drawable.star2) // Optional: Add an error image
+                .placeholder(R.drawable.other) // Optional: Add a placeholder image
+                .error(R.drawable.other) // Optional: Add an error image
                 .into(leftSquare);
 
         TextView categoryTextView = new TextView(this);
         categoryTextView.setText(categorie);
         categoryTextView.setId(View.generateViewId());
-        categoryTextView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 10);
         categoryTextView.setGravity(Gravity.CENTER_HORIZONTAL);
+        categoryTextView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14); // Increase text size
+        categoryTextView.setTypeface(null, Typeface.BOLD); // Bold text
+        categoryTextView.setTextColor(Color.BLACK); // Set text color to black
         leftSquareLayout.addView(categoryTextView);
 
         orderLayout.addView(leftSquareLayout);
@@ -532,8 +553,11 @@ public class HomePageActivity extends AppCompatActivity {
         locationParams.addRule(RelativeLayout.BELOW, rightSquareContainer.getId()); // או כל אלמנט אחר מעל המיקום
         locationParams.addRule(RelativeLayout.BELOW, leftSquareLayout.getId());
         locationParams.addRule(RelativeLayout.CENTER_HORIZONTAL);
-        locationParams.setMargins(0, dpToPx(150), 0, 0); // הוספת מרווח קטן למעלה
+        locationParams.setMargins(0, dpToPx(170), 0, dpToPx(10)); // הוספת מרווח קטן למעלה
         locationTextView.setLayoutParams(locationParams);
+        locationTextView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14); // Increase text size
+        locationTextView.setTypeface(null, Typeface.BOLD); // Bold text
+        locationTextView.setTextColor(Color.BLACK); // Set text color to black
         orderLayout.addView(locationTextView);
 
         // Fetch the type of order from Firestore and add it below the location
@@ -543,7 +567,7 @@ public class HomePageActivity extends AppCompatActivity {
                 TextView orderTypeTextView = new TextView(this);
                 orderTypeTextView.setText(typeOfOrder);
                 orderTypeTextView.setId(View.generateViewId());
-                orderTypeTextView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
+                orderTypeTextView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
                 orderTypeTextView.setGravity(Gravity.CENTER_HORIZONTAL);
                 orderTypeTextView.setTextColor(typeOfOrder.equals("Consumer") ? Color.parseColor("#00BFFF") : Color.BLUE);
                 RelativeLayout.LayoutParams orderTypeParams = new RelativeLayout.LayoutParams(
@@ -565,13 +589,26 @@ public class HomePageActivity extends AppCompatActivity {
             // Check if the order is open or closed using existing variables
             boolean isOrderOpen = timestamp != null && timestamp.toDate().getTime() > currentTime;
 
-            // Create and add the open/close text view
+// Create and add the open/close text view
             TextView openCloseTextView = new TextView(this);
-            openCloseTextView.setText(isOrderOpen ? "Open" : "Close");
+
+// Create a SpannableString to apply different styles and colors
+            SpannableString spannableString;
+            if (isOrderOpen) {
+                spannableString = new SpannableString("Open");
+                spannableString.setSpan(new ForegroundColorSpan(Color.GREEN), 0, spannableString.length(), 0); // Set color to green
+                spannableString.setSpan(new StyleSpan(Typeface.BOLD), 0, spannableString.length(), 0); // Set style to bold
+            } else {
+                spannableString = new SpannableString("Close");
+                spannableString.setSpan(new ForegroundColorSpan(Color.RED), 0, spannableString.length(), 0); // Set color to red
+                spannableString.setSpan(new StyleSpan(Typeface.BOLD), 0, spannableString.length(), 0); // Set style to bold
+            }
+
+            openCloseTextView.setText(spannableString);
             openCloseTextView.setId(View.generateViewId());
-            openCloseTextView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
+            openCloseTextView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
             openCloseTextView.setGravity(Gravity.CENTER_HORIZONTAL);
-            openCloseTextView.setTextColor(isOrderOpen ? Color.GREEN : Color.RED); // ירוק אם פתוח, אדום אם סגור
+
             RelativeLayout.LayoutParams openCloseTextParams = new RelativeLayout.LayoutParams(
                     ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
             openCloseTextParams.addRule(RelativeLayout.BELOW, locationTextView.getId());
@@ -580,6 +617,7 @@ public class HomePageActivity extends AppCompatActivity {
 
             openCloseTextView.setLayoutParams(openCloseTextParams);
             orderLayout.addView(openCloseTextView);
+
         });
 
         // Create and add the star rating
