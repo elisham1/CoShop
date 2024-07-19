@@ -85,6 +85,9 @@ public class FilterActivity extends AppCompatActivity {
         checkBoxLimit = findViewById(R.id.checkBoxLimit);
         checkBoxUnlimited = findViewById(R.id.checkBoxUnlimited);
 
+        ImageButton plusIcon = findViewById(R.id.plus_icon);
+        plusIcon.setOnClickListener(v -> toggleCategoryVisibility(v));
+
         locationWindowLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
                 result -> {
@@ -106,8 +109,7 @@ public class FilterActivity extends AppCompatActivity {
                 }
         );
 
-        ImageButton closeButton = findViewById(R.id.close_button);
-        closeButton.setOnClickListener(v -> finish());
+
 
         searchAddressButton.setOnClickListener(v -> {
             if (searchAddressButton.getTag() != null && searchAddressButton.getTag().equals("clear")) {
@@ -205,6 +207,7 @@ public class FilterActivity extends AppCompatActivity {
         TextView timeText = findViewById(R.id.time_text);
         timeIcon.setOnClickListener(this::showTimePickerDialog);
         timeText.setOnClickListener(this::showTimePickerDialog);
+        
     }
 
     private void toggleSearchClearIcon() {
@@ -241,14 +244,14 @@ public class FilterActivity extends AppCompatActivity {
     }
     public void toggleCategoryVisibility(View view) {
         ListView categoryListView = findViewById(R.id.category_list);
+        ImageButton plusIcon = (ImageButton) view;
+
         if (isCategoryListVisible) {
             categoryListView.setVisibility(View.GONE);
-            ((TextView)((LinearLayout)view).getChildAt(0)).setText("Open Category list");
-            ((ImageButton)((LinearLayout)view).getChildAt(1)).setImageResource(R.drawable.baseline_add_24);
+            plusIcon.setImageResource(R.drawable.baseline_add_24);
         } else {
             categoryListView.setVisibility(View.VISIBLE);
-            ((TextView)((LinearLayout)view).getChildAt(0)).setText("Close Category list");
-            ((ImageButton)((LinearLayout)view).getChildAt(1)).setImageResource(R.drawable.baseline_clear_24);
+            plusIcon.setImageResource(R.drawable.tick);
         }
         isCategoryListVisible = !isCategoryListVisible;
     }

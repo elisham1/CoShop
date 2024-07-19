@@ -5,50 +5,44 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:padding="16dp"
+    android:layoutDirection="ltr"
     tools:context=".FilterActivity">
-
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="vertical">
     <!-- Header with title and close button -->
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
         android:gravity="center_vertical">
+
         <TextView
             android:id="@+id/filters_title"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_centerInParent="true"
+            android:fontFamily="sans-serif"
             android:text="Additional filters"
-            android:textSize="18sp"
+            android:textColor="#000000"
+            android:textSize="25sp"
             android:textStyle="bold" />
-
-        <ImageButton
-            android:id="@+id/close_button"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:layout_alignParentEnd="true"
-            android:layout_gravity="center_vertical"
-            android:layout_marginEnd="331dp"
-            android:background="?android:attr/selectableItemBackground"
-            android:contentDescription="Close"
-            android:padding="10dp"
-            android:src="@android:drawable/ic_menu_close_clear_cancel" />
     </RelativeLayout>
 
     <!-- Address search row -->
     <LinearLayout
         android:id="@+id/search_row"
-        android:layout_width="340dp"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:padding="8dp"
         android:layout_marginLeft="16dp"
         android:layout_marginTop="16dp"
         android:layout_marginRight="16dp"
         android:layout_marginBottom="0dp"
-        android:background="?android:attr/selectableItemBackground"
-        android:clickable="true"
-        android:focusable="true"
-        android:orientation="horizontal"
-        android:padding="8dp">
+        android:layoutDirection="ltr">
 
         <ImageButton
             android:id="@+id/edit_address_button"
@@ -64,18 +58,19 @@
             android:id="@+id/search_address_text"
             android:layout_width="0dp"
             android:layout_height="38dp"
-            android:layout_gravity="end"
+            android:layout_gravity="center_vertical"
             android:layout_weight="1"
-            android:gravity="center_vertical|end"
+            android:gravity="center_vertical|start"
             android:hint="Search address"
-            android:paddingStart="12dp"
-            android:textSize="15sp" />
+            android:paddingStart="9dp"
+            android:textSize="16sp"
+            android:fontFamily="sans-serif" />
 
         <ImageButton
             android:id="@+id/search_address_button"
             android:layout_width="48dp"
             android:layout_height="match_parent"
-            android:layout_gravity="center_vertical|start"
+            android:layout_gravity="center_vertical"
             android:adjustViewBounds="true"
             android:background="?android:attr/selectableItemBackground"
             android:clickable="false"
@@ -85,20 +80,19 @@
             android:paddingTop="8dp"
             android:paddingRight="0dp"
             android:paddingBottom="8dp"
-            android:scaleType="fitStart"
+            android:scaleType="fitEnd"
             android:src="@drawable/baseline_search_24" />
     </LinearLayout>
 
-    <!-- URL input row -->
+    <!-- Hidden URL input row -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:layout_marginLeft="16dp"
-        android:layout_marginRight="16dp"
-        android:layout_marginTop="5dp"
         android:layout_marginBottom="10dp"
-        android:gravity="center_vertical">
+        android:gravity="center_vertical"
+        android:layoutDirection="ltr">
+
         <EditText
             android:id="@+id/editTextText2"
             android:layout_width="0dp"
@@ -107,7 +101,9 @@
             android:ems="10"
             android:hint="Enter URL"
             android:inputType="text"
-            android:minHeight="48dp" />
+            android:minHeight="48dp"
+            android:visibility="gone" />
+
         <ImageButton
             android:id="@+id/clear_url_button"
             android:layout_width="48dp"
@@ -124,12 +120,14 @@
         android:id="@+id/date_time_row"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:gravity="center_vertical"
         android:orientation="horizontal"
+        android:padding="8dp"
         android:layout_marginLeft="16dp"
+        android:layout_marginTop="16dp"
         android:layout_marginRight="16dp"
-        android:layout_marginTop="5dp"
-        android:layout_marginBottom="10dp"
-        android:gravity="center_vertical">
+        android:layout_marginBottom="0dp"
+        android:layoutDirection="ltr">
 
         <!-- Date selection -->
         <ImageButton
@@ -148,7 +146,8 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="Select Date"
-            android:textSize="15sp"
+            android:textSize="16sp"
+            android:fontFamily="sans-serif"
             android:gravity="center_vertical"
             android:padding="8dp"
             android:clickable="true"
@@ -171,7 +170,8 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="Select Time"
-            android:textSize="15sp"
+            android:textSize="16sp"
+            android:fontFamily="sans-serif"
             android:gravity="center_vertical"
             android:padding="8dp"
             android:clickable="true"
@@ -182,52 +182,64 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:gravity="center_vertical"
         android:orientation="horizontal"
         android:padding="8dp"
-        android:gravity="center_vertical"
-        android:clickable="true"
-        android:focusable="true"
-        android:onClick="toggleCategoryVisibility">
+        android:layout_marginLeft="16dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginRight="16dp"
+        android:layout_marginBottom="0dp"
+        android:layoutDirection="ltr">
 
         <TextView
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Open Category list"
-            android:textSize="15sp"
             android:gravity="start|center_vertical"
-            android:padding="8dp"/>
+            android:padding="8dp"
+            android:text="Open Category list"
+            android:textSize="16sp"
+            android:fontFamily="sans-serif" />
 
         <ImageButton
             android:id="@+id/plus_icon"
             android:layout_width="48dp"
-            android:layout_height="48dp"
+            android:layout_height="match_parent"
+            android:layout_gravity="center_vertical"
+            android:adjustViewBounds="true"
             android:background="?android:attr/selectableItemBackground"
+            android:clickable="false"
             android:contentDescription="Plus Icon"
-            android:padding="10dp"
-            android:src="@drawable/baseline_add_24"
-            />
+            android:focusable="false"
+            android:paddingLeft="0dp"
+            android:paddingTop="8dp"
+            android:paddingRight="0dp"
+            android:paddingBottom="8dp"
+            android:scaleType="fitEnd"
+            android:src="@drawable/baseline_add_24" />
     </LinearLayout>
 
-
-        <ListView
-            android:id="@+id/category_list"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:choiceMode="multipleChoice"
-            android:listSelector="@android:color/transparent"
-            android:fadingEdge="vertical"
-            android:fadingEdgeLength="50dp"
-            android:scrollbars="vertical"
-            android:requiresFadingEdge="vertical"
-            android:visibility="gone"/> <!-- Set initial visibility to gone -->
-
+    <ListView
+        android:id="@+id/category_list"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:choiceMode="multipleChoice"
+        android:listSelector="@android:color/transparent"
+        android:fadingEdge="vertical"
+        android:fadingEdgeLength="50dp"
+        android:scrollbars="vertical"
+        android:requiresFadingEdge="vertical"
+        android:visibility="gone"/> <!-- Set initial visibility to gone -->
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center_vertical"
-        android:orientation="horizontal">
+        android:orientation="horizontal"
+        android:layout_marginLeft="16dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginRight="16dp"
+        android:layout_marginBottom="0dp">
 
         <CheckBox
             android:id="@+id/checkBoxSupplied"
@@ -235,10 +247,12 @@
             android:layout_height="wrap_content"
             android:minHeight="48dp"
             android:text="Supplied orders"
-            android:layout_margin="16dp" />
+            android:textSize="16sp"
+            android:fontFamily="sans-serif"
+            android:layout_margin="8dp" />
 
         <Space
-            android:layout_width="56dp"
+            android:layout_width="11dp"
             android:layout_height="wrap_content"
             android:layout_weight="1" />
 
@@ -248,21 +262,29 @@
             android:layout_height="wrap_content"
             android:minHeight="48dp"
             android:text="Consumer orders"
-            android:layout_margin="16dp" />
+            android:textSize="16sp"
+            android:fontFamily="sans-serif"
+            android:layout_margin="8dp" />
     </LinearLayout>
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center_vertical"
-        android:orientation="horizontal">
+        android:orientation="horizontal"
+        android:layout_marginLeft="16dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginRight="16dp"
+        android:layout_marginBottom="0dp">
 
         <CheckBox
             android:id="@+id/checkBoxLimit"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Set People Limit"
-            android:layout_margin="16dp" />
+            android:textSize="16sp"
+            android:fontFamily="sans-serif"
+            android:layout_margin="8dp" />
 
         <Space
             android:layout_width="0dp"
@@ -274,15 +296,22 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Unlimited People"
-            android:layout_margin="16dp" />
+            android:textSize="16sp"
+            android:fontFamily="sans-serif"
+            android:layout_margin="8dp" />
     </LinearLayout>
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:layout_margin="16dp">
+        android:orientation="horizontal"
+        android:padding="8dp"
+        android:layout_marginLeft="16dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginRight="16dp"
+        android:layout_marginBottom="0dp"
+        android:layoutDirection="ltr">
 
         <com.google.android.material.slider.RangeSlider
             android:id="@+id/rangeSliderPeople"
@@ -310,23 +339,29 @@
             android:gravity="center"
             android:layout_marginStart="8dp"
             android:background="?android:attr/editTextBackground"
-            android:enabled="false" />
+            android:enabled="false"
+            android:textSize="16sp"
+            android:fontFamily="sans-serif" />
     </LinearLayout>
-
+    </LinearLayout>
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
+        android:layout_gravity="bottom"
+        android:layout_margin="16dp"
         android:gravity="center_vertical"
-        android:layout_margin="16dp">
+        android:orientation="horizontal">
 
         <Button
             android:id="@+id/reset_id"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
+            android:backgroundTint="@android:color/holo_red_light"
+            android:fontFamily="sans-serif"
             android:onClick="resetFilters"
-            android:text="Reset" />
+            android:text="Reset"
+            android:textSize="16sp" />
 
         <Space
             android:layout_width="5dp"
@@ -338,7 +373,9 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
+            android:backgroundTint="@android:color/holo_green_light"
+            android:fontFamily="sans-serif"
             android:onClick="OrderFiltering"
-            android:text="Ok" />
-    </LinearLayout>
-</LinearLayout>
+            android:text="Ok"
+            android:textSize="16sp" />
+    </LinearLayout></LinearLayout>
