@@ -7,11 +7,15 @@ import androidx.core.view.ViewCompat;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
+import android.graphics.Typeface;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
 import android.os.Bundle;
 import android.os.CountDownTimer;
+import android.text.SpannableString;
+import android.text.style.ForegroundColorSpan;
+import android.text.style.StyleSpan;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.Gravity;
@@ -79,13 +83,13 @@ public class MyOrdersActivity extends AppCompatActivity {
         userEmail = currentUser.getEmail();
 
         db.collection("users").document(userEmail).get()
-            .addOnSuccessListener(documentSnapshot -> {
-                if (documentSnapshot.exists()) {
-                    userLocation = documentSnapshot.getGeoPoint("location");
-                }
-            }).addOnFailureListener(e -> {
-                Log.e("MyOrdersActivity", "Error getting user location", e);
-            });
+                .addOnSuccessListener(documentSnapshot -> {
+                    if (documentSnapshot.exists()) {
+                        userLocation = documentSnapshot.getGeoPoint("location");
+                    }
+                }).addOnFailureListener(e -> {
+                    Log.e("MyOrdersActivity", "Error getting user location", e);
+                });
 
         tvAllOrders = findViewById(R.id.tvAllOrders);
         tvOpenedOrders = findViewById(R.id.tvOpenedOrders);
@@ -169,7 +173,7 @@ public class MyOrdersActivity extends AppCompatActivity {
                     selectedOptions.add(CONSUMER_ORDERS);
                 }
                 readUserOrders(selectedOptions);
-                }
+            }
         });
     }
 
@@ -367,6 +371,9 @@ public class MyOrdersActivity extends AppCompatActivity {
         titleTextParams.addRule(RelativeLayout.ALIGN_PARENT_TOP);
         titleTextParams.setMargins(dpToPx(20), dpToPx(10), dpToPx(10), dpToPx(5)); // Add margin from the edge
         titleTextView.setLayoutParams(titleTextParams);
+        titleTextView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14); // Increase text size
+        titleTextView.setTypeface(null, Typeface.BOLD); // Bold text
+        titleTextView.setTextColor(Color.BLACK); // Set text color to black
         orderLayout.addView(titleTextView);
 
         TextView distanceTextView = new TextView(this);
@@ -379,6 +386,9 @@ public class MyOrdersActivity extends AppCompatActivity {
         distanceTextParams.addRule(RelativeLayout.ALIGN_PARENT_TOP);
         distanceTextParams.setMargins(dpToPx(10), dpToPx(10), dpToPx(20), dpToPx(5)); // Add margin from the edge
         distanceTextView.setLayoutParams(distanceTextParams);
+        distanceTextView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14); // Increase text size
+        distanceTextView.setTypeface(null, Typeface.BOLD); // Bold text
+        distanceTextView.setTextColor(Color.BLACK); // Set text color to black
         orderLayout.addView(distanceTextView);
 
         // Create and add the people count
@@ -394,6 +404,9 @@ public class MyOrdersActivity extends AppCompatActivity {
         peopleTextParams.addRule(RelativeLayout.CENTER_IN_PARENT); // Center horizontally and vertically
         peopleTextView.setLayoutParams(peopleTextParams);
         peopleTextParams.setMargins(0, dpToPx(10), 0, dpToPx(10)); // Add margin between title and people count
+        peopleTextView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 18); // Increase text size
+        peopleTextView.setTypeface(null, Typeface.BOLD); // Bold text
+        peopleTextView.setTextColor(Color.BLACK); // Set text color to black
         orderLayout.addView(peopleTextView);
 
         // Create and add the left square with category
@@ -427,8 +440,10 @@ public class MyOrdersActivity extends AppCompatActivity {
         TextView categoryTextView = new TextView(this);
         categoryTextView.setText(categorie);
         categoryTextView.setId(View.generateViewId());
-        categoryTextView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 10);
         categoryTextView.setGravity(Gravity.CENTER_HORIZONTAL);
+        categoryTextView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14); // Increase text size
+        categoryTextView.setTypeface(null, Typeface.BOLD); // Bold text
+        categoryTextView.setTextColor(Color.BLACK); // Set text color to black
         leftSquareLayout.addView(categoryTextView);
 
         orderLayout.addView(leftSquareLayout);
@@ -520,8 +535,11 @@ public class MyOrdersActivity extends AppCompatActivity {
         locationParams.addRule(RelativeLayout.BELOW, rightSquareContainer.getId()); // או כל אלמנט אחר מעל המיקום
         locationParams.addRule(RelativeLayout.BELOW, leftSquareLayout.getId());
         locationParams.addRule(RelativeLayout.CENTER_HORIZONTAL);
-        locationParams.setMargins(0, dpToPx(150), 0, 0); // הוספת מרווח קטן למעלה
+        locationParams.setMargins(0, dpToPx(170), 0, dpToPx(10)); // הוספת מרווח קטן למעלה
         locationTextView.setLayoutParams(locationParams);
+        locationTextView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14); // Increase text size
+        locationTextView.setTypeface(null, Typeface.BOLD); // Bold text
+        locationTextView.setTextColor(Color.BLACK); // Set text color to black
         orderLayout.addView(locationTextView);
 
 
@@ -554,13 +572,26 @@ public class MyOrdersActivity extends AppCompatActivity {
             // Check if the order is open or closed using existing variables
             boolean isOrderOpen = timestamp.toDate().getTime() > currentTime;
 
-            // Create and add the open/close text view
+// Create and add the open/close text view
             TextView openCloseTextView = new TextView(this);
-            openCloseTextView.setText(isOrderOpen ? "Open" : "Close");
+
+// Create a SpannableString to apply different styles and colors
+            SpannableString spannableString;
+            if (isOrderOpen) {
+                spannableString = new SpannableString("Open");
+                spannableString.setSpan(new ForegroundColorSpan(Color.GREEN), 0, spannableString.length(), 0); // Set color to green
+                spannableString.setSpan(new StyleSpan(Typeface.BOLD), 0, spannableString.length(), 0); // Set style to bold
+            } else {
+                spannableString = new SpannableString("Close");
+                spannableString.setSpan(new ForegroundColorSpan(Color.RED), 0, spannableString.length(), 0); // Set color to red
+                spannableString.setSpan(new StyleSpan(Typeface.BOLD), 0, spannableString.length(), 0); // Set style to bold
+            }
+
+            openCloseTextView.setText(spannableString);
             openCloseTextView.setId(View.generateViewId());
-            openCloseTextView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
+            openCloseTextView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
             openCloseTextView.setGravity(Gravity.CENTER_HORIZONTAL);
-            openCloseTextView.setTextColor(isOrderOpen ? Color.GREEN : Color.RED); // ירוק אם פתוח, אדום אם סגור
+
             RelativeLayout.LayoutParams openCloseTextParams = new RelativeLayout.LayoutParams(
                     ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
             openCloseTextParams.addRule(RelativeLayout.BELOW, locationTextView.getId());
@@ -569,6 +600,7 @@ public class MyOrdersActivity extends AppCompatActivity {
 
             openCloseTextView.setLayoutParams(openCloseTextParams);
             orderLayout.addView(openCloseTextView);
+
         });
 
         // Create and add the star rating
