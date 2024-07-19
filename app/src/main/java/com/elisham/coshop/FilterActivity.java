@@ -66,6 +66,8 @@ public class FilterActivity extends AppCompatActivity {
     private ImageButton clearURLButton;
     private String lastURL;
     private MenuUtils menuUtils;
+    private boolean isCategoryListVisible = false;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -82,6 +84,9 @@ public class FilterActivity extends AppCompatActivity {
         unlimitEditText = findViewById(R.id.unlimit_value);
         checkBoxLimit = findViewById(R.id.checkBoxLimit);
         checkBoxUnlimited = findViewById(R.id.checkBoxUnlimited);
+
+        ImageButton plusIcon = findViewById(R.id.plus_icon);
+        plusIcon.setOnClickListener(v -> toggleCategoryVisibility(v));
 
         locationWindowLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
@@ -104,8 +109,7 @@ public class FilterActivity extends AppCompatActivity {
                 }
         );
 
-        ImageButton closeButton = findViewById(R.id.close_button);
-        closeButton.setOnClickListener(v -> finish());
+
 
         searchAddressButton.setOnClickListener(v -> {
             if (searchAddressButton.getTag() != null && searchAddressButton.getTag().equals("clear")) {
@@ -203,6 +207,7 @@ public class FilterActivity extends AppCompatActivity {
         TextView timeText = findViewById(R.id.time_text);
         timeIcon.setOnClickListener(this::showTimePickerDialog);
         timeText.setOnClickListener(this::showTimePickerDialog);
+        
     }
 
     private void toggleSearchClearIcon() {
@@ -237,7 +242,19 @@ public class FilterActivity extends AppCompatActivity {
                     }
                 });
     }
+    public void toggleCategoryVisibility(View view) {
+        ListView categoryListView = findViewById(R.id.category_list);
+        ImageButton plusIcon = (ImageButton) view;
 
+        if (isCategoryListVisible) {
+            categoryListView.setVisibility(View.GONE);
+            plusIcon.setImageResource(R.drawable.baseline_add_24);
+        } else {
+            categoryListView.setVisibility(View.VISIBLE);
+            plusIcon.setImageResource(R.drawable.tick);
+        }
+        isCategoryListVisible = !isCategoryListVisible;
+    }
     public void OrderFiltering(View v) {
         String address = searchAddressText.getText().toString();
         String urlOrString = editTextURL.getText().toString();
