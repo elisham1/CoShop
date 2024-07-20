@@ -1,19 +1,26 @@
 package com.elisham.coshop;
 
 import androidx.appcompat.app.AppCompatActivity;
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.widget.ArrayAdapter;
+import android.view.View;
+import android.widget.Button;
+import android.widget.SimpleAdapter;
 import android.widget.ListView;
+import android.widget.Toast;
 
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.GeoPoint;
+import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
-import com.google.firebase.auth.FirebaseAuth;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -23,119 +30,80 @@ public class notificationActivity extends AppCompatActivity {
 
     private MenuUtils menuUtils;
     private ListView notificationsListView;
-    private ArrayAdapter<String> adapter;
-    private List<String> notificationsList;
+    private SimpleAdapter adapter;
+    private List<Map<String, Object>> notificationsList;
+    private FirebaseFirestore db;
+    private FirebaseAuth mAuth;
+    private FirebaseUser currentUser;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_notification);
 
+        // Initialize MenuUtils
         menuUtils = new MenuUtils(this);
+
+        // Initialize ListView
         notificationsListView = findViewById(R.id.notificationsListView);
         notificationsList = new ArrayList<>();
-        adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, notificationsList);
+        adapter = new SimpleAdapter(this, notificationsList, R.layout.notification_item,
+                new String[]{"newOrder", "message", "linkButton", "timestamp"},
+                new int[]{R.id.newOrder, R.id.message, R.id.linkButton, R.id.timestamp});
+        adapter.setViewBinder((view, data, textRepresentation) -> {
+            if (view.getId() == R.id.linkButton) {
+                Button button = (Button) view;
+                button.setTag(data.toString());
+                button.setText("click to see order");
+                button.setOnClickListener(this::openLink);
+                return true;
+            }
+            return false;
+        });
         notificationsListView.setAdapter(adapter);
 
-        // קבלת נתונים מההזמנה החדשה
-        String category = getIntent().getStringExtra("category");
-        double latitude = getIntent().getDoubleExtra("latitude", 0);
-        double longitude = getIntent().getDoubleExtra("longitude", 0);
+        db = FirebaseFirestore.getInstance();
+        mAuth = FirebaseAuth.getInstance();
+        currentUser = mAuth.getCurrentUser();
 
-        if (category != null && latitude != 0 && longitude != 0) {
-            checkAndNotifyUsers(category, latitude, longitude);
+        if (currentUser != null) {
+            fetchNotifications(currentUser.getEmail());
+        } else {
+            Toast.makeText(this, "User not logged in", Toast.LENGTH_SHORT).show();
         }
-
-        // שליפת הודעות מה-collection ב-Firestore
-        loadNotifications();
     }
 
-    private void checkAndNotifyUsers(String category, double latitude, double longitude) {
-        FirebaseFirestore db = FirebaseFirestore.getInstance();
-        CollectionReference usersRef = db.collection("users");
-        GeoPoint orderLocation = new GeoPoint(latitude, longitude);
+    private void fetchNotifications(String userEmail) {
+        CollectionReference notificationsRef = db.collection("users").document(userEmail).collection("notifications");
+        notificationsRef.orderBy("timestamp", Query.Direction.DESCENDING)
+                .get()
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        notificationsList.clear();
+                        for (QueryDocumentSnapshot document : task.getResult()) {
+                            String message = document.getString("message");
+                            String link = document.getString("link");
+                            String timestamp = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(document.getTimestamp("timestamp").toDate());
 
-        usersRef.get().addOnCompleteListener(task -> {
-            if (task.isSuccessful()) {
-                for (QueryDocumentSnapshot userDocument : task.getResult()) {
-                    List<String> favoriteCategories = (List<String>) userDocument.get("favorite categories");
-                    Log.d("NotificationActivity", "User favorite categories: " + favoriteCategories);
+                            Map<String, Object> notification = new HashMap<>();
+                            notification.put("newOrder", "New order");
+                            notification.put("message", message);
+                            notification.put("linkButton", link);
+                            notification.put("timestamp", timestamp);
 
-                    // בדיקת סוג השדה 'address' לפני השליפה
-                    if (userDocument.get("address") instanceof GeoPoint) {
-                        GeoPoint userLocation = userDocument.getGeoPoint("address");
-                        Log.d("NotificationActivity", "User location: " + userLocation);
-                        double maxDistance = 10.0; // נניח טווח של 10 קילומטרים, ניתן לשנות לפי הצורך
-
-                        if (favoriteCategories.contains(category) && isWithinDistance(orderLocation, userLocation, maxDistance)) {
-                            String userEmail = userDocument.getString("email");
-                            String notificationMessage = "הזמנה חדשה בתחום שמעניין אותך!";
-                            Log.d("NotificationActivity", "Sending notification to: " + userEmail);
-
-                            // שמירת הודעה ב-Firestore בתת-collection של המשתמש
-                            CollectionReference notificationsRef = usersRef.document(userDocument.getId()).collection("notifications");
-                            Map<String, Object> notificationData = new HashMap<>();
-                            notificationData.put("message", notificationMessage);
-                            notificationData.put("userEmail", userEmail);
-                            notificationData.put("timestamp", com.google.firebase.firestore.FieldValue.serverTimestamp());
-
-                            notificationsRef.add(notificationData)
-                                    .addOnSuccessListener(documentReference -> {
-                                        Log.d("Firestore", "Notification added successfully for user: " + userEmail);
-                                    })
-                                    .addOnFailureListener(e -> {
-                                        Log.w("Firestore", "Error adding notification for user: " + userEmail, e);
-                                    });
+                            notificationsList.add(notification);
                         }
+                        adapter.notifyDataSetChanged();
                     } else {
-                        Log.w("Firestore", "User document does not contain a GeoPoint address");
+                        Log.w("Firestore", "Error getting documents.", task.getException());
                     }
-                }
-            } else {
-                Log.w("Firestore", "Error getting documents.", task.getException());
-            }
-        });
+                });
     }
 
-    private boolean isWithinDistance(GeoPoint point1, GeoPoint point2, double maxDistance) {
-        double lat1 = point1.getLatitude();
-        double lon1 = point1.getLongitude();
-        double lat2 = point2.getLatitude();
-        double lon2 = point2.getLongitude();
-
-        double distance = haversine(lat1, lon1, lat2, lon2);
-        Log.d("NotificationActivity", "Calculated distance: " + distance);
-        return distance <= maxDistance;
-    }
-
-    private double haversine(double lat1, double lon1, double lat2, double lon2) {
-        final int R = 6371; // רדיוס כדור הארץ בקילומטרים
-        double dLat = Math.toRadians(lat2 - lat1);
-        double dLon = Math.toRadians(lon2 - lon1);
-        double a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
-        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-        return R * c;
-    }
-
-    private void loadNotifications() {
-        FirebaseFirestore db = FirebaseFirestore.getInstance();
-        CollectionReference notificationsRef = db.collection("users")
-                .document(FirebaseAuth.getInstance().getCurrentUser().getUid())
-                .collection("notifications");
-
-        notificationsRef.orderBy("timestamp", com.google.firebase.firestore.Query.Direction.DESCENDING).get().addOnCompleteListener(task -> {
-            if (task.isSuccessful()) {
-
-                for (QueryDocumentSnapshot document : task.getResult()) {
-                    String message = document.getString("message");
-                    notificationsList.add(message);
-                    Log.d("NotificationActivity", "Loaded notification: " + message);
-                }
-                adapter.notifyDataSetChanged();
-            } else {
-                Log.w("Firestore", "Error getting documents.", task.getException());
-            }
-        });
+    public void openLink(View view) {
+        String link = (String) view.getTag();
+        Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(link));
+        startActivity(browserIntent);
     }
 
     @Override
@@ -172,7 +140,7 @@ public class notificationActivity extends AppCompatActivity {
                 menuUtils.allChats();
                 return true;
             case R.id.chat_notification:
-                loadNotifications(); // קריאה ל-loadNotifications כדי לעדכן את ההתראות
+                menuUtils.chat_notification();
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
