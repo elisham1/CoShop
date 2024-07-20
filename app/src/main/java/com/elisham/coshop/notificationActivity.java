@@ -31,8 +31,8 @@ public class notificationActivity extends AppCompatActivity {
     private MenuUtils menuUtils;
     private ListView notificationsListView;
 
-    private ArrayAdapter<String> adapter;
-    private List<String> notificationsList;
+    private SimpleAdapter adapter;
+    private List<Map<String, Object>> notificationsList;
     private String globalUserType;
     private FirebaseFirestore db;
     private FirebaseAuth mAuth;
