@@ -37,8 +37,6 @@ public class MainActivity extends AppCompatActivity {
 
         // Check if the user is logged in
         if (currentUser != null) {
-            Toast.makeText(MainActivity.this, "logged in", Toast.LENGTH_SHORT).show();
-
             //check if user completed registration
             String userEmail = currentUser.getEmail();
             db.collection("users").document(userEmail).get()
@@ -46,14 +44,19 @@ public class MainActivity extends AppCompatActivity {
                         if (task.isSuccessful()) {
                             DocumentSnapshot document = task.getResult();
                             if (document.exists()) {
-                                Toast.makeText(MainActivity.this, "user exists", Toast.LENGTH_SHORT).show();
+                                String userType = document.getString("type of user");
+                                if ("Consumer".equals(userType)) {
+                                    Intent intent = new Intent(MainActivity.this, HomePageActivity.class);
+                                    intent.putExtra("userType", "Consumer");
+                                    startActivity(intent);
+                                }
+                                if ("Supplier".equals(userType)) {
+                                    Intent intent = new Intent(MainActivity.this, MyOrdersActivity.class);
+                                    intent.putExtra("userType", "Supplier");
+                                    startActivity(intent);
+                                }
 
-                                // User document exists, redirect to HomePageActivity
-                                Intent intent = new Intent(MainActivity.this, HomePageActivity.class);
-                                startActivity(intent);
                             } else {
-                                Toast.makeText(MainActivity.this, "user dont exists", Toast.LENGTH_SHORT).show();
-
                                 // User document does not exist, redirect to CategoriesActivity
                                 Intent intent = new Intent(MainActivity.this, CategoriesActivity.class);
                                 intent.putExtra("email", userEmail);

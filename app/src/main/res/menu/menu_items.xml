@@ -45,12 +45,6 @@
         android:title="Home"
         app:showAsAction="always"/>
 
-    <!-- New item with the custom icon, set to always show -->
-    <item
-        android:id="@+id/list_icon"
-        android:icon="@drawable/shopping_cart_white_24"
-        android:title="Cart"
-        app:showAsAction="always" />
 
 
 </menu>

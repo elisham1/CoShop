@@ -1,10 +1,8 @@
 package com.elisham.coshop;
 
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.cardview.widget.CardView;
 import androidx.core.view.ViewCompat;
 
-import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.Typeface;
@@ -23,7 +21,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
@@ -45,18 +43,20 @@ import com.google.firebase.firestore.QuerySnapshot;
 
 
 import java.io.IOException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
 
 public class MyOrdersActivity extends AppCompatActivity {
     private FirebaseFirestore db;
     private MenuUtils menuUtils;
     private LinearLayout ordersLayout;
-    private String userEmail;
+    private String userEmail, globalUserType;
     private GeoPoint userLocation;
     private Geocoder geocoder;
     private TextView tvAllOrders, tvOpenedOrders, tvClosedOrders, tvSupplierOrders, tvConsumerOrders;
@@ -70,9 +70,19 @@ public class MyOrdersActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        // Set the theme based on the user type
+        Intent intent = getIntent();
+        globalUserType = intent.getStringExtra("userType");
+
+        if (globalUserType != null && globalUserType.equals("Consumer")) {
+            setTheme(R.style.ConsumerTheme);
+        }
+        if (globalUserType != null && globalUserType.equals("Supplier")) {
+            setTheme(R.style.SupplierTheme);
+        }
         setContentView(R.layout.activity_my_orders);
         db = FirebaseFirestore.getInstance();
-        menuUtils = new MenuUtils(this);
+        menuUtils = new MenuUtils(this,globalUserType);
         ordersLayout = findViewById(R.id.ordersLayout);
 
         // Initialize Geocoder
@@ -96,7 +106,11 @@ public class MyOrdersActivity extends AppCompatActivity {
         tvClosedOrders = findViewById(R.id.tvClosedOrders);
         tvSupplierOrders = findViewById(R.id.tvSupplierOrders);
         tvConsumerOrders = findViewById(R.id.tvConsumerOrders);
-
+        if (globalUserType.equals("Supplier"))
+        {
+            tvSupplierOrders.setVisibility(View.GONE);
+            tvConsumerOrders.setVisibility(View.GONE);
+        }
 
         // Set default view to All Orders
         selectedOptions.add(ALL_ORDERS);
@@ -122,6 +136,10 @@ public class MyOrdersActivity extends AppCompatActivity {
                         selectedOptions.add(ALL_ORDERS);
                     }
                 } else {
+                    if (globalUserType.equals("Supplier"))
+                    {
+                        selectedOptions.clear();
+                    }
                     selectedOptions.add(OPENED_ORDERS);
                 }
                 readUserOrders(selectedOptions);
@@ -138,6 +156,10 @@ public class MyOrdersActivity extends AppCompatActivity {
                         selectedOptions.add(ALL_ORDERS);
                     }
                 } else {
+                    if (globalUserType.equals("Supplier"))
+                    {
+                        selectedOptions.clear();
+                    }
                     selectedOptions.add(CLOSED_ORDERS);
                 }
                 readUserOrders(selectedOptions);
@@ -173,6 +195,21 @@ public class MyOrdersActivity extends AppCompatActivity {
                     selectedOptions.add(CONSUMER_ORDERS);
                 }
                 readUserOrders(selectedOptions);
+            }
+        });
+
+        ImageButton newOrderButton = findViewById(R.id.newOrderButton);
+        if (globalUserType.equals("Supplier"))
+        {
+            newOrderButton.setVisibility(View.VISIBLE);
+            newOrderButton.setImageResource(R.drawable.ic_plus_supplier);
+        }
+        newOrderButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(MyOrdersActivity.this, OpenNewOrderActivity.class);
+                intent.putExtra("userType", globalUserType);
+                startActivity(intent);
             }
         });
     }
@@ -296,49 +333,58 @@ public class MyOrdersActivity extends AppCompatActivity {
 
         }
     }
+
     private void calculateAndDisplayRatings(String orderId, String titleOfOrder, String location,
                                             long numberOfPeopleInOrder, long maxPeople, String categorie,
-                                            float distance, Timestamp timestamp){
+                                            float distance, Timestamp timestamp) {
         db.collection("orders").document(orderId).get().addOnSuccessListener(documentSnapshot -> {
-            List<Map<String, Object>> peopleInOrder = (List<Map<String, Object>>) documentSnapshot.get("listPeopleInOrder");
-            db.collection("users").get().addOnSuccessListener(queryDocumentSnapshots -> {
-                List<Double> allRatings = new ArrayList<>();
-                int count = 0;
-                double temp_rating = 0.0;
-                for (DocumentSnapshot userDoc : queryDocumentSnapshots) {
-                    String email = userDoc.getId();
-                    if (peopleInOrder.contains(email)) {
-                        List<Map<String, Object>> userRatings = (List<Map<String, Object>>) userDoc.get("ratings");
-                        if (userRatings != null) {
-                            if (!userRatings.isEmpty()) {
-                                for (Map<String, Object> rating : userRatings) {
-                                    Object ratingValue = rating.get("rating");
-                                    if (ratingValue instanceof Double) {
-                                        temp_rating = (Double) ratingValue;
-                                    } else if (ratingValue instanceof Long) {
-                                        temp_rating = ((Long) ratingValue).doubleValue();
-                                    }
-                                }
-                                allRatings.add(temp_rating/userRatings.size());
-                            } else {
-                                allRatings.add(0.0);
-                            }
-                            Log.d("Ratings" , count + "");
-                        }
-                    }
-
-                }
-                double totalRating = 0;
-                for (double rating : allRatings) {
-                    totalRating += rating;
-                }
-                double averageRating = totalRating / peopleInOrder.size();
-
-                // Add the order to the layout
+            List<String> peopleInOrder = (List<String>) documentSnapshot.get("listPeopleInOrder");
+            if (peopleInOrder == null || peopleInOrder.isEmpty()) {
                 addOrderToLayout(orderId, titleOfOrder, location, numberOfPeopleInOrder, maxPeople,
-                        categorie, distance, timestamp, averageRating);
+                        categorie, distance, timestamp, 0.0);
+                return;
+            }
+
+            db.collection("users").get().addOnSuccessListener(queryDocumentSnapshots -> {
+                List<CompletableFuture<Double>> ratingFutures = queryDocumentSnapshots.getDocuments().stream()
+                        .filter(userDoc -> peopleInOrder.contains(userDoc.getId()))
+                        .map(userDoc -> CompletableFuture.supplyAsync(() -> calculateUserRating(userDoc)))
+                        .collect(Collectors.toList());
+
+                CompletableFuture<Void> allOf = CompletableFuture.allOf(ratingFutures.toArray(new CompletableFuture[0]));
+                CompletableFuture<List<Double>> allRatingsFuture = allOf.thenApply(v ->
+                        ratingFutures.stream().map(CompletableFuture::join).collect(Collectors.toList()));
+
+                try {
+                    List<Double> allRatings = allRatingsFuture.get();
+                    double totalRating = allRatings.stream().mapToDouble(Double::doubleValue).sum();
+                    double averageRating = totalRating / peopleInOrder.size();
+
+                    addOrderToLayout(orderId, titleOfOrder, location, numberOfPeopleInOrder, maxPeople,
+                            categorie, distance, timestamp, averageRating);
+                } catch (InterruptedException | ExecutionException e) {
+                    e.printStackTrace();
+                    // Handle exception
+                }
             });
         });
+    }
+
+    private Double calculateUserRating(DocumentSnapshot userDoc) {
+        List<Map<String, Object>> userRatings = (List<Map<String, Object>>) userDoc.get("ratings");
+        if (userRatings == null || userRatings.isEmpty()) {
+            return 0.0;
+        }
+        double totalRating = 0.0;
+        for (Map<String, Object> rating : userRatings) {
+            Object ratingValue = rating.get("rating");
+            if (ratingValue instanceof Double) {
+                totalRating += (Double) ratingValue;
+            } else if (ratingValue instanceof Long) {
+                totalRating += ((Long) ratingValue).doubleValue();
+            }
+        }
+        return totalRating / userRatings.size();
     }
 
     private void addOrderToLayout(String orderId, String titleOfOrder,
@@ -357,6 +403,7 @@ public class MyOrdersActivity extends AppCompatActivity {
         // Set onClickListener to open order details
         orderLayout.setOnClickListener(v -> {
             Intent intent = new Intent(MyOrdersActivity.this, OrderDetailsActivity.class);
+            intent.putExtra("userType", globalUserType);
             intent.putExtra("orderId", orderId);
             startActivity(intent);
         });
@@ -394,7 +441,7 @@ public class MyOrdersActivity extends AppCompatActivity {
         // Create and add the people count
         TextView peopleTextView = new TextView(this);
         if (maxPeople == 0) {
-            peopleTextView.setText("unlimit people");
+            peopleTextView.setText("∞");
         } else {
             peopleTextView.setText(numberOfPeopleInOrder + "/" + maxPeople);
         }
@@ -551,8 +598,11 @@ public class MyOrdersActivity extends AppCompatActivity {
                 orderTypeTextView.setText(typeOfOrder);
                 orderTypeTextView.setId(View.generateViewId());
                 orderTypeTextView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
+                orderTypeTextView.setTypeface(null, Typeface.BOLD); // Bold text
                 orderTypeTextView.setGravity(Gravity.CENTER_HORIZONTAL);
-                orderTypeTextView.setTextColor(typeOfOrder.equals("Consumer") ? Color.parseColor("#00BFFF") : Color.BLUE);
+                orderTypeTextView.setTextColor(typeOfOrder.equals("Consumer") ?
+                        Color.parseColor("#1679AB") :
+                        Color.parseColor("#E98654"));
                 RelativeLayout.LayoutParams orderTypeParams = new RelativeLayout.LayoutParams(
                         ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
                 orderTypeParams.addRule(RelativeLayout.BELOW, locationTextView.getId());
@@ -718,17 +768,34 @@ public class MyOrdersActivity extends AppCompatActivity {
 
     private void updateButtonColors(List<String> selectedOptions) {
 
+        if (globalUserType.equals("Supplier")) {
+            tvAllOrders.setBackgroundResource(R.drawable.bg_selected_supplier);
+        }
+        else {
+            if (selectedOptions.size() == 4)
+            {
+                selectedOptions.clear();
+                selectedOptions.add(ALL_ORDERS);
+            }
+            tvAllOrders.setBackgroundResource(R.drawable.bg_selected_consumer);
+        }
 
-        tvAllOrders.setBackgroundResource(R.drawable.bg_selected);
         tvOpenedOrders.setBackgroundResource(R.drawable.bg_unselected);
         tvClosedOrders.setBackgroundResource(R.drawable.bg_unselected);
         tvSupplierOrders.setBackgroundResource(R.drawable.bg_unselected);
         tvConsumerOrders.setBackgroundResource(R.drawable.bg_unselected);
 
+
+
         for (String option : selectedOptions)
         {
             if (option.equals(ALL_ORDERS)) {
-                tvAllOrders.setBackgroundResource(R.drawable.bg_selected);
+                if (globalUserType.equals("Supplier")) {
+                    tvAllOrders.setBackgroundResource(R.drawable.bg_selected_supplier);
+                }
+                else {
+                    tvAllOrders.setBackgroundResource(R.drawable.bg_selected_consumer);
+                }
                 tvOpenedOrders.setBackgroundResource(R.drawable.bg_unselected);
                 tvClosedOrders.setBackgroundResource(R.drawable.bg_unselected);
                 tvSupplierOrders.setBackgroundResource(R.drawable.bg_unselected);
@@ -739,16 +806,26 @@ public class MyOrdersActivity extends AppCompatActivity {
                 tvAllOrders.setBackgroundResource(R.drawable.bg_unselected);
 
                 if (option.equals(OPENED_ORDERS)) {
-                    tvOpenedOrders.setBackgroundResource(R.drawable.bg_selected);
+                    if (globalUserType.equals("Supplier")) {
+                        tvOpenedOrders.setBackgroundResource(R.drawable.bg_selected_supplier);
+                    }
+                    else {
+                        tvOpenedOrders.setBackgroundResource(R.drawable.bg_selected_consumer);
+                    }
                 }
                 if (option.equals(CLOSED_ORDERS)) {
-                    tvClosedOrders.setBackgroundResource(R.drawable.bg_selected);
+                    if (globalUserType.equals("Supplier")) {
+                        tvClosedOrders.setBackgroundResource(R.drawable.bg_selected_supplier);
+                    }
+                    else {
+                        tvClosedOrders.setBackgroundResource(R.drawable.bg_selected_consumer);
+                    }
                 }
                 if (option.equals(SUPPLIER_ORDERS)) {
-                    tvSupplierOrders.setBackgroundResource(R.drawable.bg_selected);
+                    tvSupplierOrders.setBackgroundResource(R.drawable.bg_selected_consumer);
                 }
                 if (option.equals(CONSUMER_ORDERS)) {
-                    tvConsumerOrders.setBackgroundResource(R.drawable.bg_selected);
+                    tvConsumerOrders.setBackgroundResource(R.drawable.bg_selected_consumer);
                 }
             }
         }
@@ -766,6 +843,12 @@ public class MyOrdersActivity extends AppCompatActivity {
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_items, menu);
+        if ("Supplier".equals(globalUserType)) {
+            MenuItem item = menu.findItem(R.id.chat_notification);
+            if (item != null) {
+                item.setVisible(false);
+            }
+        }
         return true;
     }
 
@@ -787,9 +870,6 @@ public class MyOrdersActivity extends AppCompatActivity {
             case R.id.Log_Out:
                 menuUtils.logOut();
                 return true;
-            case R.id.list_icon:
-                menuUtils.basket();
-                return true;
             case R.id.home:
                 menuUtils.home();
                 return true;
@@ -802,11 +882,6 @@ public class MyOrdersActivity extends AppCompatActivity {
             default:
                 return super.onOptionsItemSelected(item);
         }
-    }
-
-    public void openOrder(View v) {
-        Intent toy = new Intent(MyOrdersActivity.this, OrderDetailsActivity.class);
-        startActivity(toy);
     }
 
 }

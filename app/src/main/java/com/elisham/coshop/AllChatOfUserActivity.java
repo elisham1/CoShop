@@ -36,12 +36,24 @@ public class AllChatOfUserActivity extends AppCompatActivity {
     private RecyclerView chatRecyclerView;
     private ChatListAdapter chatListAdapter;
     private List<ChatOrder> chatOrders;
+    private String globalUserType;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        // Set the theme based on the user type
+        Intent intent = getIntent();
+        globalUserType = intent.getStringExtra("userType");
+
+        if (globalUserType != null && globalUserType.equals("Consumer")) {
+            setTheme(R.style.ConsumerTheme);
+        }
+        if (globalUserType != null && globalUserType.equals("Supplier")) {
+            setTheme(R.style.SupplierTheme);
+        }
+
         setContentView(R.layout.activityallchats);
-        menuUtils = new MenuUtils(this);
+        menuUtils = new MenuUtils(this, globalUserType);
         db = FirebaseFirestore.getInstance();
         mAuth = FirebaseAuth.getInstance();
         currentUser = mAuth.getCurrentUser();
@@ -129,6 +141,7 @@ public class AllChatOfUserActivity extends AppCompatActivity {
 
     private void onChatSelected(String orderId) {
         Intent intent = new Intent(this, ChatActivity.class);
+        intent.putExtra("userType", globalUserType);
         intent.putExtra("orderId", orderId);
         startActivity(intent);
     }
@@ -136,7 +149,13 @@ public class AllChatOfUserActivity extends AppCompatActivity {
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         MenuInflater inflater = getMenuInflater();
-        inflater.inflate(R.menu.menu_items, menu); // Inflate your menu XML
+        inflater.inflate(R.menu.menu_items, menu);
+        if ("Supplier".equals(globalUserType)) {
+            MenuItem item = menu.findItem(R.id.chat_notification);
+            if (item != null) {
+                item.setVisible(false);
+            }
+        }
         return true;
     }
 
@@ -157,9 +176,6 @@ public class AllChatOfUserActivity extends AppCompatActivity {
                 return true;
             case R.id.Log_Out:
                 menuUtils.logOut();
-                return true;
-            case R.id.list_icon:
-                menuUtils.basket();
                 return true;
             case R.id.home:
                 menuUtils.home();

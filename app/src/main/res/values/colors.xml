@@ -16,4 +16,13 @@
     <color name="colorAccent">#FF4081</color>
     <color name="colorSelected">#009FBD</color>
     <color name="colorDefault">#CCCCCC</color>
+
+    <color name="consumerPrimary">#1679AB</color>
+    <color name="consumerPrimaryDark">#105F86</color>
+    <color name="consumerAccent">#54ABE9</color>
+
+    <color name="supplierPrimary">#E98654</color>
+    <color name="supplierPrimaryDark">#C37040</color>
+    <color name="supplierAccent">#AB5816</color>
+
 </resources>

@@ -107,12 +107,23 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
     private static final int UPDATE_CATEGORIES_REQUEST = 3;
     private MenuUtils menuUtils;
     private ArrayList<String> currentCategories;
+    private String globalUserType;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        // Set the theme based on the user type
+        Intent intent = getIntent();
+        globalUserType = intent.getStringExtra("userType");
+
+        if (globalUserType != null && globalUserType.equals("Consumer")) {
+            setTheme(R.style.ConsumerTheme);
+        }
+        if (globalUserType != null && globalUserType.equals("Supplier")) {
+            setTheme(R.style.SupplierTheme);
+        }
         setContentView(R.layout.activity_update_user_details);
-        menuUtils = new MenuUtils(this);
+        menuUtils = new MenuUtils(this,globalUserType);
         db = FirebaseFirestore.getInstance();
         mAuth = FirebaseAuth.getInstance();
         storage = FirebaseStorage.getInstance();
@@ -120,7 +131,6 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
 
         emailTextView = findViewById(R.id.emailText);
         fullNameTextView = findViewById(R.id.fullName);
-//        addressEditText = findViewById(R.id.addressText);
         typeOfUserTextView = findViewById(R.id.type_of_user);
         profileImageView = findViewById(R.id.profileImage);
 
@@ -143,6 +153,10 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
         profilePic.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                if (picUrl == null)
+                {
+                    profileImageView.setImageResource(R.drawable.ic_profile);
+                }
                 showImageSourceDialog(picUrl);
             }
         });
@@ -152,6 +166,7 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(UpdateUserDetailsActivity.this, CategoriesActivity.class);
+                intent.putExtra("userType", globalUserType);
                 intent.putExtra("categories_update", true);
                 startActivityForResult(intent, UPDATE_CATEGORIES_REQUEST);
             }
@@ -209,6 +224,7 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
         LinearLayout searchRow = findViewById(R.id.search_row);
         searchRow.setOnClickListener(v -> {
             Intent intent = new Intent(UpdateUserDetailsActivity.this, LocationWindow.class);
+            intent.putExtra("userType", globalUserType);
             intent.putExtra("hideDistanceLayout", true); // העברת פרמטר להסתרת ה-KM
             if (lastAddress != null && !lastAddress.isEmpty()) {
                 intent.putExtra("address", lastAddress);
@@ -247,6 +263,7 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
 
         editAddressButton.setOnClickListener(v -> {
             Intent intent = new Intent(UpdateUserDetailsActivity.this, LocationWindow.class);
+            intent.putExtra("userType", globalUserType);
             intent.putExtra("hideDistanceLayout", true); // העברת פרמטר להסתרת ה-KM
             if (lastAddress != null && !lastAddress.isEmpty()) {
                 intent.putExtra("address", lastAddress);
@@ -268,41 +285,51 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
         }
     }
 
-    private void showImageSourceDialog(final String profileImageUrl) {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+    private void showImageSourceDialog(String profileImageUrl) {
+        androidx.appcompat.app.AlertDialog.Builder builder = new androidx.appcompat.app.AlertDialog.Builder(this);
         builder.setTitle("Change Profile Picture");
-
         // Create a list of options
         List<CharSequence> options = new ArrayList<>();
-        if (profileImageUrl != null) {
-            options.add("View Photo");
-        }
         options.add("Take Photo");
         options.add("Choose from Gallery");
+        if (profileImageUrl != null) {
+            options.add("View Photo");
+            options.add("Delete Photo");
+        }
 
         CharSequence[] items = options.toArray(new CharSequence[0]);
-
-        builder.setItems(items, new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                switch (which) {
-                    case 0:
-                        if (profileImageUrl != null) {
-                            // Handle viewing the photo
-                            viewPhoto(profileImageUrl);
-                        } else {
-                            checkCameraPermissionAndTakePhoto();
+        builder.setItems(items,
+                new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        Log.d("ImageSourceDialog", "Selected option: " + which);
+                        switch (which) {
+                            case 0:
+                                Log.d("ImageSourceDialog", "Take Photo");
+                                checkCameraPermissionAndTakePhoto();
+                                break;
+                            case 1:
+                                Log.d("ImageSourceDialog", "Choose from Gallery");
+                                openFileChooser();
+                                break;
+                            case 2:
+                                if (profileImageUrl != null) {
+                                    // Handle viewing the photo
+                                    viewPhoto(profileImageUrl);
+                                }
+                                break;
+                            case 3:
+                                if (profileImageUrl != null) {
+                                    // Handle deleting the photo
+                                    deleteUserProfileImage(profileImageUrl);
+                                    picUrl = null;
+                                    changePic = true;
+                                    profileImageView.setImageResource(R.drawable.ic_profile);
+                                }
+                                break;
                         }
-                        break;
-                    case 1:
-                        checkCameraPermissionAndTakePhoto();
-                        break;
-                    case 2:
-                        openFileChooser();
-                        break;
-                }
-            }
-        });
+                    }
+                });
         builder.show();
     }
 
@@ -590,8 +617,15 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
                     public void onSuccess(Void aVoid) {
                         Toast.makeText(UpdateUserDetailsActivity.this, "User details updated successfully", Toast.LENGTH_SHORT).show();
                         Log.d("EditUserDetails", "User details updated.");
-                        // Optionally, navigate to another activity or perform further actions upon success
-                        Intent toy = new Intent(UpdateUserDetailsActivity.this, HomePageActivity.class);
+                        // Navigate to another activity or perform further actions upon success
+                        Intent toy;
+                        if (globalUserType.equals("Supplier")) {
+                            toy = new Intent(UpdateUserDetailsActivity.this, MyOrdersActivity.class);
+                        }
+                        else{
+                            toy = new Intent(UpdateUserDetailsActivity.this, HomePageActivity.class);
+                        }
+                        toy.putExtra("userType", globalUserType);
                         startActivity(toy);
                         finish();
                     }
@@ -814,6 +848,7 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
 
     public void changePassword() {
         Intent toy = new Intent(UpdateUserDetailsActivity.this, ChangePasswordActivity.class);
+        toy.putExtra("userType", globalUserType);
         startActivity(toy);
     }
 
@@ -833,6 +868,12 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_items, menu);
+        if ("Supplier".equals(globalUserType)) {
+            MenuItem item = menu.findItem(R.id.chat_notification);
+            if (item != null) {
+                item.setVisible(false);
+            }
+        }
         return true;
     }
 
@@ -853,9 +894,6 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
                 return true;
             case R.id.Log_Out:
                 menuUtils.logOut();
-                return true;
-            case R.id.list_icon:
-                menuUtils.basket();
                 return true;
             case R.id.home:
                 menuUtils.home();

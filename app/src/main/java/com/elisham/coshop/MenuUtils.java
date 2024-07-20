@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.util.Log;
 import android.view.MenuItem;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -11,43 +12,50 @@ import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 
 public class MenuUtils {
 
     private static FirebaseAuth mAuth;
-    private Context context;
-    GoogleSignInAccount googleSignInAccount;
+    private FirebaseUser currentUser;
+    private FirebaseFirestore db;
+    private final Context context;
+    private final GoogleSignInAccount googleSignInAccount;
+    private final String userType;
 
-    public MenuUtils(Context context) {
+    public MenuUtils(Context context, String userType) {
+        Toast.makeText(context, "" + userType, Toast.LENGTH_SHORT).show();
         this.context = context;
-        mAuth = FirebaseAuth.getInstance();
         googleSignInAccount = GoogleSignIn.getLastSignedInAccount(context);
+        mAuth = FirebaseAuth.getInstance();
+        currentUser = mAuth.getCurrentUser();
+        this.userType = userType;
 
     }
 
     public void personalInfo() {
         Intent intent = new Intent(context, UpdateUserDetailsActivity.class);
+        intent.putExtra("userType", userType);
         context.startActivity(intent);
     }
 
     public void myOrders() {
         Intent intent = new Intent(context, MyOrdersActivity.class);
+        intent.putExtra("userType", userType);
         context.startActivity(intent);
     }
 
     public void aboutUs() {
         Intent intent = new Intent(context, AboutActivity.class);
+        intent.putExtra("userType", userType);
         context.startActivity(intent);
     }
 
     public void contactUs() {
         Intent intent = new Intent(context, ContactUsActivity.class);
-        context.startActivity(intent);
-    }
-
-    public void basket() {
-        Intent intent = new Intent(context, BasketActivity.class);
+        intent.putExtra("userType", userType);
         context.startActivity(intent);
     }
 
@@ -74,7 +82,15 @@ public class MenuUtils {
     }
 
     public void home() {
-        Intent intent = new Intent(context, HomePageActivity.class);
+        Intent intent;
+        if (userType.equals("Consumer"))
+        {
+            intent = new Intent(context, HomePageActivity.class);
+        }
+        else {
+            intent = new Intent(context, MyOrdersActivity.class);
+        }
+        intent.putExtra("userType", userType);
         context.startActivity(intent);
         finishActivity();
     }
@@ -86,10 +102,13 @@ public class MenuUtils {
     }
     public void allChats() {
         Intent intent = new Intent(context, AllChatOfUserActivity.class);
+        intent.putExtra("userType", userType);
         context.startActivity(intent);
     }
+
     public void chat_notification(){
         Intent intent = new Intent(context, notificationActivity.class);
+        intent.putExtra("userType", userType);
         context.startActivity(intent);
     }
 
