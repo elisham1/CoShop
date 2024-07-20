@@ -215,6 +215,11 @@ public class OpenNewOrderActivity extends AppCompatActivity {
             locationWindowLauncher.launch(intentLocation);
         });
 
+        ImageButton submit = findViewById(R.id.submit_button);
+        if (globalUserType.equals("Supplier")) {
+            submit.setImageResource(R.drawable.ic_plus_supplier);
+        }
+
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
 
         String apiKey = "YOUR_API_KEY"; // החלף במפתח ה-API שלך
