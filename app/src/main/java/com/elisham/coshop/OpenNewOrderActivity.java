@@ -268,7 +268,7 @@ public class OpenNewOrderActivity extends AppCompatActivity {
         TaskCompletionSource<Void> taskCompletionSource = new TaskCompletionSource<>();
 
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) {
-            createDynamicLink(orderId, shortLink -> {
+            createDynamicLink(orderId, globalUserType, shortLink -> {
                 if (shortLink != null) {
                     Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(shortLink));
                     PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
@@ -317,9 +317,9 @@ public class OpenNewOrderActivity extends AppCompatActivity {
                 .addOnFailureListener(e -> Log.w("Firestore", "Error saving notification", e));
     }
 
-    private void createDynamicLink(String orderId, DynamicLinkCallback callback) {
+    private void createDynamicLink(String orderId, String userType, DynamicLinkCallback callback) {
         String domainUriPrefix = "https://coshopapp.page.link";
-        String deepLink = "https://coshopapp.page.link/order?orderId=" + orderId;
+        String deepLink = "https://coshopapp.page.link/order?orderId=" + orderId + "&userType=" + userType;
 
         FirebaseDynamicLinks.getInstance().createDynamicLink()
                 .setLongLink(Uri.parse(domainUriPrefix + "/?" +
@@ -511,7 +511,7 @@ public class OpenNewOrderActivity extends AppCompatActivity {
                             String notificationMessage = "There is a new order in the field that interests you!";
                             Log.d("OpenNewOrderActivity", "Sending notification to: " + userEmail);
 
-                            createDynamicLink(orderId, shortLink -> {
+                            createDynamicLink(orderId, globalUserType, shortLink -> {
                                 if (shortLink != null) {
                                     Map<String, Object> notificationData = new HashMap<>();
                                     notificationData.put("message", notificationMessage);

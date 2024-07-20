@@ -46,77 +46,85 @@
         <activity
             android:name=".OrderDetailsActivity"
             android:exported="true"
-            android:theme="@style/Theme.CoShop">
+            android:theme="@style/Theme.CoShop"/>
+
+        <activity
+            android:name=".DeepLinkHandlerActivity"
+            android:theme="@style/FullscreenTheme"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
+
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
+
                 <data
-                    android:scheme="https"
                     android:host="coshopapp.page.link"
-                    android:pathPrefix="/order" />
+                    android:pathPrefix="/order"
+                    android:scheme="https" />
             </intent-filter>
         </activity>
+
 
         <activity
             android:name=".MyOrdersActivity"
             android:exported="false"
-            android:theme="@style/Theme.CoShop"/>
+            android:theme="@style/Theme.CoShop" />
         <activity
             android:name=".ContactUsActivity"
             android:exported="false"
-            android:theme="@style/Theme.CoShop"/>
+            android:theme="@style/Theme.CoShop" />
         <activity
             android:name=".JoinOrderActivity"
             android:exported="false"
-            android:theme="@style/Theme.CoShop"/>
+            android:theme="@style/Theme.CoShop" />
         <activity
             android:name=".UserDetailsActivity"
             android:exported="false"
-            android:theme="@style/Theme.CoShop"/>
+            android:theme="@style/Theme.CoShop" />
         <activity
             android:name=".FilterActivity"
             android:exported="false"
-            android:theme="@style/Theme.CoShop"/>
+            android:theme="@style/Theme.CoShop" />
 
         <activity
             android:name=".HomePageActivity"
             android:exported="false"
-            android:theme="@style/Theme.CoShop"/>
+            android:theme="@style/Theme.CoShop" />
         <activity
             android:name=".ChangePasswordActivity"
             android:exported="false"
-            android:theme="@style/Theme.CoShop"/>
+            android:theme="@style/Theme.CoShop" />
         <activity
             android:name=".OpenNewOrderActivity"
             android:exported="false"
-            android:windowSoftInputMode="adjustResize"
-            android:theme="@style/Theme.CoShop" />
+            android:theme="@style/Theme.CoShop"
+            android:windowSoftInputMode="adjustResize" />
 
         <activity
             android:name=".AboutActivity"
             android:exported="false"
-            android:theme="@style/Theme.CoShop"/>
+            android:theme="@style/Theme.CoShop" />
         <activity
             android:name=".ChatActivity"
             android:exported="false"
-            android:theme="@style/Theme.CoShop"/>
+            android:theme="@style/Theme.CoShop" />
         <activity
             android:name=".CategoriesActivity"
             android:exported="false"
-            android:theme="@style/Theme.CoShop"/>
+            android:theme="@style/Theme.CoShop" />
         <activity
             android:name=".LocationWindow"
-            android:theme="@style/AppTheme.Dialog.NoTitle"/>
+            android:theme="@style/AppTheme.Dialog.NoTitle" />
 
         <activity
             android:name=".AllChatOfUserActivity"
             android:exported="false"
-            android:theme="@style/Theme.CoShop"/>
+            android:theme="@style/Theme.CoShop" />
         <activity
             android:name=".notificationActivity"
             android:exported="false"
-            android:theme="@style/Theme.CoShop"/>
+            android:theme="@style/Theme.CoShop" />
         <activity
             android:name=".MainActivity"
             android:exported="true"
