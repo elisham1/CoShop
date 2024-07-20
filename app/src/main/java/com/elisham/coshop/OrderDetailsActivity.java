@@ -4,6 +4,7 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
+import androidx.core.view.ViewCompat;
 
 import android.app.Dialog;
 import android.content.DialogInterface;
@@ -787,6 +788,9 @@ public class OrderDetailsActivity extends AppCompatActivity {
         TextView colon3 = findViewById(R.id.colon3);
         LinearLayout secondsContainer = findViewById(R.id.secondsContainer);
         TextView secondsTextView = findViewById(R.id.secondsTextView);
+
+        // Add this line to ensure the timer layout is left-to-right
+        ViewCompat.setLayoutDirection(timerContainer, ViewCompat.LAYOUT_DIRECTION_LTR);
 
         long currentTime = System.currentTimeMillis();
         Date date = timestamp.toDate();
