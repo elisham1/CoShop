@@ -82,6 +82,7 @@ public class OrderDetailsActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         // Set the theme based on the user type
+
         Intent intent = getIntent();
         globalUserType = intent.getStringExtra("userType");
 
@@ -113,9 +114,6 @@ public class OrderDetailsActivity extends AppCompatActivity {
 
         // Initialize userListLayout
         userListLayout = findViewById(R.id.userListLayout);
-
-        // Handle incoming deep link
-        handleIncomingDeepLink();
 
         // Get the orderId from the intent
         orderId = intent.getStringExtra("orderId");
@@ -154,40 +152,16 @@ public class OrderDetailsActivity extends AppCompatActivity {
         });
     }
 
-    private void handleIncomingDeepLink() {
-        FirebaseDynamicLinks.getInstance()
-                .getDynamicLink(getIntent())
-                .addOnSuccessListener(this, pendingDynamicLinkData -> {
-                    if (pendingDynamicLinkData != null) {
-                        Uri deepLink = pendingDynamicLinkData.getLink();
-                        if (deepLink != null) {
-                            String orderIdFromLink = deepLink.getQueryParameter("orderId");
-                            if (orderIdFromLink != null) {
-                                // Open OrderDetailsActivity with the orderId
-                                Intent intent = new Intent(this, OrderDetailsActivity.class);
-                                intent.putExtra("userType", globalUserType);
-                                intent.putExtra("orderId", orderIdFromLink);
-                                startActivity(intent);
-                                finish(); // End current activity
-                            }
-                        }
-                    }
-                })
-                .addOnFailureListener(this, e -> Log.w("OrderDetailsActivity", "getDynamicLink:onFailure", e));
-    }
-
     private void shareOrderDetails() {
-        createDynamicLink(orderId, shortLink -> {
+        createDynamicLink(orderId, globalUserType, shortLink -> {
             if (shortLink != null) {
                 String shareText = buildShareText(shortLink);
                 Intent shareIntent = new Intent();
                 shareIntent.setAction(Intent.ACTION_SEND);
                 shareIntent.putExtra(Intent.EXTRA_TEXT, shareText);
-                shareIntent.putExtra("userType", globalUserType);
                 shareIntent.setType("text/plain");
 
                 Intent chooser = Intent.createChooser(shareIntent, "Share Order Details");
-                chooser.putExtra("userType", globalUserType);
                 if (shareIntent.resolveActivity(getPackageManager()) != null) {
                     startActivity(chooser);
                 }
@@ -224,9 +198,9 @@ public class OrderDetailsActivity extends AppCompatActivity {
         return sdf.format(date);
     }
 
-    private void createDynamicLink(String orderId, DynamicLinkCallback callback) {
+    private void createDynamicLink(String orderId, String userType, DynamicLinkCallback callback) {
         String domainUriPrefix = "https://coshopapp.page.link";
-        String deepLink = "https://coshopapp.page.link/order?orderId=" + orderId;
+        String deepLink = "https://coshopapp.page.link/order?orderId=" + orderId + "&userType=" + userType;
 
         FirebaseDynamicLinks.getInstance().createDynamicLink()
                 .setLongLink(Uri.parse(domainUriPrefix + "/?" +

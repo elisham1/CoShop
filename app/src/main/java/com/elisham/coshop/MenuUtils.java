@@ -26,7 +26,6 @@ public class MenuUtils {
     private final String userType;
 
     public MenuUtils(Context context, String userType) {
-        Toast.makeText(context, "" + userType, Toast.LENGTH_SHORT).show();
         this.context = context;
         googleSignInAccount = GoogleSignIn.getLastSignedInAccount(context);
         mAuth = FirebaseAuth.getInstance();

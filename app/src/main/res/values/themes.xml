@@ -14,12 +14,12 @@
     <style name="ConsumerTheme" parent="Theme.MaterialComponents.DayNight.DarkActionBar">
         <item name="colorPrimary">@color/consumerPrimary</item>
         <item name="colorPrimaryVariant">@color/consumerPrimaryDark</item>
-        <item name="colorOnPrimary">@color/consumerAccent</item>
+        <item name="colorOnPrimary">@color/white</item>
     </style>
 
     <style name="SupplierTheme" parent="Theme.MaterialComponents.DayNight.DarkActionBar">
         <item name="colorPrimary">@color/supplierPrimary</item>
         <item name="colorPrimaryVariant">@color/supplierPrimaryDark</item>
-        <item name="colorOnPrimary">@color/supplierAccent</item>
+        <item name="colorOnPrimary">@color/white</item>
     </style>
 </resources>
