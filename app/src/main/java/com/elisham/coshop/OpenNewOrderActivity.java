@@ -2,7 +2,6 @@ package com.elisham.coshop;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
-import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.Manifest;
@@ -17,7 +16,6 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.text.Editable;
-import android.text.InputType;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.view.Menu;
@@ -25,16 +23,13 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
-import android.widget.TimePicker;
 import android.widget.Toast;
 
-import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 import androidx.core.content.ContextCompat;
@@ -80,11 +75,6 @@ public class OpenNewOrderActivity extends AppCompatActivity {
     private EditText urlEditText;
     private EditText descriptionEditText;
     private EditText titleEditText;
-    private EditText timeEditText;
-    private Calendar selectedTime = null;
-    private int max_people_in_order;
-    private EditText maxPeopleEditText;
-    private String saveNewCategorieName;
     private TextView searchAddressText;
     private String lastAddress;
     private double lastLatitude;
@@ -99,6 +89,12 @@ public class OpenNewOrderActivity extends AppCompatActivity {
     private ActivityResultLauncher<String> requestPermissionLauncher;
     private MenuUtils menuUtils;
 
+    private Calendar selectedDate;
+    private Calendar selectedTime;
+    private EditText maxPeopleEditText;
+    private int max_people_in_order;
+    private String saveNewCategorieName;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -110,17 +106,16 @@ public class OpenNewOrderActivity extends AppCompatActivity {
         urlEditText = findViewById(R.id.url);
         descriptionEditText = findViewById(R.id.description);
         titleEditText = findViewById(R.id.title);
-        timeEditText = findViewById(R.id.time);
         searchAddressText = findViewById(R.id.search_address_text);
         searchAddressButton = findViewById(R.id.search_address_button);
         editAddressButton = findViewById(R.id.edit_address_button);
+        maxPeopleEditText = findViewById(R.id.maxPeopleEditText);
 
         createNotificationChannel();
         requestNotificationPermission();
 
         readCategoriesFromFireStore();
 
-        maxPeopleEditText = findViewById(R.id.maxPeopleEditText);
         maxPeopleEditText.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
@@ -304,13 +299,10 @@ public class OpenNewOrderActivity extends AppCompatActivity {
         void onLinkCreated(String shortLink);
     }
 
-
-
     public void goToMyOrders(View v) {
         String url = urlEditText.getText().toString().trim();
         String description = descriptionEditText.getText().toString().trim();
         String title = titleEditText.getText().toString().trim();
-        String time = timeEditText.getText().toString().trim();
         int maxPeople = maxPeople();
 
         if (url.isEmpty()) {
@@ -340,16 +332,21 @@ public class OpenNewOrderActivity extends AppCompatActivity {
             return;
         }
 
-        if (time.isEmpty()) {
+        if (selectedDate == null) {
+            Toast.makeText(this, "Date is required", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        if (selectedTime == null) {
             Toast.makeText(this, "Time is required", Toast.LENGTH_SHORT).show();
             return;
         }
 
         if (maxPeople == 0) {
             Toast.makeText(this, "Maximum people is required", Toast.LENGTH_SHORT).show();
+//            maxPeopleEditText.setError("Maximum people is required");
             return;
         }
-
         addCategorieToDataBase();
 
         saveOrder(url, description, title, maxPeople).addOnCompleteListener(task -> {
@@ -370,6 +367,7 @@ public class OpenNewOrderActivity extends AppCompatActivity {
             }
         });
     }
+
     private void toggleSearchClearIcon() {
         String address = searchAddressText.getText().toString();
         if (!address.isEmpty()) {
@@ -391,7 +389,7 @@ public class OpenNewOrderActivity extends AppCompatActivity {
         try {
             return Integer.parseInt(maxPeopleStr);
         } catch (NumberFormatException e) {
-            return 0; // Return 0 if the entered text is not a valid number
+            return 0; // Return 0 אם הטקסט שהוזן אינו מספר חוקי
         }
     }
 
@@ -427,9 +425,6 @@ public class OpenNewOrderActivity extends AppCompatActivity {
                 });
     }
 
-
-
-
     private boolean containsIgnoreCase(List<String> list, String str) {
         for (String s : list) {
             if (s.equalsIgnoreCase(str)) {
@@ -438,7 +433,6 @@ public class OpenNewOrderActivity extends AppCompatActivity {
         }
         return false;
     }
-
 
     private Task<Void> checkAndNotifyUsers(String category, double latitude, double longitude) {
         TaskCompletionSource<Void> taskCompletionSource = new TaskCompletionSource<>();
@@ -508,6 +502,7 @@ public class OpenNewOrderActivity extends AppCompatActivity {
 
         return taskCompletionSource.getTask();
     }
+
     private void sendPushNotification(String fcmToken, String message) {
         String serverKey = "YOUR_SERVER_KEY"; // החלף במפתח השרת שלך מ-Firebase Console
         JSONObject notification = new JSONObject();
@@ -560,38 +555,6 @@ public class OpenNewOrderActivity extends AppCompatActivity {
         return R * c;
     }
 
-    private boolean validateFields() {
-        Log.d("Validate Fields", "Start");
-        String url = urlEditText.getText().toString().trim();
-        String description = descriptionEditText.getText().toString().trim();
-        String category = saveNewCategorieName;
-        String address = searchAddressText.getText().toString().trim();
-        String title = titleEditText.getText().toString().trim();
-        boolean valid = true;
-
-        if (description.isEmpty()) {
-            descriptionEditText.setError("Description is required");
-            valid = false;
-        }
-
-        if (title.isEmpty()) {
-            titleEditText.setError("Title is required");
-            valid = false;
-        }
-
-        if (category.isEmpty() || category.equals("Other") || category.equals("Choose Categorie")) {
-            Toast.makeText(this, "Please select a valid category", Toast.LENGTH_SHORT).show();
-            valid = false;
-        }
-
-        if (address.isEmpty()) {
-            searchAddressText.setError("Address is required");
-            valid = false;
-        }
-
-        Log.d("Validate Fields", "End with valid = " + valid);
-        return valid;
-    }
 
     public void addCategorieToDataBase() {
         Log.d("Add Category", "Start");
@@ -689,44 +652,77 @@ public class OpenNewOrderActivity extends AppCompatActivity {
         return taskCompletionSource.getTask();
     }
 
-    public void showTimePickerDialog(View view) {
+    public void showDatePickerDialog(View view) {
+        Locale.setDefault(Locale.ENGLISH);
         Calendar calendar = Calendar.getInstance();
-        DatePickerDialog datePickerDialog = new DatePickerDialog(OpenNewOrderActivity.this, new DatePickerDialog.OnDateSetListener() {
-            @Override
-            public void onDateSet(DatePicker view, int year, int month, int dayOfMonth) {
-                Calendar currentDate = Calendar.getInstance();
-                currentDate.set(Calendar.YEAR, year);
-                currentDate.set(Calendar.MONTH, month);
-                currentDate.set(Calendar.DAY_OF_MONTH, dayOfMonth);
-
-                if (currentDate.before(Calendar.getInstance())) {
-                    Toast.makeText(OpenNewOrderActivity.this, "You can't choose a past date", Toast.LENGTH_SHORT).show();
-                } else {
+        DatePickerDialog datePickerDialog = new DatePickerDialog(
+                OpenNewOrderActivity.this,
+                android.R.style.Theme_Holo_Light_Dialog_MinWidth, // ערכת נושא שתבטיח שהדיאלוג יהיה רחב מספיק
+                (view1, year, month, dayOfMonth) -> {
                     Calendar selectedDate = Calendar.getInstance();
                     selectedDate.set(year, month, dayOfMonth);
 
-                    TimePickerDialog timePickerDialog = new TimePickerDialog(OpenNewOrderActivity.this, new TimePickerDialog.OnTimeSetListener() {
-                        @Override
-                        public void onTimeSet(TimePicker view, int hourOfDay, int minute) {
-                            selectedDate.set(Calendar.HOUR_OF_DAY, hourOfDay);
-                            selectedDate.set(Calendar.MINUTE, minute);
+                    // אם כבר נבחרה שעה, מוודאים שהשעה לא בעבר
+                    if (this.selectedTime != null) {
+                        selectedDate.set(Calendar.HOUR_OF_DAY, this.selectedTime.get(Calendar.HOUR_OF_DAY));
+                        selectedDate.set(Calendar.MINUTE, this.selectedTime.get(Calendar.MINUTE));
+                    }
 
-                            if (selectedDate.before(Calendar.getInstance())) {
-                                Toast.makeText(OpenNewOrderActivity.this, "You cannot select a past time", Toast.LENGTH_SHORT).show();
-                            } else {
-                                selectedTime = selectedDate;
-                                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault());
-                                String dateTime = sdf.format(selectedDate.getTime());
+                    if (selectedDate.before(Calendar.getInstance())) {
+                        Toast.makeText(OpenNewOrderActivity.this, "You can't choose a past date", Toast.LENGTH_SHORT).show();
+                    } else {
+                        this.selectedDate = selectedDate;
+                        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+                        String dateString = sdf.format(selectedDate.getTime());
 
-                                timeEditText.setText(dateTime);
-                            }
-                        }
-                    }, calendar.get(Calendar.HOUR_OF_DAY), calendar.get(Calendar.MINUTE), true);
-                    timePickerDialog.show();
-                }
-            }
-        }, calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH));
+                        TextView dateText = findViewById(R.id.date_text);
+                        dateText.setText(dateString);
+
+                        ImageButton dateIcon = findViewById(R.id.date_icon);
+                        dateIcon.setImageResource(R.drawable.baseline_calendar_month_24);
+                    }
+                },
+                calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH)
+        );
         datePickerDialog.show();
+    }
+
+    public void showTimePickerDialog(View view) {
+        Locale.setDefault(Locale.ENGLISH);
+        Calendar calendar = Calendar.getInstance();
+
+        TimePickerDialog timePickerDialog = new TimePickerDialog(
+                OpenNewOrderActivity.this,
+                android.R.style.Theme_Holo_Light_Dialog_MinWidth, // ערכת נושא שתבטיח שהדיאלוג יהיה רחב מספיק
+                (view1, hourOfDay, minute) -> {
+                    Calendar selectedTime = Calendar.getInstance();
+                    selectedTime.set(Calendar.HOUR_OF_DAY, hourOfDay);
+                    selectedTime.set(Calendar.MINUTE, minute);
+
+                    // אם כבר נבחר תאריך, מוודאים שהתאריך והשעה לא בעבר
+                    if (this.selectedDate != null) {
+                        selectedTime.set(Calendar.YEAR, this.selectedDate.get(Calendar.YEAR));
+                        selectedTime.set(Calendar.MONTH, this.selectedDate.get(Calendar.MONTH));
+                        selectedTime.set(Calendar.DAY_OF_MONTH, this.selectedDate.get(Calendar.DAY_OF_MONTH));
+                    }
+
+                    if (selectedTime.before(Calendar.getInstance())) {
+                        Toast.makeText(OpenNewOrderActivity.this, "You cannot select a past time", Toast.LENGTH_SHORT).show();
+                    } else {
+                        this.selectedTime = selectedTime;
+                        SimpleDateFormat sdf = new SimpleDateFormat("HH:mm", Locale.getDefault());
+                        String timeString = sdf.format(selectedTime.getTime());
+
+                        TextView timeText = findViewById(R.id.time_text);
+                        timeText.setText(timeString);
+
+                        ImageButton timeIcon = findViewById(R.id.time_icon);
+                        timeIcon.setImageResource(R.drawable.ic_baseline_access_time_24);
+                    }
+                },
+                calendar.get(Calendar.HOUR_OF_DAY), calendar.get(Calendar.MINUTE), true
+        );
+        timePickerDialog.show();
     }
 
     @Override
