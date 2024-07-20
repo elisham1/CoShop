@@ -667,7 +667,7 @@ public class HomePageActivity extends AppCompatActivity {
 
     private void addStarsToLayout(LinearLayout layout, double rating) {
         int fullStars = (int) rating;
-        boolean hasHalfStar = rating - fullStars >= 0.5;
+        boolean hasHalfStar = rating - fullStars > 0;
         int emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
 
         int starSize = dpToPx(16); // Adjust the size of the stars here
