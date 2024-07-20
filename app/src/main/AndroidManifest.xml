@@ -16,7 +16,6 @@
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
 
-
     <uses-permission
         android:name="android.permission.MANAGE_EXTERNAL_STORAGE"
         tools:ignore="ScopedStorage" />
@@ -84,7 +83,10 @@
             android:exported="false" />
         <activity
             android:name=".OpenNewOrderActivity"
+            android:windowSoftInputMode="adjustResize"
             android:exported="false" />
+
+
         <activity
             android:name=".AboutActivity"
             android:exported="false" />

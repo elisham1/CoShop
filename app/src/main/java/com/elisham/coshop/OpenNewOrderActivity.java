@@ -77,6 +77,7 @@ public class OpenNewOrderActivity extends AppCompatActivity {
     private EditText titleEditText;
     private TextView searchAddressText;
     private String lastAddress;
+    private String getUserEmail;
     private double lastLatitude;
     private double lastLongitude;
     private ImageButton searchAddressButton;
@@ -246,7 +247,9 @@ public class OpenNewOrderActivity extends AppCompatActivity {
         return (int) System.currentTimeMillis();
     }
 
-    private void sendNotification(String title, String message, String orderId) {
+    private Task<Void> sendNotification(String title, String message, String orderId) {
+        TaskCompletionSource<Void> taskCompletionSource = new TaskCompletionSource<>();
+
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) {
             createDynamicLink(orderId, shortLink -> {
                 if (shortLink != null) {
@@ -262,17 +265,39 @@ public class OpenNewOrderActivity extends AppCompatActivity {
                             .setAutoCancel(true);
 
                     NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this);
-                    int notificationId = getUniqueNotificationId(); // שימוש בפונקציה ליצירת id ייחודי להודעה
+                    int notificationId = getUniqueNotificationId();
                     notificationManager.notify(notificationId, builder.build());
+
+                    // שמירת הקישור במסמך ההודעה בפיירבייס
+                    saveNotificationToFirestore(orderId, shortLink, title, message);
+                    taskCompletionSource.setResult(null);
                 } else {
                     Toast.makeText(this, "Failed to create notification link", Toast.LENGTH_SHORT).show();
                     Log.d("Notification", "Failed to create notification link");
+                    taskCompletionSource.setException(new Exception("Failed to create notification link"));
                 }
             });
         } else {
             Toast.makeText(this, "Notification permission is required to send notifications", Toast.LENGTH_SHORT).show();
             Log.d("Notification Permission", "Notification permission is not granted");
+            taskCompletionSource.setException(new Exception("Notification permission is not granted"));
         }
+
+        return taskCompletionSource.getTask();
+    }
+
+    private void saveNotificationToFirestore(String orderId, String link, String title, String message) {
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        Map<String, Object> notificationData = new HashMap<>();
+        notificationData.put("title", title);
+        notificationData.put("message", message);
+        notificationData.put("link", link);
+        notificationData.put("timestamp", FieldValue.serverTimestamp());
+
+        db.collection("orders").document(orderId).collection("notifications")
+                .add(notificationData)
+                .addOnSuccessListener(documentReference -> Log.d("Firestore", "Notification saved successfully"))
+                .addOnFailureListener(e -> Log.w("Firestore", "Error saving notification", e));
     }
 
     private void createDynamicLink(String orderId, DynamicLinkCallback callback) {
@@ -343,8 +368,15 @@ public class OpenNewOrderActivity extends AppCompatActivity {
         }
 
         if (maxPeople == 0) {
-            Toast.makeText(this, "Maximum people is required", Toast.LENGTH_SHORT).show();
-//            maxPeopleEditText.setError("Maximum people is required");
+            Toast.makeText(this, "Maximum people is required it's can't be zero", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        if (maxPeople == 1) {
+            Toast.makeText(this, "Choose minimum two participants", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        if (maxPeople < 0) {
+            Toast.makeText(this, "You cannot choose a negative number", Toast.LENGTH_SHORT).show();
             return;
         }
         addCategorieToDataBase();
@@ -352,12 +384,17 @@ public class OpenNewOrderActivity extends AppCompatActivity {
         saveOrder(url, description, title, maxPeople).addOnCompleteListener(task -> {
             if (task.isSuccessful()) {
                 String orderId = task.getResult();
-                checkAndNotifyUsers(saveNewCategorieName, lastLatitude, lastLongitude)
+                checkAndNotifyUsers(saveNewCategorieName, lastLatitude, lastLongitude, orderId)
                         .addOnCompleteListener(notificationTask -> {
                             if (notificationTask.isSuccessful()) {
-                                sendNotification("New Order", "There is a new order in the field that interests you!", orderId);
-                                Intent intent = new Intent(OpenNewOrderActivity.this, MyOrdersActivity.class);
-                                startActivity(intent);
+                                sendNotification("New Order", "There is a new order in the field that interests you!", orderId).addOnCompleteListener(notificationSendTask -> {
+                                    if (notificationSendTask.isSuccessful()) {
+                                        Intent intent = new Intent(OpenNewOrderActivity.this, MyOrdersActivity.class);
+                                        startActivity(intent);
+                                    } else {
+                                        Toast.makeText(this, "Error in notification process", Toast.LENGTH_SHORT).show();
+                                    }
+                                });
                             } else {
                                 Toast.makeText(this, "Error in notification process", Toast.LENGTH_SHORT).show();
                             }
@@ -434,7 +471,7 @@ public class OpenNewOrderActivity extends AppCompatActivity {
         return false;
     }
 
-    private Task<Void> checkAndNotifyUsers(String category, double latitude, double longitude) {
+    private Task<Void> checkAndNotifyUsers(String category, double latitude, double longitude, String orderId) {
         TaskCompletionSource<Void> taskCompletionSource = new TaskCompletionSource<>();
         FirebaseFirestore db = FirebaseFirestore.getInstance();
         CollectionReference usersRef = db.collection("users");
@@ -456,15 +493,15 @@ public class OpenNewOrderActivity extends AppCompatActivity {
                             String notificationMessage = "There is a new order in the field that interests you!";
                             Log.d("OpenNewOrderActivity", "Sending notification to: " + userEmail);
 
-                            CollectionReference notificationsRef = usersRef.document(userDocument.getId()).collection("notifications");
-                            notificationsRef.get().addOnCompleteListener(notificationTask -> {
-                                if (notificationTask.isSuccessful() && notificationTask.getResult().isEmpty()) {
-                                    // אוסף התראות לא קיים, צור אותו ולאחר מכן הוסף את ההתראה
+                            createDynamicLink(orderId, shortLink -> {
+                                if (shortLink != null) {
                                     Map<String, Object> notificationData = new HashMap<>();
                                     notificationData.put("message", notificationMessage);
                                     notificationData.put("userEmail", userEmail);
                                     notificationData.put("timestamp", FieldValue.serverTimestamp());
+                                    notificationData.put("link", shortLink);
 
+                                    CollectionReference notificationsRef = usersRef.document(userDocument.getId()).collection("notifications");
                                     notificationsRef.add(notificationData)
                                             .addOnSuccessListener(documentReference -> {
                                                 Log.d("Firestore", "Notification added successfully for user: " + userEmail);
@@ -473,19 +510,7 @@ public class OpenNewOrderActivity extends AppCompatActivity {
                                                 Log.w("Firestore", "Error adding notification for user: " + userEmail, e);
                                             });
                                 } else {
-                                    // אוסף התראות קיים, הוסף את ההתראה
-                                    Map<String, Object> notificationData = new HashMap<>();
-                                    notificationData.put("message", notificationMessage);
-                                    notificationData.put("userEmail", userEmail);
-                                    notificationData.put("timestamp", FieldValue.serverTimestamp());
-
-                                    notificationsRef.add(notificationData)
-                                            .addOnSuccessListener(documentReference -> {
-                                                Log.d("Firestore", "Notification added successfully for user: " + userEmail);
-                                            })
-                                            .addOnFailureListener(e -> {
-                                                Log.w("Firestore", "Error adding notification for user: " + userEmail, e);
-                                            });
+                                    Log.d("Notification", "Failed to create notification link");
                                 }
                             });
                         }
@@ -501,38 +526,6 @@ public class OpenNewOrderActivity extends AppCompatActivity {
         });
 
         return taskCompletionSource.getTask();
-    }
-
-    private void sendPushNotification(String fcmToken, String message) {
-        String serverKey = "YOUR_SERVER_KEY"; // החלף במפתח השרת שלך מ-Firebase Console
-        JSONObject notification = new JSONObject();
-        JSONObject notificationBody = new JSONObject();
-
-        try {
-            notificationBody.put("title", "New Order");
-            notificationBody.put("message", message);
-
-            notification.put("to", fcmToken);
-            notification.put("data", notificationBody);
-
-        } catch (JSONException e) {
-            Log.e("FCM", "Error creating notification JSON", e);
-        }
-
-        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.POST, "https://fcm.googleapis.com/fcm/send", notification,
-                response -> Log.d("FCM", "Notification sent successfully"),
-                error -> Log.e("FCM", "Error sending notification", error)) {
-            @Override
-            public Map<String, String> getHeaders() {
-                Map<String, String> headers = new HashMap<>();
-                headers.put("Authorization", "key=" + serverKey);
-                headers.put("Content-Type", "application/json");
-                return headers;
-            }
-        };
-
-        RequestQueue requestQueue = Volley.newRequestQueue(this);
-        requestQueue.add(jsonObjectRequest);
     }
 
     private boolean isWithinDistance(GeoPoint point1, GeoPoint point2, double maxDistance) {
@@ -554,7 +547,6 @@ public class OpenNewOrderActivity extends AppCompatActivity {
         double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
         return R * c;
     }
-
 
     public void addCategorieToDataBase() {
         Log.d("Add Category", "Start");
@@ -594,6 +586,7 @@ public class OpenNewOrderActivity extends AppCompatActivity {
             return Tasks.forException(new Exception("User not logged in"));
         }
 
+        getUserEmail=userEmail;
         String finalUserEmail = userEmail;
         String finalUrl = url;
         String finalDescription = description;
