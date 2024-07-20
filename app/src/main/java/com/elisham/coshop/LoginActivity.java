@@ -112,6 +112,7 @@ public class LoginActivity extends AppCompatActivity {
 
         userRef.get().addOnSuccessListener(documentSnapshot -> {
             if (documentSnapshot.exists()) {
+                String userType = documentSnapshot.getString("type of user");
                 Boolean isBlocked = documentSnapshot.getBoolean("blocked");
                 Timestamp blockedTimestamp = documentSnapshot.getTimestamp("blockedTimestamp");
 
@@ -141,6 +142,7 @@ public class LoginActivity extends AppCompatActivity {
                 } else {
                     // User is not blocked, proceed to HomePageActivity
                     Intent intent = new Intent(LoginActivity.this, HomePageActivity.class);
+                    intent.putExtra("userType", userType);
                     startActivity(intent);
                     finish(); // Close this activity to prevent returning to it on back press
                 }

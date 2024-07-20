@@ -107,12 +107,23 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
     private static final int UPDATE_CATEGORIES_REQUEST = 3;
     private MenuUtils menuUtils;
     private ArrayList<String> currentCategories;
+    private String globalUserType;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        // Set the theme based on the user type
+        Intent intent = getIntent();
+        globalUserType = intent.getStringExtra("userType");
+
+        if (globalUserType != null && globalUserType.equals("Consumer")) {
+            setTheme(R.style.ConsumerTheme);
+        }
+        if (globalUserType != null && globalUserType.equals("Supplier")) {
+            setTheme(R.style.SupplierTheme);
+        }
         setContentView(R.layout.activity_update_user_details);
-        menuUtils = new MenuUtils(this);
+        menuUtils = new MenuUtils(this,globalUserType);
         db = FirebaseFirestore.getInstance();
         mAuth = FirebaseAuth.getInstance();
         storage = FirebaseStorage.getInstance();
@@ -155,6 +166,7 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(UpdateUserDetailsActivity.this, CategoriesActivity.class);
+                intent.putExtra("userType", globalUserType);
                 intent.putExtra("categories_update", true);
                 startActivityForResult(intent, UPDATE_CATEGORIES_REQUEST);
             }
@@ -212,6 +224,7 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
         LinearLayout searchRow = findViewById(R.id.search_row);
         searchRow.setOnClickListener(v -> {
             Intent intent = new Intent(UpdateUserDetailsActivity.this, LocationWindow.class);
+            intent.putExtra("userType", globalUserType);
             intent.putExtra("hideDistanceLayout", true); // העברת פרמטר להסתרת ה-KM
             if (lastAddress != null && !lastAddress.isEmpty()) {
                 intent.putExtra("address", lastAddress);
@@ -250,6 +263,7 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
 
         editAddressButton.setOnClickListener(v -> {
             Intent intent = new Intent(UpdateUserDetailsActivity.this, LocationWindow.class);
+            intent.putExtra("userType", globalUserType);
             intent.putExtra("hideDistanceLayout", true); // העברת פרמטר להסתרת ה-KM
             if (lastAddress != null && !lastAddress.isEmpty()) {
                 intent.putExtra("address", lastAddress);
@@ -603,8 +617,15 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
                     public void onSuccess(Void aVoid) {
                         Toast.makeText(UpdateUserDetailsActivity.this, "User details updated successfully", Toast.LENGTH_SHORT).show();
                         Log.d("EditUserDetails", "User details updated.");
-                        // Optionally, navigate to another activity or perform further actions upon success
-                        Intent toy = new Intent(UpdateUserDetailsActivity.this, HomePageActivity.class);
+                        // Navigate to another activity or perform further actions upon success
+                        Intent toy;
+                        if (globalUserType.equals("Supplier")) {
+                            toy = new Intent(UpdateUserDetailsActivity.this, MyOrdersActivity.class);
+                        }
+                        else{
+                            toy = new Intent(UpdateUserDetailsActivity.this, HomePageActivity.class);
+                        }
+                        toy.putExtra("userType", globalUserType);
                         startActivity(toy);
                         finish();
                     }
@@ -827,6 +848,7 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
 
     public void changePassword() {
         Intent toy = new Intent(UpdateUserDetailsActivity.this, ChangePasswordActivity.class);
+        toy.putExtra("userType", globalUserType);
         startActivity(toy);
     }
 
@@ -846,6 +868,12 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_items, menu);
+        if ("Supplier".equals(globalUserType)) {
+            MenuItem item = menu.findItem(R.id.chat_notification);
+            if (item != null) {
+                item.setVisible(false);
+            }
+        }
         return true;
     }
 

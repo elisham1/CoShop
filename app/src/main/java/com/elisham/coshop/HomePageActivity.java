@@ -32,6 +32,8 @@ import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.google.android.gms.tasks.Task;
+import com.google.android.gms.tasks.TaskCompletionSource;
 import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -47,32 +49,56 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
 
 public class HomePageActivity extends AppCompatActivity {
 
+    private FirebaseUser currentUser;
     private FirebaseFirestore db;
     private LinearLayout ordersContainer;
     private Geocoder geocoder;
     private MenuUtils menuUtils;
+    private String userEmail, globalUserType;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_home_page);
-
-        // Initialize Firestore
+        FirebaseAuth mAuth = FirebaseAuth.getInstance();
+        currentUser = mAuth.getCurrentUser();
         db = FirebaseFirestore.getInstance();
 
+        // Set the theme based on the user type
+        Intent intent = getIntent();
+        globalUserType = intent.getStringExtra("userType");
+
+        if (globalUserType != null && globalUserType.equals("Consumer")) {
+            setTheme(R.style.ConsumerTheme);
+        }
+        if (globalUserType != null && globalUserType.equals("Supplier")) {
+            setTheme(R.style.SupplierTheme);
+        }
+        setContentView(R.layout.activity_home_page);
+        initializeUI();
+    }
+
+    private void initializeUI() {
+        if (currentUser != null) {
+            userEmail = currentUser.getEmail();
+        }
         // Initialize the orders container
         ordersContainer = findViewById(R.id.ordersContainer);
+        ImageButton plus = findViewById(R.id.newOrderButton);
+        if (globalUserType.equals("Supplier")) {
+            plus.setImageResource(R.drawable.ic_plus_supplier);
+        }
 
         // Initialize Geocoder
         geocoder = new Geocoder(this, Locale.ENGLISH);
-
-        menuUtils = new MenuUtils(this);
-
-        // Retrieve filtered orders from Intent
+        menuUtils = new MenuUtils(this, globalUserType);
         Intent intent = getIntent();
+        // Retrieve filtered orders from Intent
         String filteredOrders = intent.getStringExtra("filteredOrders");
         boolean noOrdersFound = intent.getBooleanExtra("noOrdersFound", false);
         boolean filterActive = intent.getBooleanExtra("filterActive", false);
@@ -85,6 +111,7 @@ public class HomePageActivity extends AppCompatActivity {
             // Fetch and display all orders as usual if no filter is applied
             getUserEmailAndFetchOrders();
         }
+
 
         // הצגת כפתור הסרת הסינון אם יש סינון פעיל
         ImageButton filterOffButton = findViewById(R.id.filterOffButton);
@@ -111,12 +138,6 @@ public class HomePageActivity extends AppCompatActivity {
                 starButton.setTag("star");
             }
         });
-        FirebaseAuth mAuth = FirebaseAuth.getInstance();
-        FirebaseUser currentUser = mAuth.getCurrentUser();
-        String userEmail = null;
-        if (currentUser != null) {
-            userEmail = currentUser.getEmail();
-        }
 
         TextView filterBarText1 = findViewById(R.id.filterBarText1);
 
@@ -143,16 +164,13 @@ public class HomePageActivity extends AppCompatActivity {
                         }
                     });
         }
-
     }
 
     private void fetchAllOrders(GeoPoint userLocation) {
         CollectionReference ordersRef = db.collection("orders");
         ordersRef.get().addOnCompleteListener(task -> {
             if (task.isSuccessful()) {
-                FirebaseAuth mAuth = FirebaseAuth.getInstance();
-                FirebaseUser currentUser = mAuth.getCurrentUser();
-                String userEmail = null;
+
                 if (currentUser != null) {
                     userEmail = currentUser.getEmail();
                 }
@@ -188,50 +206,57 @@ public class HomePageActivity extends AppCompatActivity {
         });
     }
 
-
     private void calculateAndDisplayRatings(String orderId, String titleOfOrder, String location,
                                             long numberOfPeopleInOrder, long maxPeople, String categorie,
-                                            float distance, Timestamp timestamp){
+                                            float distance, Timestamp timestamp) {
         db.collection("orders").document(orderId).get().addOnSuccessListener(documentSnapshot -> {
-            List<Map<String, Object>> peopleInOrder = (List<Map<String, Object>>) documentSnapshot.get("listPeopleInOrder");
-            db.collection("users").get().addOnSuccessListener(queryDocumentSnapshots -> {
-                List<Double> allRatings = new ArrayList<>();
-                int count = 0;
-                double temp_rating = 0.0;
-                for (DocumentSnapshot userDoc : queryDocumentSnapshots) {
-                    String email = userDoc.getId();
-                    if (peopleInOrder.contains(email)) {
-                        List<Map<String, Object>> userRatings = (List<Map<String, Object>>) userDoc.get("ratings");
-                        if (userRatings != null) {
-                            if (!userRatings.isEmpty()) {
-                                for (Map<String, Object> rating : userRatings) {
-                                    Object ratingValue = rating.get("rating");
-                                    if (ratingValue instanceof Double) {
-                                        temp_rating = (Double) ratingValue;
-                                    } else if (ratingValue instanceof Long) {
-                                        temp_rating = ((Long) ratingValue).doubleValue();
-                                    }
-                                }
-                                allRatings.add(temp_rating/userRatings.size());
-                            } else {
-                                allRatings.add(0.0);
-                            }
-                            Log.d("Ratings" , count + "");
-                        }
-                    }
-
-                }
-                double totalRating = 0;
-                for (double rating : allRatings) {
-                    totalRating += rating;
-                }
-                double averageRating = totalRating / peopleInOrder.size();
-
-                // Add the order to the layout
+            List<String> peopleInOrder = (List<String>) documentSnapshot.get("listPeopleInOrder");
+            if (peopleInOrder == null || peopleInOrder.isEmpty()) {
                 addOrderToLayout(orderId, titleOfOrder, location, numberOfPeopleInOrder, maxPeople,
-                        categorie, distance, timestamp, averageRating);
+                        categorie, distance, timestamp, 0.0);
+                return;
+            }
+
+            db.collection("users").get().addOnSuccessListener(queryDocumentSnapshots -> {
+                List<CompletableFuture<Double>> ratingFutures = queryDocumentSnapshots.getDocuments().stream()
+                        .filter(userDoc -> peopleInOrder.contains(userDoc.getId()))
+                        .map(userDoc -> CompletableFuture.supplyAsync(() -> calculateUserRating(userDoc)))
+                        .collect(Collectors.toList());
+
+                CompletableFuture<Void> allOf = CompletableFuture.allOf(ratingFutures.toArray(new CompletableFuture[0]));
+                CompletableFuture<List<Double>> allRatingsFuture = allOf.thenApply(v ->
+                        ratingFutures.stream().map(CompletableFuture::join).collect(Collectors.toList()));
+
+                try {
+                    List<Double> allRatings = allRatingsFuture.get();
+                    double totalRating = allRatings.stream().mapToDouble(Double::doubleValue).sum();
+                    double averageRating = totalRating / peopleInOrder.size();
+
+                    addOrderToLayout(orderId, titleOfOrder, location, numberOfPeopleInOrder, maxPeople,
+                            categorie, distance, timestamp, averageRating);
+                } catch (InterruptedException | ExecutionException e) {
+                    e.printStackTrace();
+                    // Handle exception
+                }
             });
         });
+    }
+
+    private Double calculateUserRating(DocumentSnapshot userDoc) {
+        List<Map<String, Object>> userRatings = (List<Map<String, Object>>) userDoc.get("ratings");
+        if (userRatings == null || userRatings.isEmpty()) {
+            return 0.0;
+        }
+        double totalRating = 0.0;
+        for (Map<String, Object> rating : userRatings) {
+            Object ratingValue = rating.get("rating");
+            if (ratingValue instanceof Double) {
+                totalRating += (Double) ratingValue;
+            } else if (ratingValue instanceof Long) {
+                totalRating += ((Long) ratingValue).doubleValue();
+            }
+        }
+        return totalRating / userRatings.size();
     }
 
 
@@ -286,9 +311,7 @@ public class HomePageActivity extends AppCompatActivity {
     }
 
     private void getUserEmailAndFetchOrders() {
-        FirebaseAuth mAuth = FirebaseAuth.getInstance();
-        FirebaseUser currentUser = mAuth.getCurrentUser();
-        String userEmail = null;
+
         if (currentUser != null) {
             userEmail = currentUser.getEmail();
         } else {
@@ -326,9 +349,6 @@ public class HomePageActivity extends AppCompatActivity {
         CollectionReference ordersRef = db.collection("orders");
         ordersRef.get().addOnCompleteListener(task -> {
             if (task.isSuccessful()) {
-                FirebaseAuth mAuth = FirebaseAuth.getInstance();
-                FirebaseUser currentUser = mAuth.getCurrentUser();
-                String userEmail = null;
                 if (currentUser != null) {
                     userEmail = currentUser.getEmail();
                 }
@@ -377,6 +397,7 @@ public class HomePageActivity extends AppCompatActivity {
         // Set onClickListener to open order details
         orderLayout.setOnClickListener(v -> {
             Intent intent = new Intent(HomePageActivity.this, OrderDetailsActivity.class);
+            intent.putExtra("userType", globalUserType);
             intent.putExtra("orderId", orderId);
             startActivity(intent);
         });
@@ -541,7 +562,6 @@ public class HomePageActivity extends AppCompatActivity {
             minutesTextView.setText("00");
             secondsTextView.setText("00");
         }
-
         orderLayout.addView(rightSquareContainer);
 
         // Create and add the location
@@ -566,10 +586,13 @@ public class HomePageActivity extends AppCompatActivity {
             if (typeOfOrder != null) {
                 TextView orderTypeTextView = new TextView(this);
                 orderTypeTextView.setText(typeOfOrder);
+                orderTypeTextView.setTypeface(null, Typeface.BOLD);
                 orderTypeTextView.setId(View.generateViewId());
                 orderTypeTextView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
                 orderTypeTextView.setGravity(Gravity.CENTER_HORIZONTAL);
-                orderTypeTextView.setTextColor(typeOfOrder.equals("Consumer") ? Color.parseColor("#00BFFF") : Color.BLUE);
+                orderTypeTextView.setTextColor(typeOfOrder.equals("Consumer") ?
+                        Color.parseColor("#1679AB") :
+                        Color.parseColor("#E98654"));
                 RelativeLayout.LayoutParams orderTypeParams = new RelativeLayout.LayoutParams(
                         ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
                 orderTypeParams.addRule(RelativeLayout.BELOW, locationTextView.getId());
@@ -589,10 +612,10 @@ public class HomePageActivity extends AppCompatActivity {
             // Check if the order is open or closed using existing variables
             boolean isOrderOpen = timestamp != null && timestamp.toDate().getTime() > currentTime;
 
-// Create and add the open/close text view
+            // Create and add the open/close text view
             TextView openCloseTextView = new TextView(this);
 
-// Create a SpannableString to apply different styles and colors
+            // Create a SpannableString to apply different styles and colors
             SpannableString spannableString;
             if (isOrderOpen) {
                 spannableString = new SpannableString("Open");
@@ -712,6 +735,13 @@ public class HomePageActivity extends AppCompatActivity {
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_items, menu);
+
+        if ("Supplier".equals(globalUserType)) {
+            MenuItem item = menu.findItem(R.id.chat_notification);
+            if (item != null) {
+                item.setVisible(false);
+            }
+        }
         return true;
     }
 
@@ -749,11 +779,13 @@ public class HomePageActivity extends AppCompatActivity {
 
     public void gotofilter(View v) {
         Intent toy = new Intent(HomePageActivity.this, FilterActivity.class);
+        toy.putExtra("userType", globalUserType);
         startActivity(toy);
     }
 
     public void gotoneworder(View v) {
         Intent toy = new Intent(HomePageActivity.this, OpenNewOrderActivity.class);
+        toy.putExtra("userType", globalUserType);
         startActivity(toy);
     }
 

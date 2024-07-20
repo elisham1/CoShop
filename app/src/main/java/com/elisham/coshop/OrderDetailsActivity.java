@@ -75,12 +75,23 @@ public class OrderDetailsActivity extends AppCompatActivity {
     private boolean showAllUsers = false;
     private boolean inOrder = false;
     private ImageView chatIcon;
+    private String globalUserType;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        // Set the theme based on the user type
+        Intent intent = getIntent();
+        globalUserType = intent.getStringExtra("userType");
+
+        if (globalUserType != null && globalUserType.equals("Consumer")) {
+            setTheme(R.style.ConsumerTheme);
+        }
+        if (globalUserType != null && globalUserType.equals("Supplier")) {
+            setTheme(R.style.SupplierTheme);
+        }
         setContentView(R.layout.activity_order_details);
-        menuUtils = new MenuUtils(this);
+        menuUtils = new MenuUtils(this, globalUserType);
 
         db = FirebaseFirestore.getInstance();
         mAuth = FirebaseAuth.getInstance();
@@ -106,7 +117,6 @@ public class OrderDetailsActivity extends AppCompatActivity {
         handleIncomingDeepLink();
 
         // Get the orderId from the intent
-        Intent intent = getIntent();
         orderId = intent.getStringExtra("orderId");
 
         if (orderId != null) {
@@ -123,6 +133,7 @@ public class OrderDetailsActivity extends AppCompatActivity {
                 inOrder = true;
             } else {
                 Intent chatIntent = new Intent(OrderDetailsActivity.this, ChatActivity.class);
+                chatIntent.putExtra("userType", globalUserType);
                 chatIntent.putExtra("orderId", orderId);
                 startActivity(chatIntent);
             }
@@ -130,6 +141,7 @@ public class OrderDetailsActivity extends AppCompatActivity {
 
         chatIcon.setOnClickListener(v -> {
             Intent chatIntent = new Intent(OrderDetailsActivity.this, ChatActivity.class);
+            chatIntent.putExtra("userType", globalUserType);
             chatIntent.putExtra("orderId", orderId);
             startActivity(chatIntent);
         });
@@ -152,6 +164,7 @@ public class OrderDetailsActivity extends AppCompatActivity {
                             if (orderIdFromLink != null) {
                                 // Open OrderDetailsActivity with the orderId
                                 Intent intent = new Intent(this, OrderDetailsActivity.class);
+                                intent.putExtra("userType", globalUserType);
                                 intent.putExtra("orderId", orderIdFromLink);
                                 startActivity(intent);
                                 finish(); // End current activity
@@ -169,9 +182,11 @@ public class OrderDetailsActivity extends AppCompatActivity {
                 Intent shareIntent = new Intent();
                 shareIntent.setAction(Intent.ACTION_SEND);
                 shareIntent.putExtra(Intent.EXTRA_TEXT, shareText);
+                shareIntent.putExtra("userType", globalUserType);
                 shareIntent.setType("text/plain");
 
                 Intent chooser = Intent.createChooser(shareIntent, "Share Order Details");
+                chooser.putExtra("userType", globalUserType);
                 if (shareIntent.resolveActivity(getPackageManager()) != null) {
                     startActivity(chooser);
                 }
@@ -831,6 +846,7 @@ public class OrderDetailsActivity extends AppCompatActivity {
             joinIcon.setVisibility(View.GONE); // Hide the join icon
             chatIcon.setVisibility(View.VISIBLE); // Show the chat icon
             Intent chatIntent = new Intent(OrderDetailsActivity.this, ChatActivity.class);
+            chatIntent.putExtra("userType", globalUserType);
             chatIntent.putExtra("orderId", orderId);
             startActivity(chatIntent);
         }).addOnFailureListener(e -> Toast.makeText(this, "Failed to add user to order", Toast.LENGTH_SHORT).show());
@@ -839,6 +855,12 @@ public class OrderDetailsActivity extends AppCompatActivity {
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_items, menu);
+        if ("Supplier".equals(globalUserType)) {
+            MenuItem item = menu.findItem(R.id.chat_notification);
+            if (item != null) {
+                item.setVisible(false);
+            }
+        }
         return true;
     }
 

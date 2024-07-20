@@ -1,6 +1,8 @@
 package com.elisham.coshop;
 
 import androidx.appcompat.app.AppCompatActivity;
+
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
@@ -25,13 +27,25 @@ public class notificationActivity extends AppCompatActivity {
     private ListView notificationsListView;
     private ArrayAdapter<String> adapter;
     private List<String> notificationsList;
+    private String globalUserType;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        // Set the theme based on the user type
+        Intent intent = getIntent();
+        globalUserType = intent.getStringExtra("userType");
+
+        if (globalUserType != null && globalUserType.equals("Consumer")) {
+            setTheme(R.style.ConsumerTheme);
+        }
+        if (globalUserType != null && globalUserType.equals("Supplier")) {
+            setTheme(R.style.SupplierTheme);
+        }
+
         setContentView(R.layout.activity_notification);
 
-        menuUtils = new MenuUtils(this);
+        menuUtils = new MenuUtils(this,globalUserType);
         notificationsListView = findViewById(R.id.notificationsListView);
         notificationsList = new ArrayList<>();
         adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, notificationsList);
@@ -141,6 +155,12 @@ public class notificationActivity extends AppCompatActivity {
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_items, menu);
+        if ("Supplier".equals(globalUserType)) {
+            MenuItem item = menu.findItem(R.id.chat_notification);
+            if (item != null) {
+                item.setVisible(false);
+            }
+        }
         return true;
     }
 

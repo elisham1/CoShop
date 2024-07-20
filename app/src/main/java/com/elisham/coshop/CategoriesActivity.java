@@ -43,10 +43,20 @@ public class CategoriesActivity extends AppCompatActivity {
     private boolean isGoogleSignUp;
     private boolean isEmailSignUp;
     private boolean isCategoriesUpdate;
+    private String globalUserType;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Intent intent = getIntent();
+        globalUserType = intent.getStringExtra("userType");
+
+        if (globalUserType != null && globalUserType.equals("Consumer")) {
+            setTheme(R.style.ConsumerTheme);
+        }
+        if (globalUserType != null && globalUserType.equals("Supplier")) {
+            setTheme(R.style.SupplierTheme);
+        }
         setContentView(R.layout.activity_categories);
 
         db = FirebaseFirestore.getInstance();
@@ -55,9 +65,7 @@ public class CategoriesActivity extends AppCompatActivity {
         selectedCategories = new ArrayList<>();
 
         //get the user mail and name
-        Intent intent = getIntent();
-        if (intent != null)
-        {
+
             isGoogleSignUp = intent.getBooleanExtra("google_sign_up", false);
             isEmailSignUp = intent.getBooleanExtra("email_sign_up", false);
             isCategoriesUpdate = intent.getBooleanExtra("categories_update", false);
@@ -123,7 +131,7 @@ public class CategoriesActivity extends AppCompatActivity {
                 displayCategories();
             }
 
-        }
+
     }
 
     private void updateHelloUser() {
@@ -248,6 +256,7 @@ public class CategoriesActivity extends AppCompatActivity {
                             Log.d("CategoriesActivity", "User details updated.");
                             // Optionally, navigate to another activity or perform further actions upon success
                             Intent toy = new Intent(CategoriesActivity.this, UpdateUserDetailsActivity.class);
+                            toy.putExtra("userType", globalUserType);
                             startActivity(toy);
                             finish();
                         }

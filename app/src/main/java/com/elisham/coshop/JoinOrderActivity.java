@@ -14,6 +14,7 @@ public class JoinOrderActivity extends AppCompatActivity {
 
     public Button ok_id;
     private MenuUtils menuUtils;
+    private String globalUserType;
 
 
     public void init() {
@@ -21,6 +22,7 @@ public class JoinOrderActivity extends AppCompatActivity {
         ok_id.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 Intent toy = new Intent(JoinOrderActivity.this, MyOrdersActivity.class);
+                toy.putExtra("userType", globalUserType);
                 startActivity(toy);
             }
         });
@@ -29,8 +31,19 @@ public class JoinOrderActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        // Set the theme based on the user type
+        Intent intent = getIntent();
+        globalUserType = intent.getStringExtra("userType");
+
+        if (globalUserType != null && globalUserType.equals("Consumer")) {
+            setTheme(R.style.ConsumerTheme);
+        }
+        if (globalUserType != null && globalUserType.equals("Supplier")) {
+            setTheme(R.style.SupplierTheme);
+        }
+
         setContentView(R.layout.activity_join_order);
-        menuUtils = new MenuUtils(this);
+        menuUtils = new MenuUtils(this,globalUserType);
         init();
 
     }
@@ -38,6 +51,12 @@ public class JoinOrderActivity extends AppCompatActivity {
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_items, menu);
+        if ("Supplier".equals(globalUserType)) {
+            MenuItem item = menu.findItem(R.id.chat_notification);
+            if (item != null) {
+                item.setVisible(false);
+            }
+        }
         return true;
     }
 

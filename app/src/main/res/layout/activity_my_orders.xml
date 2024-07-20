@@ -1,104 +1,108 @@
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:padding="16dp"
     tools:context=".MyOrdersActivity">
 
-    <!-- Sorting options -->
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="match_parent"
         android:orientation="vertical"
-        android:gravity="center">
+        android:padding="16dp">
 
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="50dp"
-            android:orientation="horizontal"
-            android:gravity="center"
-            android:layout_marginBottom="4dp">
-
-            <TextView
-                android:id="@+id/tvSupplierOrders"
-                android:layout_width="0dp"
-                android:layout_weight="1"
-                android:layout_height="match_parent"
-                android:text="Supplier Orders"
-                android:textColor="@color/white"
-                android:gravity="center"
-                android:background="@drawable/bg_unselected"
-                android:layout_marginEnd="2dp"
-                />
-
-            <TextView
-                android:id="@+id/tvConsumerOrders"
-                android:layout_width="0dp"
-                android:layout_weight="1"
-                android:layout_height="match_parent"
-                android:text="Consumer Orders"
-                android:textColor="@color/white"
-                android:gravity="center"
-                android:background="@drawable/bg_unselected"
-                android:layout_marginStart="2dp" />
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="50dp"
-            android:orientation="horizontal"
-            android:gravity="center"
-            android:layout_marginBottom="4dp" >
-
-            <TextView
-                android:id="@+id/tvOpenedOrders"
-                android:layout_width="0dp"
-                android:layout_weight="1"
-                android:layout_height="match_parent"
-                android:text="Opened Orders"
-                android:textColor="@color/white"
-                android:gravity="center"
-                android:background="@drawable/bg_unselected"
-                android:layout_marginEnd="2dp"/>
-
-            <TextView
-                android:id="@+id/tvClosedOrders"
-                android:layout_width="0dp"
-                android:layout_weight="1"
-                android:layout_height="match_parent"
-                android:text="Closed Orders"
-                android:textColor="@color/white"
-                android:gravity="center"
-                android:background="@drawable/bg_unselected"
-                android:layout_marginStart="2dp" />
-        </LinearLayout>
-
-        <TextView
-            android:id="@+id/tvAllOrders"
-            android:layout_width="match_parent"
-            android:layout_weight="1"
-            android:layout_height="50dp"
-            android:text="All Orders"
-            android:textColor="@color/white"
-            android:gravity="center"
-            android:background="@drawable/bg_selected"
-            android:layout_marginBottom="4dp" />
-    </LinearLayout>
-
-    <!-- Scroll view for orders -->
-    <ScrollView
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:contentDescription="Scrollable area for orders">
-
-        <LinearLayout
-            android:id="@+id/ordersLayout"
+        <!-- Sorting options -->
+        <HorizontalScrollView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical" />
-    </ScrollView>
+            android:layout_marginBottom="4dp">
 
-</LinearLayout>
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center">
+
+                <TextView
+                    android:id="@+id/tvAllOrders"
+                    android:layout_width="100dp"
+                    android:layout_height="50dp"
+                    android:text="All orders"
+                    android:textColor="@color/white"
+                    android:gravity="center"
+                    android:background="@drawable/bg_selected_consumer"
+                    android:layout_marginEnd="2dp"/>
+
+                <TextView
+                    android:id="@+id/tvOpenedOrders"
+                    android:layout_width="100dp"
+                    android:layout_height="match_parent"
+                    android:text="Opened"
+                    android:textColor="@color/white"
+                    android:gravity="center"
+                    android:background="@drawable/bg_unselected"
+                    android:layout_marginEnd="2dp"
+                    android:layout_marginStart="2dp"/>
+
+                <TextView
+                    android:id="@+id/tvClosedOrders"
+                    android:layout_width="100dp"
+                    android:layout_height="match_parent"
+                    android:text="Closed"
+                    android:textColor="@color/white"
+                    android:gravity="center"
+                    android:background="@drawable/bg_unselected"
+                    android:layout_marginStart="2dp"
+                    android:layout_marginEnd="2dp"/>
+
+                <TextView
+                    android:id="@+id/tvSupplierOrders"
+                    android:layout_width="100dp"
+                    android:layout_height="match_parent"
+                    android:text="Supplier"
+                    android:textColor="@color/white"
+                    android:gravity="center"
+                    android:background="@drawable/bg_unselected"
+                    android:layout_marginEnd="2dp"
+                    android:layout_marginStart="2dp"/>
+
+                <TextView
+                    android:id="@+id/tvConsumerOrders"
+                    android:layout_width="100dp"
+                    android:layout_height="match_parent"
+                    android:text="Consumer"
+                    android:textColor="@color/white"
+                    android:gravity="center"
+                    android:background="@drawable/bg_unselected"
+                    android:layout_marginStart="2dp"/>
+            </LinearLayout>
+        </HorizontalScrollView>
+
+        <!-- Scroll view for orders -->
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:contentDescription="Scrollable area for orders">
+
+            <LinearLayout
+                android:id="@+id/ordersLayout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"/>
+        </ScrollView>
+    </LinearLayout>
+
+    <ImageButton
+        android:id="@+id/newOrderButton"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:layout_margin="18dp"
+        android:background="@drawable/plus_bg"
+        android:contentDescription="newOrder"
+        android:onClick="gotoneworder"
+        android:scaleType="centerInside"
+        app:srcCompat="@drawable/ic_plus_consumer"
+        android:layout_gravity="bottom|end"
+        android:visibility="gone"/>
+</FrameLayout>

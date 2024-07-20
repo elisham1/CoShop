@@ -259,6 +259,7 @@ public class EmailLoginActivity extends AppCompatActivity {
                 DocumentReference userRef = db.collection("users").document(userEmail);
                 userRef.get().addOnSuccessListener(documentSnapshot -> {
                     if (documentSnapshot.exists()) {
+                        String userType = documentSnapshot.getString("type of user");
                         Boolean isBlocked = documentSnapshot.getBoolean("blocked");
                         Timestamp blockedTimestamp = documentSnapshot.getTimestamp("blockedTimestamp");
 
@@ -283,6 +284,7 @@ public class EmailLoginActivity extends AppCompatActivity {
                         } else {
                             // User is not blocked, proceed to HomePageActivity
                             Intent intent = new Intent(EmailLoginActivity.this, HomePageActivity.class);
+                            intent.putExtra("userType", userType);
                             intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
                             startActivity(intent);
                             finish();

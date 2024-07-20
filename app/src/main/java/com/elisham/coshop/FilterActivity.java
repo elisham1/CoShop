@@ -64,7 +64,7 @@ public class FilterActivity extends AppCompatActivity {
     private ImageButton editAddressButton;
     private EditText editTextURL;
     private ImageButton clearURLButton;
-    private String lastURL;
+    private String lastURL, globalUserType;
     private MenuUtils menuUtils;
     private boolean isCategoryListVisible = false;
 
@@ -72,8 +72,19 @@ public class FilterActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        // Set the theme based on the user type
+        Intent intent = getIntent();
+        globalUserType = intent.getStringExtra("userType");
+
+        if (globalUserType != null && globalUserType.equals("Consumer")) {
+            setTheme(R.style.ConsumerTheme);
+        }
+        if (globalUserType != null && globalUserType.equals("Supplier")) {
+            setTheme(R.style.SupplierTheme);
+        }
+
         setContentView(R.layout.activity_filter);
-        menuUtils = new MenuUtils(this);
+        menuUtils = new MenuUtils(this,globalUserType);
 
         searchAddressText = findViewById(R.id.search_address_text);
         searchAddressButton = findViewById(R.id.search_address_button);
@@ -155,12 +166,13 @@ public class FilterActivity extends AppCompatActivity {
 
         LinearLayout searchRow = findViewById(R.id.search_row);
         searchRow.setOnClickListener(v -> {
-            Intent intent = new Intent(FilterActivity.this, LocationWindow.class);
+            Intent intentLocation = new Intent(FilterActivity.this, LocationWindow.class);
+            intentLocation.putExtra("userType", globalUserType);
             if (lastAddress != null && !lastAddress.isEmpty() && lastDistance > 0) {
-                intent.putExtra("address", lastAddress);
-                intent.putExtra("distance", lastDistance);
+                intentLocation.putExtra("address", lastAddress);
+                intentLocation.putExtra("distance", lastDistance);
             }
-            locationWindowLauncher.launch(intent);
+            locationWindowLauncher.launch(intentLocation);
         });
 
         clearURLButton.setOnClickListener(v -> editTextURL.setText(""));
@@ -501,6 +513,7 @@ public class FilterActivity extends AppCompatActivity {
                 }
 
                 Intent intent = new Intent(FilterActivity.this, HomePageActivity.class);
+                intent.putExtra("userType", globalUserType);
                 intent.putExtra("filterActive", true); // תמיד מציינים שסינון פעיל
                 if (results.length() == 0) {
                     intent.putExtra("noOrdersFound", true);
@@ -602,6 +615,7 @@ public class FilterActivity extends AppCompatActivity {
                 }
 
                 Intent intent = new Intent(FilterActivity.this, HomePageActivity.class);
+                intent.putExtra("userType", globalUserType);
                 if (results.length() == 0) {
                     intent.putExtra("noOrdersFound", true);
                 } else {
@@ -697,6 +711,7 @@ public class FilterActivity extends AppCompatActivity {
                 }
 
                 Intent intent = new Intent(FilterActivity.this, HomePageActivity.class);
+                intent.putExtra("userType", globalUserType);
                 if (results.length() == 0) {
                     intent.putExtra("noOrdersFound", true);
                 } else {

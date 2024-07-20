@@ -49,7 +49,7 @@ public class ChatActivity extends AppCompatActivity {
     private EditText messageInput;
     private ImageView sendIcon, orderIcon;
     private TextView orderTitle;
-    private String orderId;
+    private String orderId, globalUserType;
     private FirebaseAuth mAuth;
     private FirebaseUser currentUser;
     private LinearLayout orderDetailsLayout;
@@ -63,8 +63,18 @@ public class ChatActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        // Set the theme based on the user type
+        Intent intent = getIntent();
+        globalUserType = intent.getStringExtra("userType");
+
+        if (globalUserType != null && globalUserType.equals("Consumer")) {
+            setTheme(R.style.ConsumerTheme);
+        }
+        if (globalUserType != null && globalUserType.equals("Supplier")) {
+            setTheme(R.style.SupplierTheme);
+        }
         setContentView(R.layout.activity_chat);
-        menuUtils = new MenuUtils(this);
+        menuUtils = new MenuUtils(this,globalUserType);
 
         db = FirebaseFirestore.getInstance();
         mAuth = FirebaseAuth.getInstance();
@@ -84,13 +94,13 @@ public class ChatActivity extends AppCompatActivity {
         chatRecyclerView.setAdapter(chatAdapter);
 
         // Get the orderId from the intent
-        Intent intent = getIntent();
         orderId = intent.getStringExtra("orderId");
         Toast.makeText(this, "Order ID: " + orderId, Toast.LENGTH_SHORT).show();
         loadChatMessages(orderId);
 
         orderDetailsLayout.setOnClickListener(v -> {
             Intent orderDetailsIntent = new Intent(ChatActivity.this, OrderDetailsActivity.class);
+            orderDetailsIntent.putExtra("userType", globalUserType);
             orderDetailsIntent.putExtra("orderId", orderId); // תחליף ב-ID של ההזמנה שלך
             startActivity(orderDetailsIntent);
         });
