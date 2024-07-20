@@ -34,12 +34,23 @@ public class ChangePasswordActivity extends AppCompatActivity {
     private FirebaseAuth mAuth;
     private FirebaseFirestore db;
     private MenuUtils menuUtils;
+    private String globalUserType;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        // Set the theme based on the user type
+        Intent intent = getIntent();
+        globalUserType = intent.getStringExtra("userType");
+
+        if (globalUserType != null && globalUserType.equals("Consumer")) {
+            setTheme(R.style.ConsumerTheme);
+        }
+        if (globalUserType != null && globalUserType.equals("Supplier")) {
+            setTheme(R.style.SupplierTheme);
+        }
         setContentView(R.layout.activity_change_password);
-        menuUtils = new MenuUtils(this);
+        menuUtils = new MenuUtils(this,globalUserType);
 
         oldPasswordEditText = findViewById(R.id.old_password);
         newPasswordEditText = findViewById(R.id.new_password);
@@ -146,6 +157,12 @@ public class ChangePasswordActivity extends AppCompatActivity {
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_items, menu);
+        if ("Supplier".equals(globalUserType)) {
+            MenuItem item = menu.findItem(R.id.chat_notification);
+            if (item != null) {
+                item.setVisible(false);
+            }
+        }
         return true;
     }
 
@@ -166,9 +183,6 @@ public class ChangePasswordActivity extends AppCompatActivity {
                 return true;
             case R.id.Log_Out:
                 menuUtils.logOut();
-                return true;
-            case R.id.list_icon:
-                menuUtils.basket();
                 return true;
             case R.id.home:
                 menuUtils.home();

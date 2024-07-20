@@ -95,12 +95,23 @@ public class OpenNewOrderActivity extends AppCompatActivity {
     private EditText maxPeopleEditText;
     private int max_people_in_order;
     private String saveNewCategorieName;
+    private String globalUserType;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        // Set the theme based on the user type
+        Intent intent = getIntent();
+        globalUserType = intent.getStringExtra("userType");
+
+        if (globalUserType != null && globalUserType.equals("Consumer")) {
+            setTheme(R.style.ConsumerTheme);
+        }
+        if (globalUserType != null && globalUserType.equals("Supplier")) {
+            setTheme(R.style.SupplierTheme);
+        }
         setContentView(R.layout.activity_open_new_order);
-        menuUtils = new MenuUtils(this);
+        menuUtils = new MenuUtils(this,globalUserType);
 
         db = FirebaseFirestore.getInstance();
         categorySpinner = findViewById(R.id.category);
@@ -195,12 +206,13 @@ public class OpenNewOrderActivity extends AppCompatActivity {
 
         LinearLayout searchRow = findViewById(R.id.search_row);
         searchRow.setOnClickListener(v -> {
-            Intent intent = new Intent(OpenNewOrderActivity.this, LocationWindow.class);
-            intent.putExtra("hideDistanceLayout", true); // העברת פרמטר להסתרת ה-KM
+            Intent intentLocation = new Intent(OpenNewOrderActivity.this, LocationWindow.class);
+            intentLocation.putExtra("userType", globalUserType);
+            intentLocation.putExtra("hideDistanceLayout", true); // העברת פרמטר להסתרת ה-KM
             if (lastAddress != null && !lastAddress.isEmpty()) {
-                intent.putExtra("address", lastAddress);
+                intentLocation.putExtra("address", lastAddress);
             }
-            locationWindowLauncher.launch(intent);
+            locationWindowLauncher.launch(intentLocation);
         });
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
@@ -390,6 +402,7 @@ public class OpenNewOrderActivity extends AppCompatActivity {
                                 sendNotification("New Order", "There is a new order in the field that interests you!", orderId).addOnCompleteListener(notificationSendTask -> {
                                     if (notificationSendTask.isSuccessful()) {
                                         Intent intent = new Intent(OpenNewOrderActivity.this, MyOrdersActivity.class);
+                                        intent.putExtra("userType", globalUserType);
                                         startActivity(intent);
                                     } else {
                                         Toast.makeText(this, "Error in notification process", Toast.LENGTH_SHORT).show();
@@ -721,6 +734,12 @@ public class OpenNewOrderActivity extends AppCompatActivity {
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_items, menu);
+        if ("Supplier".equals(globalUserType)) {
+            MenuItem item = menu.findItem(R.id.chat_notification);
+            if (item != null) {
+                item.setVisible(false);
+            }
+        }
         return true;
     }
 
@@ -741,9 +760,6 @@ public class OpenNewOrderActivity extends AppCompatActivity {
                 return true;
             case R.id.Log_Out:
                 menuUtils.logOut();
-                return true;
-            case R.id.list_icon:
-                menuUtils.basket();
                 return true;
             case R.id.home:
                 menuUtils.home();

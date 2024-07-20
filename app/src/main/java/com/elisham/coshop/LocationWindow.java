@@ -60,14 +60,26 @@ public class LocationWindow extends AppCompatActivity {
     public ActivityResultLauncher<Intent> locationSettingsLauncher;
     private String lastValidAddress;
     private LocationFunctions locationFunctions;
+    private String globalUserType;
 
     private MenuUtils menuUtils;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         supportRequestWindowFeature(Window.FEATURE_NO_TITLE);
+        // Set the theme based on the user type
+        Intent intent = getIntent();
+        globalUserType = intent.getStringExtra("userType");
+
+        if (globalUserType != null && globalUserType.equals("Consumer")) {
+            setTheme(R.style.ConsumerTheme);
+        }
+        if (globalUserType != null && globalUserType.equals("Supplier")) {
+            setTheme(R.style.SupplierTheme);
+        }
+
         setContentView(R.layout.location_window);
-        menuUtils = new MenuUtils(this);
+        menuUtils = new MenuUtils(this,globalUserType);
 
         // Hide the title in the action bar
         ActionBar actionBar = getSupportActionBar();
@@ -243,8 +255,8 @@ public class LocationWindow extends AppCompatActivity {
         });
 
 
-        Intent intent = getIntent();
-        if (intent != null) {
+//        Intent intent = getIntent();
+//        if (intent != null) {
             boolean hideDistanceLayout = intent.getBooleanExtra("hideDistanceLayout", false);
             String address = intent.getStringExtra("address");
             int distance = intent.getIntExtra("distance", 0);
@@ -267,7 +279,7 @@ public class LocationWindow extends AppCompatActivity {
                 distanceEditText.setText(""); // איפוס השדה
                 numberPicker.setValue(0);
             }
-        }
+//        }
     }
 
     private void getAutocompletePredictions(String query) {
@@ -347,6 +359,12 @@ public class LocationWindow extends AppCompatActivity {
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_items, menu);
+        if ("Supplier".equals(globalUserType)) {
+            MenuItem item = menu.findItem(R.id.chat_notification);
+            if (item != null) {
+                item.setVisible(false);
+            }
+        }
         return true;
     }
 
@@ -367,9 +385,6 @@ public class LocationWindow extends AppCompatActivity {
                 return true;
             case R.id.Log_Out:
                 menuUtils.logOut();
-                return true;
-            case R.id.list_icon:
-                menuUtils.basket();
                 return true;
             case R.id.home:
                 menuUtils.home();

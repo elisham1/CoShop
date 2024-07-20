@@ -86,7 +86,8 @@ public class UserDetailsActivity extends AppCompatActivity {
     private ImageView profileImageView;
     private FirebaseStorage storage;
     private StorageReference storageReference;
-    boolean isGoogleSignUp, changePic = false;
+    private boolean isGoogleSignUp, changePic = false;
+    private String userType;
 
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -434,8 +435,8 @@ public class UserDetailsActivity extends AppCompatActivity {
         }
 
         if (selectedRadioButton != null) {
-            String selectedChoice = selectedRadioButton.getText().toString();
-            userDetails.put("type of user", selectedChoice);
+            userType = selectedRadioButton.getText().toString();
+            userDetails.put("type of user", userType);
         } else {
             showAlertDialog("No choice selected");
             Toast.makeText(UserDetailsActivity.this, "No choice selected", Toast.LENGTH_SHORT).show();
@@ -626,12 +627,20 @@ public class UserDetailsActivity extends AppCompatActivity {
         // Set the result to OK to indicate success
         setResult(RESULT_OK);
 
-        // Create an intent to go to HomePageActivity
-        Intent homeIntent = new Intent(UserDetailsActivity.this, HomePageActivity.class);
+        Intent homeIntent;
+        if (userType.equals("Supplier"))
+        {
+            // Create an intent to go to MyOrdersActivity
+            homeIntent = new Intent(UserDetailsActivity.this, MyOrdersActivity.class);
+        }
+        else {
+            // Create an intent to go to HomePageActivity
+            homeIntent = new Intent(UserDetailsActivity.this, HomePageActivity.class);
+        }
 
-        // Clear the activity stack and start HomePageActivity as a new task
+        // Clear the activity stack and start as a new task
         homeIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
-
+        homeIntent.putExtra("userType", userType);
         startActivity(homeIntent);
 
         // Finish UserDetailsActivity

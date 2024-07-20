@@ -30,8 +30,10 @@ public class notificationActivity extends AppCompatActivity {
 
     private MenuUtils menuUtils;
     private ListView notificationsListView;
-    private SimpleAdapter adapter;
-    private List<Map<String, Object>> notificationsList;
+
+    private ArrayAdapter<String> adapter;
+    private List<String> notificationsList;
+    private String globalUserType;
     private FirebaseFirestore db;
     private FirebaseAuth mAuth;
     private FirebaseUser currentUser;
@@ -39,10 +41,21 @@ public class notificationActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        // Set the theme based on the user type
+        Intent intent = getIntent();
+        globalUserType = intent.getStringExtra("userType");
+
+        if (globalUserType != null && globalUserType.equals("Consumer")) {
+            setTheme(R.style.ConsumerTheme);
+        }
+        if (globalUserType != null && globalUserType.equals("Supplier")) {
+            setTheme(R.style.SupplierTheme);
+        }
+
         setContentView(R.layout.activity_notification);
 
         // Initialize MenuUtils
-        menuUtils = new MenuUtils(this);
+         menuUtils = new MenuUtils(this,globalUserType);
 
         // Initialize ListView
         notificationsListView = findViewById(R.id.notificationsListView);
@@ -109,6 +122,12 @@ public class notificationActivity extends AppCompatActivity {
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_items, menu);
+        if ("Supplier".equals(globalUserType)) {
+            MenuItem item = menu.findItem(R.id.chat_notification);
+            if (item != null) {
+                item.setVisible(false);
+            }
+        }
         return true;
     }
 
@@ -129,9 +148,6 @@ public class notificationActivity extends AppCompatActivity {
                 return true;
             case R.id.Log_Out:
                 menuUtils.logOut();
-                return true;
-            case R.id.list_icon:
-                menuUtils.basket();
                 return true;
             case R.id.home:
                 menuUtils.home();
