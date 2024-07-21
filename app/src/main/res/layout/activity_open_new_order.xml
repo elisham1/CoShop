@@ -79,6 +79,7 @@
             android:id="@+id/url_id"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+
             android:gravity="center_vertical"
             android:orientation="horizontal"
             android:padding="4dp"
@@ -90,15 +91,28 @@
 
             <EditText
                 android:id="@+id/url"
-                android:layout_width="match_parent"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
+                android:layout_weight="1"
                 android:ems="10"
                 android:textSize="15sp"
                 android:inputType="textUri"
-                android:hint="Enter URL"
+                android:hint="Insert a secure payment link."
                 android:layout_marginBottom="10dp"
-                android:minHeight="48dp"
-                android:padding="12dp"/>
+                android:padding="12dp"
+                android:minHeight="48dp"/>
+
+            <ImageButton
+                android:id="@+id/tap_icon"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="?android:attr/selectableItemBackground"
+                android:contentDescription="Tap icon"
+                android:scaleType="fitCenter"
+                android:src="@drawable/tap"
+                android:padding="8dp"
+                android:layout_marginBottom="11dp"
+                />
         </LinearLayout>
 
         <!-- Category selection -->
