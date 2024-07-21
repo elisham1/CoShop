@@ -441,7 +441,9 @@ public class MyOrdersActivity extends AppCompatActivity {
         // Create and add the people count
         TextView peopleTextView = new TextView(this);
         if (maxPeople == 0) {
-            peopleTextView.setText("∞");
+            peopleTextView.setText("∞/"+numberOfPeopleInOrder);
+            //peopleText = "People: " + numberOfPeopleInOrder + "/∞";
+
         } else {
             peopleTextView.setText(numberOfPeopleInOrder + "/" + maxPeople);
         }
