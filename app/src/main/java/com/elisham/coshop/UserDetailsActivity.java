@@ -147,8 +147,15 @@ public class UserDetailsActivity extends AppCompatActivity {
             }
         });
 
-        CardView profilePic = findViewById(R.id.profilePic);
+        LinearLayout profilePic = findViewById(R.id.profilePic);
         profilePic.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                showImageSourceDialog(googleProfilePicUrl);
+            }
+        });
+
+        profileImageView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 showImageSourceDialog(googleProfilePicUrl);
