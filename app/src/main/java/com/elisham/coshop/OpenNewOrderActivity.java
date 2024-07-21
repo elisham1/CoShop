@@ -2,6 +2,7 @@ package com.elisham.coshop;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.Manifest;
@@ -16,6 +17,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.text.Editable;
+import android.text.Html;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.view.Menu;
@@ -23,8 +25,10 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
@@ -33,6 +37,7 @@ import android.widget.Toast;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 import androidx.core.content.ContextCompat;
+import androidx.viewpager2.widget.ViewPager2;
 
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
@@ -99,6 +104,17 @@ public class OpenNewOrderActivity extends AppCompatActivity {
     private String saveNewCategorieName;
     private String globalUserType;
 
+    private int[] imageResources = {
+            R.drawable.one, 
+            R.drawable.two,
+            R.drawable.three,
+            R.drawable.four,
+            R.drawable.five,
+            R.drawable.six,
+            R.drawable.seven,
+            R.drawable.eight,
+
+    };
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -129,7 +145,8 @@ public class OpenNewOrderActivity extends AppCompatActivity {
         requestNotificationPermission();
 
         readCategoriesFromFireStore();
-
+        ImageButton tapIcon = findViewById(R.id.tap_icon);
+        tapIcon.setOnClickListener(v -> showImageAlertDialog());
         maxPeopleEditText.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
@@ -232,7 +249,70 @@ public class OpenNewOrderActivity extends AppCompatActivity {
 
         addressAdapter = new ArrayAdapter<>(this, android.R.layout.simple_dropdown_item_1line);
     }
+    private void showImageAlertDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
 
+        // Custom view for the AlertDialog
+        View dialogView = getLayoutInflater().inflate(R.layout.dialog_image_viewer, null);
+        ViewPager2 viewPager = dialogView.findViewById(R.id.view_pager);
+        LinearLayout dotsLayout = dialogView.findViewById(R.id.dots_layout);
+        Button skipButton = dialogView.findViewById(R.id.skip_button);
+        builder.setView(dialogView);
+
+        AlertDialog alertDialog = builder.create();
+
+        String[] imageCaptions = {
+                "Open the PayBox app.",
+                "Select \"Box group\" and click on plus.",
+                "Fill in details and click on \"Next\" and at the end \"Done\".",
+                "Click \"View Group\".",
+                "Click \"Invite Friends\".",
+                "Click \"Share Link\".",
+                "Click \"Copy\".",
+                "Paste the generated link here"
+        };
+
+        ViewPagerAdapter adapter = new ViewPagerAdapter(imageResources, imageCaptions);
+        viewPager.setAdapter(adapter);
+
+        addDots(dotsLayout, imageCaptions.length, 0);
+
+        viewPager.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
+            @Override
+            public void onPageSelected(int position) {
+                addDots(dotsLayout, imageCaptions.length, position);
+            }
+        });
+
+        skipButton.setOnClickListener(v -> alertDialog.dismiss());
+
+        alertDialog.setOnShowListener(dialog -> {
+            // Get the screen width and height
+            int dialogWidth = getResources().getDisplayMetrics().widthPixels;
+            int dialogHeight = getResources().getDisplayMetrics().heightPixels;
+
+            // Set the dialog to 2/3 the screen size
+            alertDialog.getWindow().setLayout((int)(dialogWidth * 0.66), (int)(dialogHeight * 0.66));
+        });
+
+        alertDialog.show();
+    }
+
+
+    private void addDots(LinearLayout dotsLayout, int size, int currentPosition) {
+        dotsLayout.removeAllViews();
+        TextView[] dots = new TextView[size];
+        for (int i = 0; i < size; i++) {
+            dots[i] = new TextView(this);
+            dots[i].setText(Html.fromHtml("&#8226;"));
+            dots[i].setTextSize(35);
+            dots[i].setTextColor(getResources().getColor(R.color.inactive_dot));
+            dotsLayout.addView(dots[i]);
+        }
+        if (dots.length > 0) {
+            dots[currentPosition].setTextColor(getResources().getColor(R.color.active_dot));
+        }
+    }
     private void requestNotificationPermission() {
         requestPermissionLauncher = registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
             if (isGranted) {
