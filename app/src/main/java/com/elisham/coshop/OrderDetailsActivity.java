@@ -65,6 +65,7 @@ public class OrderDetailsActivity extends AppCompatActivity {
     private TextView descriptionTextView, siteTextView, categoryTextView, addressTextView, timeTextView, titleTextView, groupInfoTextView;
     private ImageView categoryImageView;
     private ImageView joinIcon;
+    private Button waitingListButton; // הוספת כפתור המתנה
     private String orderId;
     private FirebaseAuth mAuth;
     private FirebaseUser currentUser;
@@ -77,6 +78,7 @@ public class OrderDetailsActivity extends AppCompatActivity {
     private boolean inOrder = false;
     private ImageView chatIcon;
     private String globalUserType;
+    private boolean inWaitingList = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -111,6 +113,7 @@ public class OrderDetailsActivity extends AppCompatActivity {
         categoryImageView = findViewById(R.id.categoryImageView);
         chatIcon = findViewById(R.id.chatIcon);
         joinIcon = findViewById(R.id.joinIcon);
+        waitingListButton = findViewById(R.id.waitingListButton); // אתחול כפתור המתנה
 
         // Initialize userListLayout
         userListLayout = findViewById(R.id.userListLayout);
@@ -122,6 +125,7 @@ public class OrderDetailsActivity extends AppCompatActivity {
             checkUserInList();
             // Fetch order details and then user details
             fetchOrderDetails(orderId, currentUser.getEmail());
+            checkIfUserInWaitingList(); // הוספת הקריאה לפונקציה החדשה כאן
         } else {
             Toast.makeText(this, "Order ID is null", Toast.LENGTH_SHORT).show();
         }
@@ -143,6 +147,34 @@ public class OrderDetailsActivity extends AppCompatActivity {
             chatIntent.putExtra("userType", globalUserType);
             chatIntent.putExtra("orderId", orderId);
             startActivity(chatIntent);
+        });
+
+        waitingListButton.setOnClickListener(v -> {
+            if (inWaitingList) {
+                new AlertDialog.Builder(OrderDetailsActivity.this)
+                        .setTitle("Confirm")
+                        .setMessage("Are you sure you want to get off the waiting list?")
+                        .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int which) {
+                                removeUserFromWaitingList();
+                            }
+                        })
+                        .setNegativeButton("Cancel", null)
+                        .setIcon(R.drawable.checklist)
+                        .show();
+            } else {
+                new AlertDialog.Builder(OrderDetailsActivity.this)
+                        .setTitle("Confirm")
+                        .setMessage("Are you sure you want to get on the waiting list?")
+                        .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int which) {
+                                addUserToWaitingList();
+                            }
+                        })
+                        .setNegativeButton("Cancel", null)
+                        .setIcon(R.drawable.checklist)
+                        .show();
+            }
         });
 
         ImageView shareIcon = findViewById(R.id.shareIcon);
@@ -169,6 +201,28 @@ public class OrderDetailsActivity extends AppCompatActivity {
                 Toast.makeText(OrderDetailsActivity.this, "Failed to create shareable link", Toast.LENGTH_SHORT).show();
             }
         });
+    }
+    private void checkIfUserInWaitingList() {
+        DocumentReference orderRef = db.collection("orders").document(orderId);
+        orderRef.get().addOnSuccessListener(documentSnapshot -> {
+            if (documentSnapshot.exists()) {
+                List<String> waitingList = (List<String>) documentSnapshot.get("waitingList");
+                List<String> listPeopleInOrder = (List<String>) documentSnapshot.get("listPeopleInOrder");
+                int numberOfPeopleInOrder = documentSnapshot.getLong("NumberOfPeopleInOrder").intValue();
+                int maxPeople = documentSnapshot.getLong("max_people").intValue();
+
+                if (waitingList != null && waitingList.contains(currentUser.getEmail())) {
+                    inWaitingList = true;
+                    waitingListButton.setText("Get off the waiting list"); // Change button text
+                    waitingListButton.setVisibility(View.VISIBLE); // Show the waiting list button
+                } else if (numberOfPeopleInOrder >= maxPeople && (listPeopleInOrder == null || !listPeopleInOrder.contains(currentUser.getEmail()))) {
+                    waitingListButton.setText("Get on the waiting list"); // Change button text
+                    waitingListButton.setVisibility(View.VISIBLE); // Show the waiting list button
+                } else {
+                    waitingListButton.setVisibility(View.GONE); // Hide the waiting list button
+                }
+            }
+        }).addOnFailureListener(e -> Toast.makeText(this, "Failed to check waiting list", Toast.LENGTH_SHORT).show());
     }
 
     private String buildShareText(String shortLink) {
@@ -284,14 +338,61 @@ public class OrderDetailsActivity extends AppCompatActivity {
                 if (listPeopleInOrder != null && !listPeopleInOrder.isEmpty()) {
                     fetchAndShowUsersInOrder(listPeopleInOrder, userEmail, currentUserEmail);
                 }
+
+                // בדיקה אם כמות האנשים בהזמנה הגיעה למקסימום
+                if (listPeopleInOrder != null && listPeopleInOrder.contains(currentUser.getEmail())) {
+                    inOrder = true;
+                    joinIcon.setVisibility(View.GONE); // Hide the join icon
+                    chatIcon.setVisibility(View.VISIBLE); // Show the chat icon
+                    waitingListButton.setVisibility(View.GONE); // Hide the waiting list button
+                } else if (numberOfPeopleInOrder >= maxPeople) {
+                    joinIcon.setVisibility(View.GONE);
+                    if (!inWaitingList) {
+                        waitingListButton.setVisibility(View.VISIBLE);
+                    } else {
+                        waitingListButton.setVisibility(View.GONE);
+                    }
+                } else {
+                    joinIcon.setVisibility(View.VISIBLE);
+                    waitingListButton.setVisibility(View.GONE);
+                }
+
+                // בדיקה אם מספר האנשים הנוכחי קטן מהמספר המקסימלי
+                if (numberOfPeopleInOrder < maxPeople) {
+                    waitingListButton.setVisibility(View.GONE);
+                }
+
+                // בדיקה אם המשתמש לא נמצא ברשימת ההמתנה ומספר האנשים בהזמנה הגיע למקסימום
+                if (numberOfPeopleInOrder >= maxPeople && !inWaitingList && !listPeopleInOrder.contains(currentUser.getEmail())) {
+                    waitingListButton.setText("Get on the waiting list"); // Update button text
+                    waitingListButton.setVisibility(View.VISIBLE);
+                }
+
             } else {
                 Toast.makeText(this, "No such document", Toast.LENGTH_SHORT).show();
             }
         }).addOnFailureListener(e -> Toast.makeText(this, "Failed to fetch document", Toast.LENGTH_SHORT).show());
     }
+    private void removeUserFromWaitingList() {
+        DocumentReference orderRef = db.collection("orders").document(orderId);
+        db.runTransaction(transaction -> {
+            DocumentSnapshot snapshot = transaction.get(orderRef);
+            List<String> waitingList = (List<String>) snapshot.get("waitingList");
+            if (waitingList != null && waitingList.contains(currentUser.getEmail())) {
+                transaction.update(orderRef, "waitingList", FieldValue.arrayRemove(currentUser.getEmail()));
+            }
+            return null;
+        }).addOnSuccessListener(aVoid -> {
+            Toast.makeText(this, "Removed from waiting list", Toast.LENGTH_SHORT).show();
+            waitingListButton.setText("Enter the waiting list"); // Update button text
+            inWaitingList = false; // Update the inWaitingList flag
+        }).addOnFailureListener(e -> {
+            Toast.makeText(this, "Failed to remove from waiting list", Toast.LENGTH_SHORT).show();
+        });
+    }
 
     private void fetchAndShowUsersInOrder(List<String> userEmails, String orderCreatorEmail, String currentUserEmail) {
-        //Reorder list current user first, then order creator, then others
+        // Reorder list current user first, then order creator, then others
         List<String> reorderedList = getReorderedList(userEmails, orderCreatorEmail, currentUserEmail);
 
         // Create a list of tasks for fetching user details
@@ -311,7 +412,7 @@ public class OrderDetailsActivity extends AppCompatActivity {
                     String familyName = documentSnapshot.getString("family name");
                     String email = documentSnapshot.getId();
 
-                    //computing user rating
+                    // computing user rating
                     String userRating;
                     List<Map<String, Object>> ratings = (List<Map<String, Object>>) documentSnapshot.get("ratings");
 
@@ -343,7 +444,7 @@ public class OrderDetailsActivity extends AppCompatActivity {
         });
     }
 
-    //Reorder list current user first, then order creator, then others
+    // Reorder list current user first, then order creator, then others
     private static @NonNull List<String> getReorderedList(List<String> userEmails, String orderCreatorEmail, String currentUserEmail) {
         List<String> reorderedList = new ArrayList<>();
         if (userEmails.contains(currentUserEmail)) {
@@ -358,6 +459,28 @@ public class OrderDetailsActivity extends AppCompatActivity {
             }
         }
         return reorderedList;
+    }
+
+    private void addUserToWaitingList() {
+        DocumentReference orderRef = db.collection("orders").document(orderId);
+        db.runTransaction(transaction -> {
+            DocumentSnapshot snapshot = transaction.get(orderRef);
+            List<String> waitingList = (List<String>) snapshot.get("waitingList");
+            if (waitingList == null) {
+                waitingList = new ArrayList<>();
+            }
+            if (!waitingList.contains(currentUser.getEmail())) {
+                transaction.update(orderRef, "waitingList", FieldValue.arrayUnion(currentUser.getEmail()));
+            }
+            return null;
+        }).addOnSuccessListener(aVoid -> {
+            Toast.makeText(this, "Added to waiting list", Toast.LENGTH_SHORT).show();
+            inWaitingList = true; // Update the inWaitingList flag
+            waitingListButton.setText("Get off the waiting list"); // Update button text
+            waitingListButton.setVisibility(View.VISIBLE); // Show the waiting list button
+        }).addOnFailureListener(e -> {
+            Toast.makeText(this, "Failed to add to waiting list", Toast.LENGTH_SHORT).show();
+        });
     }
 
     private void showUsersInOrder(List<UserDetail> userDetailList) {
@@ -618,7 +741,6 @@ public class OrderDetailsActivity extends AppCompatActivity {
         }
     }
 
-
     private void showAlertDialog(String message) {
         new AlertDialog.Builder(this)
                 .setMessage(message)
@@ -631,8 +753,7 @@ public class OrderDetailsActivity extends AppCompatActivity {
                 .show();
     }
 
-
-                private void updateStarUI(ImageView[] stars, int rating) {
+    private void updateStarUI(ImageView[] stars, int rating) {
         for (int i = 0; i < stars.length; i++) {
             if (i < rating) {
                 stars[i].setImageResource(R.drawable.star);
@@ -694,7 +815,6 @@ public class OrderDetailsActivity extends AppCompatActivity {
         return "N/A";
     }
 
-
     private void fetchUserDetails(String userEmail, int numberOfPeopleInOrder, int maxPeople, String formattedOpenOrderTime) {
         DocumentReference userRef = db.collection("users").document(userEmail);
         userRef.get().addOnSuccessListener(documentSnapshot -> {
@@ -718,6 +838,7 @@ public class OrderDetailsActivity extends AppCompatActivity {
             Toast.makeText(this, "Failed to fetch user details", Toast.LENGTH_SHORT).show();
         });
     }
+
     private void updateTimerTextViews(LinearLayout daysContainer, TextView daysTextView, TextView colon1, LinearLayout hoursContainer, TextView hoursTextView, TextView colon2, LinearLayout minutesContainer, TextView minutesTextView, TextView colon3, LinearLayout secondsContainer, TextView secondsTextView, long millisUntilFinished) {
         long seconds = millisUntilFinished / 1000;
         long minutes = seconds / 60;
@@ -799,10 +920,20 @@ public class OrderDetailsActivity extends AppCompatActivity {
         orderRef.get().addOnSuccessListener(documentSnapshot -> {
             if (documentSnapshot.exists()) {
                 List<String> listPeopleInOrder = (List<String>) documentSnapshot.get("listPeopleInOrder");
+                List<String> waitingList = (List<String>) documentSnapshot.get("waitingList");
+
                 if (listPeopleInOrder != null && listPeopleInOrder.contains(currentUser.getEmail())) {
                     inOrder = true;
                     joinIcon.setVisibility(View.GONE); // Hide the join icon
                     chatIcon.setVisibility(View.VISIBLE); // Show the chat icon
+                    waitingListButton.setVisibility(View.GONE); // Hide the waiting list button
+                } else if (waitingList != null && waitingList.contains(currentUser.getEmail())) {
+                    inWaitingList = true;
+                    waitingListButton.setText("Get off the waiting list"); // Change button text
+                    waitingListButton.setVisibility(View.VISIBLE); // Show the waiting list button
+                } else {
+                    joinIcon.setVisibility(View.VISIBLE); // Show the join icon
+                    waitingListButton.setVisibility(View.VISIBLE); // Show the waiting list button
                 }
             }
         }).addOnFailureListener(e -> Toast.makeText(this, "Failed to check user in list", Toast.LENGTH_SHORT).show());
@@ -823,6 +954,7 @@ public class OrderDetailsActivity extends AppCompatActivity {
             Toast.makeText(this, "Added to order", Toast.LENGTH_SHORT).show();
             joinIcon.setVisibility(View.GONE); // Hide the join icon
             chatIcon.setVisibility(View.VISIBLE); // Show the chat icon
+            waitingListButton.setVisibility(View.GONE); // Hide the waiting list button
             Intent chatIntent = new Intent(OrderDetailsActivity.this, ChatActivity.class);
             chatIntent.putExtra("userType", globalUserType);
             chatIntent.putExtra("orderId", orderId);
@@ -874,5 +1006,3 @@ public class OrderDetailsActivity extends AppCompatActivity {
         }
     }
 }
-
-
