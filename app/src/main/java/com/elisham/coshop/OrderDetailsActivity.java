@@ -104,7 +104,7 @@ public class OrderDetailsActivity extends AppCompatActivity {
 
         // Initialize TextViews and ImageView
         descriptionTextView = findViewById(R.id.descriptionTextView);
-        siteTextView = findViewById(R.id.siteTextView);
+        siteTextView = findViewById(R.id.siteButton);
         categoryTextView = findViewById(R.id.categoryTextView);
         addressTextView = findViewById(R.id.addressTextView);
         timeTextView = findViewById(R.id.timeTextView);
@@ -211,15 +211,21 @@ public class OrderDetailsActivity extends AppCompatActivity {
                 int numberOfPeopleInOrder = documentSnapshot.getLong("NumberOfPeopleInOrder").intValue();
                 int maxPeople = documentSnapshot.getLong("max_people").intValue();
 
-                if (waitingList != null && waitingList.contains(currentUser.getEmail())) {
-                    inWaitingList = true;
-                    waitingListButton.setText("Get off the waiting list"); // Change button text
-                    waitingListButton.setVisibility(View.VISIBLE); // Show the waiting list button
-                } else if (numberOfPeopleInOrder >= maxPeople && (listPeopleInOrder == null || !listPeopleInOrder.contains(currentUser.getEmail()))) {
-                    waitingListButton.setText("Get on the waiting list"); // Change button text
-                    waitingListButton.setVisibility(View.VISIBLE); // Show the waiting list button
+                // Always show joinIcon and hide waitingListButton when max_people is 0 and user is not in the list
+                if (maxPeople == 0 && (listPeopleInOrder == null || !listPeopleInOrder.contains(currentUser.getEmail()))) {
+                    joinIcon.setVisibility(View.VISIBLE);
+                    waitingListButton.setVisibility(View.GONE);
                 } else {
-                    waitingListButton.setVisibility(View.GONE); // Hide the waiting list button
+                    if (waitingList != null && waitingList.contains(currentUser.getEmail())) {
+                        inWaitingList = true;
+                        waitingListButton.setText("Get off the waiting list"); // Change button text
+                        waitingListButton.setVisibility(View.VISIBLE); // Show the waiting list button
+                    } else if (numberOfPeopleInOrder >= maxPeople && (listPeopleInOrder == null || !listPeopleInOrder.contains(currentUser.getEmail()))) {
+                        waitingListButton.setText("Get on the waiting list"); // Change button text
+                        waitingListButton.setVisibility(View.VISIBLE); // Show the waiting list button
+                    } else {
+                        waitingListButton.setVisibility(View.GONE); // Hide the waiting list button
+                    }
                 }
             }
         }).addOnFailureListener(e -> Toast.makeText(this, "Failed to check waiting list", Toast.LENGTH_SHORT).show());
@@ -276,6 +282,7 @@ public class OrderDetailsActivity extends AppCompatActivity {
         void onLinkCreated(String shortLink);
     }
 
+    // Inside OrderDetailsActivity.java
     private void fetchOrderDetails(String orderId, String currentUserEmail) {
         DocumentReference orderRef = db.collection("orders").document(orderId);
         orderRef.get().addOnSuccessListener(documentSnapshot -> {
@@ -304,12 +311,19 @@ public class OrderDetailsActivity extends AppCompatActivity {
 
                 // Update TextViews and ImageView with order details
                 descriptionTextView.setText("Group description:\n" + description);
+
+                // Update Button logic
+                Button siteButton = findViewById(R.id.siteButton);
                 if (siteUrl != null && !siteUrl.isEmpty()) {
-                    siteTextView.setText("Url/Site: " + siteUrl);
-                    siteTextView.setVisibility(View.VISIBLE);
+                    siteButton.setVisibility(View.VISIBLE);
+                    siteButton.setOnClickListener(v -> {
+                        Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(siteUrl));
+                        startActivity(browserIntent);
+                    });
                 } else {
-                    siteTextView.setVisibility(View.GONE);
+                    siteButton.setVisibility(View.GONE);
                 }
+
                 categoryTextView.setText(categorie);
                 addressTextView.setText("Address: " + address);
                 timeTextView.setText(formattedTime);
@@ -339,33 +353,28 @@ public class OrderDetailsActivity extends AppCompatActivity {
                     fetchAndShowUsersInOrder(listPeopleInOrder, userEmail, currentUserEmail);
                 }
 
-                // בדיקה אם כמות האנשים בהזמנה הגיעה למקסימום
-                if (listPeopleInOrder != null && listPeopleInOrder.contains(currentUser.getEmail())) {
-                    inOrder = true;
-                    joinIcon.setVisibility(View.GONE); // Hide the join icon
-                    chatIcon.setVisibility(View.VISIBLE); // Show the chat icon
-                    waitingListButton.setVisibility(View.GONE); // Hide the waiting list button
-                } else if (numberOfPeopleInOrder >= maxPeople) {
-                    joinIcon.setVisibility(View.GONE);
-                    if (!inWaitingList) {
-                        waitingListButton.setVisibility(View.VISIBLE);
-                    } else {
-                        waitingListButton.setVisibility(View.GONE);
-                    }
-                } else {
+                // Always show joinIcon and hide waitingListButton when max_people is 0 and user is not in the list
+                if (maxPeople == 0 && (listPeopleInOrder == null || !listPeopleInOrder.contains(currentUser.getEmail()))) {
                     joinIcon.setVisibility(View.VISIBLE);
                     waitingListButton.setVisibility(View.GONE);
-                }
-
-                // בדיקה אם מספר האנשים הנוכחי קטן מהמספר המקסימלי
-                if (numberOfPeopleInOrder < maxPeople) {
-                    waitingListButton.setVisibility(View.GONE);
-                }
-
-                // בדיקה אם המשתמש לא נמצא ברשימת ההמתנה ומספר האנשים בהזמנה הגיע למקסימום
-                if (numberOfPeopleInOrder >= maxPeople && !inWaitingList && !listPeopleInOrder.contains(currentUser.getEmail())) {
-                    waitingListButton.setText("Get on the waiting list"); // Update button text
-                    waitingListButton.setVisibility(View.VISIBLE);
+                } else {
+                    // Existing logic to check if the user is in the order or waiting list
+                    if (listPeopleInOrder != null && listPeopleInOrder.contains(currentUser.getEmail())) {
+                        inOrder = true;
+                        joinIcon.setVisibility(View.GONE); // Hide the join icon
+                        chatIcon.setVisibility(View.VISIBLE); // Show the chat icon
+                        waitingListButton.setVisibility(View.GONE); // Hide the waiting list button
+                    } else if (numberOfPeopleInOrder >= maxPeople) {
+                        joinIcon.setVisibility(View.GONE);
+                        if (!inWaitingList) {
+                            waitingListButton.setVisibility(View.VISIBLE);
+                        } else {
+                            waitingListButton.setVisibility(View.GONE);
+                        }
+                    } else {
+                        joinIcon.setVisibility(View.VISIBLE);
+                        waitingListButton.setVisibility(View.GONE);
+                    }
                 }
 
             } else {
