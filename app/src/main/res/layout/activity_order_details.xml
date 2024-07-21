@@ -271,28 +271,14 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"/>
 
-            <!-- URL מתחת ל-description -->
-            <TextView
-                android:id="@+id/siteTextView"
-                style="@style/CustomTextViewStyle"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:gravity="start"
-                android:layout_marginTop="4dp"
-                android:paddingStart="13dp"
-                android:paddingEnd="13dp"
-                app:layout_constraintTop_toBottomOf="@id/descriptionTextView"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"/>
-
-            <!-- קו מתחת ל-URL -->
+            <!-- קו מתחת ל-description -->
             <View
                 android:id="@+id/descriptionUnderlineView"
                 android:layout_width="0dp"
                 android:layout_height="1dp"
                 android:layout_marginTop="4dp"
                 android:background="#000000"
-                app:layout_constraintTop_toBottomOf="@id/siteTextView"
+                app:layout_constraintTop_toBottomOf="@id/descriptionTextView"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"/>
 
@@ -321,6 +307,30 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"/>
 
+            <!-- כפתור מתחת ל-קוד כתובת -->
+            <Button
+                android:id="@+id/siteButton"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:layout_marginTop="4dp"
+                android:text="Click to Pay"
+                android:visibility="gone"
+                app:layout_constraintTop_toBottomOf="@id/addressUnderlineView"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"/>
+
+            <!-- קו מתחת ל-כפתור -->
+            <View
+                android:id="@+id/siteButtonUnderlineView"
+                android:layout_width="0dp"
+                android:layout_height="1dp"
+                android:layout_marginTop="4dp"
+                android:background="#000000"
+                app:layout_constraintTop_toBottomOf="@id/siteButton"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"/>
+
             <!-- TextView שמוסתר -->
             <TextView
                 android:id="@+id/timeTextView"
@@ -332,7 +342,7 @@
                 android:paddingStart="13dp"
                 android:paddingEnd="13dp"
                 android:visibility="gone"
-                app:layout_constraintTop_toBottomOf="@id/addressUnderlineView"
+                app:layout_constraintTop_toBottomOf="@id/siteButtonUnderlineView"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"/>
 

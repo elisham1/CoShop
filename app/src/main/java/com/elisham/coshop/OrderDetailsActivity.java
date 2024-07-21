@@ -104,7 +104,7 @@ public class OrderDetailsActivity extends AppCompatActivity {
 
         // Initialize TextViews and ImageView
         descriptionTextView = findViewById(R.id.descriptionTextView);
-        siteTextView = findViewById(R.id.siteTextView);
+        siteTextView = findViewById(R.id.siteButton);
         categoryTextView = findViewById(R.id.categoryTextView);
         addressTextView = findViewById(R.id.addressTextView);
         timeTextView = findViewById(R.id.timeTextView);
@@ -276,6 +276,7 @@ public class OrderDetailsActivity extends AppCompatActivity {
         void onLinkCreated(String shortLink);
     }
 
+    // Inside OrderDetailsActivity.java
     private void fetchOrderDetails(String orderId, String currentUserEmail) {
         DocumentReference orderRef = db.collection("orders").document(orderId);
         orderRef.get().addOnSuccessListener(documentSnapshot -> {
@@ -304,12 +305,20 @@ public class OrderDetailsActivity extends AppCompatActivity {
 
                 // Update TextViews and ImageView with order details
                 descriptionTextView.setText("Group description:\n" + description);
+
+                // Update Button logic
+                Button siteButton = findViewById(R.id.siteButton);
                 if (siteUrl != null && !siteUrl.isEmpty()) {
-                    siteTextView.setText("Url/Site: " + siteUrl);
-                    siteTextView.setVisibility(View.VISIBLE);
+                    siteButton.setVisibility(View.VISIBLE);
+                    siteButton.setOnClickListener(v -> {
+                        Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(siteUrl));
+                        startActivity(browserIntent);
+                    });
                 } else {
-                    siteTextView.setVisibility(View.GONE);
+                    siteButton.setVisibility(View.GONE);
                 }
+
+
                 categoryTextView.setText(categorie);
                 addressTextView.setText("Address: " + address);
                 timeTextView.setText(formattedTime);
