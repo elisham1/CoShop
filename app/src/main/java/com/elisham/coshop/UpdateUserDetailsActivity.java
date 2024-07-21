@@ -11,6 +11,7 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
 
+import android.content.res.Resources;
 import android.location.Address;
 import android.location.Geocoder;
 
@@ -48,6 +49,9 @@ import android.content.DialogInterface;
 import com.bumptech.glide.Glide;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
+import com.google.android.gms.auth.api.signin.GoogleSignInClient;
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
+import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -113,9 +117,10 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
     private static final int TAKE_PHOTO_REQUEST = 1;
     private static final int PICK_IMAGE_REQUEST = 2;
     private static final int UPDATE_CATEGORIES_REQUEST = 3;
+    private static final int GOOGLE_SIGN_IN_REQUEST_CODE = 1001;
     private MenuUtils menuUtils;
     private ArrayList<String> currentCategories;
-    private String globalUserType;
+    private String globalUserType, webClientId;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -136,6 +141,9 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
         mAuth = FirebaseAuth.getInstance();
         storage = FirebaseStorage.getInstance();
         storageReference = storage.getReference();
+        Resources res = getResources();
+        int defaultWebClientId = res.getIdentifier("default_web_client_id", "string", getPackageName()); // Get the resource ID dynamically
+        webClientId = res.getString(defaultWebClientId);
 
         emailTextView = findViewById(R.id.emailText);
         fullNameTextView = findViewById(R.id.fullName);
@@ -395,33 +403,43 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
     }
 
     @Override
-    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (resultCode == RESULT_OK) {
-            if (requestCode == PICK_IMAGE_REQUEST && data != null && data.getData() != null) {
-                imageUri = data.getData();
-                try {
-                    Bitmap bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), imageUri);
-                    bitmap = rotateImageIfRequired(bitmap, imageUri);
-                    profileImageView.setImageBitmap(bitmap);
-                    Map<String, Object> updatePicUrl = new HashMap<>();
-                    uploadImage(updatePicUrl);
-                    changePic = true;
-                } catch (IOException e) {
-                    e.printStackTrace();
+
+        if (requestCode == GOOGLE_SIGN_IN_REQUEST_CODE) {
+            Task<GoogleSignInAccount> task = GoogleSignIn.getSignedInAccountFromIntent(data);
+            try {
+                GoogleSignInAccount account = task.getResult(ApiException.class);
+                if (account != null) {
+                    AuthCredential credential = GoogleAuthProvider.getCredential(account.getIdToken(), null);
+                    reauthenticateUser(currentUser, credential);
                 }
-            } else if (requestCode == TAKE_PHOTO_REQUEST && data != null && data.getExtras() != null) {
-                Bitmap bitmap = (Bitmap) data.getExtras().get("data");
-                imageUri = getImageUri(bitmap);
-                try {
-                    bitmap = rotateImageIfRequired(bitmap, imageUri);
-                    profileImageView.setImageBitmap(bitmap);
-                    Map<String, Object> updatePicUrl = new HashMap<>();
-                    uploadImage(updatePicUrl);
-                    changePic = true;
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+            } catch (ApiException e) {
+                Log.e("UpdateUserDetailsActivity", "Google sign in failed", e);
+            }
+        } else if (resultCode == RESULT_OK && requestCode == PICK_IMAGE_REQUEST && data != null && data.getData() != null) {
+            imageUri = data.getData();
+            try {
+                Bitmap bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), imageUri);
+                bitmap = rotateImageIfRequired(bitmap, imageUri);
+                profileImageView.setImageBitmap(bitmap);
+                Map<String, Object> updatePicUrl = new HashMap<>();
+                uploadImage(updatePicUrl);
+                changePic = true;
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        } else if (resultCode == RESULT_OK && requestCode == TAKE_PHOTO_REQUEST && data != null && data.getExtras() != null) {
+            Bitmap bitmap = (Bitmap) data.getExtras().get("data");
+            imageUri = getImageUri(bitmap);
+            try {
+                bitmap = rotateImageIfRequired(bitmap, imageUri);
+                profileImageView.setImageBitmap(bitmap);
+                Map<String, Object> updatePicUrl = new HashMap<>();
+                uploadImage(updatePicUrl);
+                changePic = true;
+            } catch (IOException e) {
+                e.printStackTrace();
             }
         }
     }
@@ -720,12 +738,23 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
         GoogleSignInAccount googleSignInAccount = GoogleSignIn.getLastSignedInAccount(this);
         if (googleSignInAccount != null) {
             Log.d("UpdateUserDetailsActivity", "GoogleSignInAccount found, using GoogleAuthProvider credential.");
-            AuthCredential credential = GoogleAuthProvider.getCredential(googleSignInAccount.getIdToken(), null);
-            reauthenticateUser(currentUser, credential);
+            promptForGoogleSignIn();
         } else {
             Log.d("UpdateUserDetailsActivity", "No GoogleSignInAccount found, prompting for password.");
             promptForPassword();
         }
+    }
+
+    private void promptForGoogleSignIn() {
+        GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                .requestIdToken(webClientId)
+                .requestEmail()
+                .build();
+
+        GoogleSignInClient googleSignInClient = GoogleSignIn.getClient(this, gso);
+
+        Intent signInIntent = googleSignInClient.getSignInIntent();
+        startActivityForResult(signInIntent, GOOGLE_SIGN_IN_REQUEST_CODE);
     }
 
     private void promptForPassword() {
@@ -881,6 +910,7 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
                 List<Task<Void>> updateTasks = new ArrayList<>();
                 for (DocumentSnapshot document : documents) {
                     List<String> mails = (List<String>) document.get("listPeopleInOrder");
+                    List<String> waitingList = (List<String>) document.get("waitingList");
                     String userEmail = document.getString("user_email");
                     Long numberOfPeopleInOrder = document.getLong("NumberOfPeopleInOrder");
                     Log.d("UpdateUserDetailsActivity", "Processing order document ID: " + document.getId());
@@ -916,6 +946,13 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
 
                                 updateTasks.add(document.getReference().update(updates));
                             }
+                        }
+                        if (waitingList != null && waitingList.contains(emailToRemove)) {
+                            Log.d("UpdateUserDetailsActivity", "Email exists, removing it from the waiting list.");
+                            waitingList.remove(emailToRemove);
+                            Map<String, Object> updates = new HashMap<>();
+                            updates.put("waitingList", waitingList);
+                            updateTasks.add(document.getReference().update(updates));
                         }
                     }
                 }
