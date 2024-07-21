@@ -26,11 +26,13 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.text.Editable;
+import android.text.InputType;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
@@ -44,12 +46,18 @@ import android.app.AlertDialog;
 import android.content.DialogInterface;
 
 import com.bumptech.glide.Glide;
+import com.google.android.gms.auth.api.signin.GoogleSignIn;
+import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
+import com.google.android.gms.tasks.Tasks;
+import com.google.firebase.auth.AuthCredential;
+import com.google.firebase.auth.EmailAuthProvider;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.auth.GoogleAuthProvider;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -140,6 +148,7 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
         currentCategories = new ArrayList<String>();
 
         getUserInformation();
+
         showLocationWindow();
 
         fullNameTextView.setOnClickListener(new View.OnClickListener() {
@@ -149,7 +158,7 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
             }
         });
 
-        CardView profilePic = findViewById(R.id.profilePic);
+        LinearLayout profilePic = findViewById(R.id.profilePic);
         profilePic.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -161,7 +170,18 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
             }
         });
 
-        Button updateCategoriesButton = findViewById(R.id.btn_update_categories);
+        profileImageView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (picUrl == null)
+                {
+                    profileImageView.setImageResource(R.drawable.ic_profile);
+                }
+                showImageSourceDialog(picUrl);
+            }
+        });
+
+        ImageButton updateCategoriesButton = findViewById(R.id.update_categories_button);
         updateCategoriesButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -172,7 +192,7 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
             }
         });
 
-        Button changePasswordButton = findViewById(R.id.changePasswordText);
+        ImageButton changePasswordButton = findViewById(R.id.change_password_button);
         changePasswordButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -180,7 +200,7 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
             }
         });
 
-        Button deleteAccountButton = findViewById(R.id.deleteButton);
+        TextView deleteAccountButton = findViewById(R.id.deleteButton);
         deleteAccountButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -188,30 +208,31 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
             }
         });
 
-        Button doneButton = findViewById(R.id.doneButton);
-        doneButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                editUserDetails();
-            }
-        });
-
     }
 
     private void showLocationWindow() {
+        LinearLayout searchRow = findViewById(R.id.search_row);
+        // Update the height of the layout
+        ViewGroup.LayoutParams params = searchRow.getLayoutParams();
+        params.height = ViewGroup.LayoutParams.WRAP_CONTENT;
         locationWindowLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
                 result -> {
+
                     if (result.getResultCode() == RESULT_OK && result.getData() != null) {
                         lastAddress = result.getData().getStringExtra("address");
                         lastLatitude = result.getData().getDoubleExtra("latitude", 0);
                         lastLongitude = result.getData().getDoubleExtra("longitude", 0);
                         if (lastLatitude != 0 && lastLongitude != 0) {
                             address = new GeoPoint(lastLatitude, lastLongitude);
+                            Map<String, Object> updateAddress = new HashMap<>();
+                            updateAddress.put("address", address);
+                            updateDB(updateAddress);
                         }
 
                         if (lastAddress != null) {
-                            searchAddressText.setText(lastAddress); // הצגת הכתובת בלבד בלי KM
+                            searchAddressText.setText(lastAddress);
+                            searchRow.setLayoutParams(params);// הצגת הכתובת בלבד בלי KM
                             searchAddressButton.setVisibility(View.VISIBLE);
                             searchAddressButton.setTag("clear");
                             searchAddressButton.setImageResource(R.drawable.clear);
@@ -221,7 +242,6 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
                 }
         );
 
-        LinearLayout searchRow = findViewById(R.id.search_row);
         searchRow.setOnClickListener(v -> {
             Intent intent = new Intent(UpdateUserDetailsActivity.this, LocationWindow.class);
             intent.putExtra("userType", globalUserType);
@@ -257,7 +277,6 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
 
             @Override
             public void afterTextChanged(Editable s) {
-                changeLocation = true;
             }
         });
 
@@ -385,7 +404,8 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
                     Bitmap bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), imageUri);
                     bitmap = rotateImageIfRequired(bitmap, imageUri);
                     profileImageView.setImageBitmap(bitmap);
-//                    uploadImage();
+                    Map<String, Object> updatePicUrl = new HashMap<>();
+                    uploadImage(updatePicUrl);
                     changePic = true;
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -396,7 +416,8 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
                 try {
                     bitmap = rotateImageIfRequired(bitmap, imageUri);
                     profileImageView.setImageBitmap(bitmap);
-//                    uploadImage();
+                    Map<String, Object> updatePicUrl = new HashMap<>();
+                    uploadImage(updatePicUrl);
                     changePic = true;
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -494,6 +515,11 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
                         fullNameTextView.setText(fullName);
                         changeName = true;
 
+                        // Update Firestore with the new details
+                        Map<String, Object> updateName = new HashMap<>();
+                        updateName.put("first name", firstName);
+                        updateName.put("family name", familyName);
+                        updateDB(updateName);
                         // Dismiss dialog
                         dialog.dismiss();
                     }
@@ -529,11 +555,10 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
                                     currentCategories = (ArrayList<String>) document.get("favorite categories");
 
                                     String fullName = firstName + " " + familyName;
-                                    String typeText = "User Type: " + userType;
                                     emailTextView.setText(email);
                                     fullNameTextView.setText(fullName);
                                     searchAddressText.setText(geoPointToString(address));
-                                    typeOfUserTextView.setText(typeText);
+                                    typeOfUserTextView.setText(userType);
                                     if (picUrl != null && !picUrl.isEmpty()) {
                                         Glide.with(UpdateUserDetailsActivity.this)
                                                 .load(picUrl)
@@ -618,16 +643,7 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
                         Toast.makeText(UpdateUserDetailsActivity.this, "User details updated successfully", Toast.LENGTH_SHORT).show();
                         Log.d("EditUserDetails", "User details updated.");
                         // Navigate to another activity or perform further actions upon success
-                        Intent toy;
-                        if (globalUserType.equals("Supplier")) {
-                            toy = new Intent(UpdateUserDetailsActivity.this, MyOrdersActivity.class);
-                        }
-                        else{
-                            toy = new Intent(UpdateUserDetailsActivity.this, HomePageActivity.class);
-                        }
-                        toy.putExtra("userType", globalUserType);
-                        startActivity(toy);
-                        finish();
+
                     }
                 })
                 .addOnFailureListener(new OnFailureListener() {
@@ -679,27 +695,20 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
     }
 
     public void deleteAccount() {
+        Log.d("UpdateUserDetailsActivity", "deleteAccount called.");
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("Delete Account");
         builder.setMessage("Are you sure you want to delete your account?")
                 .setCancelable(true)
                 .setPositiveButton("OK", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
-                        if(currentUser != null)
-                        {
-                            if (picUrl != null && !picUrl.isEmpty()) {
-                                deleteUserProfileImage(picUrl);
-                            }
-                            deleteUserFromAllOrders(db, email);
-                            deleteUserDetails(db, email);
-                            deleteUser(currentUser);
-                            menuUtils.logOut();
-                            dialog.dismiss();
-                        }
-                        else {
+                        if (currentUser != null) {
+                            Log.d("UpdateUserDetailsActivity", "User is signed in, proceeding to reauthenticateAndDeleteUser.");
+                            reauthenticateAndDeleteUser();
+                        } else {
                             Toast.makeText(UpdateUserDetailsActivity.this,
-                                    "no user is signed in", Toast.LENGTH_SHORT).show();
-                            Log.d("UpdateUserActivity", "No user is currently signed in.");
+                                    "No user is signed in", Toast.LENGTH_SHORT).show();
+                            Log.d("UpdateUserDetailsActivity", "No user is currently signed in.");
                         }
                     }
                 })
@@ -708,143 +717,222 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
         alert.show();
     }
 
-    private void deleteUserProfileImage(String imageUrl) {
+    private void reauthenticateAndDeleteUser() {
+        Log.d("UpdateUserDetailsActivity", "reauthenticateAndDeleteUser called.");
+        GoogleSignInAccount googleSignInAccount = GoogleSignIn.getLastSignedInAccount(this);
+        if (googleSignInAccount != null) {
+            Log.d("UpdateUserDetailsActivity", "GoogleSignInAccount found, using GoogleAuthProvider credential.");
+            AuthCredential credential = GoogleAuthProvider.getCredential(googleSignInAccount.getIdToken(), null);
+            reauthenticateUser(currentUser, credential);
+        } else {
+            Log.d("UpdateUserDetailsActivity", "No GoogleSignInAccount found, prompting for password.");
+            promptForPassword();
+        }
+    }
+
+    private void promptForPassword() {
+        Log.d("UpdateUserDetailsActivity", "promptForPassword called.");
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Re-authentication Required");
+        builder.setMessage("Please enter your password to continue:");
+
+        final EditText input = new EditText(this);
+        input.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
+        builder.setView(input);
+
+        builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                String password = input.getText().toString();
+                Log.d("UpdateUserDetailsActivity", "Password entered: " + password);
+                if (!password.isEmpty()) {
+                    reauthenticateWithPassword(password);
+                } else {
+                    Toast.makeText(UpdateUserDetailsActivity.this,
+                            "Password cannot be empty.", Toast.LENGTH_SHORT).show();
+                    Log.d("UpdateUserDetailsActivity", "Empty password entered.");
+                }
+            }
+        });
+        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.cancel();
+                Log.d("UpdateUserDetailsActivity", "Password prompt cancelled.");
+            }
+        });
+
+        builder.show();
+    }
+
+    private void reauthenticateWithPassword(String password) {
+        Log.d("UpdateUserDetailsActivity", "reauthenticateWithPassword called.");
+        String email = currentUser.getEmail();
+        if (email != null) {
+            Log.d("UpdateUserDetailsActivity", "User email: " + email);
+            AuthCredential credential = EmailAuthProvider.getCredential(email, password);
+            reauthenticateUser(currentUser, credential);
+        } else {
+            Toast.makeText(UpdateUserDetailsActivity.this,
+                    "No email associated with the current user.", Toast.LENGTH_SHORT).show();
+            Log.d("UpdateUserDetailsActivity", "No email associated with the current user.");
+        }
+    }
+
+    private void reauthenticateUser(FirebaseUser user, AuthCredential credential) {
+        Log.d("UpdateUserDetailsActivity", "reauthenticateUser called.");
+        user.reauthenticate(credential).addOnCompleteListener(new OnCompleteListener<Void>() {
+            @Override
+            public void onComplete(@NonNull Task<Void> task) {
+                if (task.isSuccessful()) {
+                    Log.d("UpdateUserDetailsActivity", "Re-authentication successful.");
+                    performDeleteTasks();
+                } else {
+                    Toast.makeText(UpdateUserDetailsActivity.this,
+                            "Re-authentication failed. Cannot delete account.", Toast.LENGTH_SHORT).show();
+                    Log.e("UpdateUserDetailsActivity", "Re-authentication failed.", task.getException());
+                }
+            }
+        });
+    }
+
+    private void performDeleteTasks() {
+        Log.d("UpdateUserDetailsActivity", "performDeleteTasks called.");
+        List<Task<?>> tasks = new ArrayList<>();
+
+        // Add deleteUserProfileImage task
+        if (picUrl != null && !picUrl.isEmpty()) {
+            Log.d("UpdateUserDetailsActivity", "Adding deleteUserProfileImage task.");
+            tasks.add(deleteUserProfileImage(picUrl));
+        }
+
+        // Add deleteUserFromAllOrders task
+        Log.d("UpdateUserDetailsActivity", "Adding deleteUserFromAllOrders task.");
+        tasks.add(deleteUserFromAllOrders(db, email));
+
+        // Add deleteUserDetails task
+        Log.d("UpdateUserDetailsActivity", "Adding deleteUserDetails task.");
+        tasks.add(deleteUserDetails(db, email));
+
+        // Add deleteUser task
+        Log.d("UpdateUserDetailsActivity", "Adding deleteUser task.");
+        tasks.add(deleteUser(currentUser));
+
+        // Execute tasks sequentially
+        Tasks.whenAllComplete(tasks).addOnCompleteListener(new OnCompleteListener<List<Task<?>>>() {
+            @Override
+            public void onComplete(@NonNull Task<List<Task<?>>> task) {
+                Log.d("UpdateUserDetailsActivity", "All deletion tasks completed.");
+                menuUtils.logOut();
+                Toast.makeText(UpdateUserDetailsActivity.this,
+                        "Account and associated data deleted successfully.", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private Task<Void> deleteUserProfileImage(String imageUrl) {
+        Log.d("UpdateUserDetailsActivity", "deleteUserProfileImage called with URL: " + imageUrl);
         StorageReference photoRef = storage.getReferenceFromUrl(imageUrl);
-        photoRef.delete().addOnSuccessListener(new OnSuccessListener<Void>() {
+        return photoRef.delete().addOnSuccessListener(new OnSuccessListener<Void>() {
             @Override
             public void onSuccess(Void aVoid) {
                 Toast.makeText(UpdateUserDetailsActivity.this,
                         "Profile image deleted successfully", Toast.LENGTH_SHORT).show();
-                Log.d("MainActivity", "Profile image deleted.");
+                Log.d("UpdateUserDetailsActivity", "Profile image deleted.");
             }
         }).addOnFailureListener(new OnFailureListener() {
             @Override
             public void onFailure(@NonNull Exception exception) {
                 Toast.makeText(UpdateUserDetailsActivity.this,
                         "Failed to delete profile image", Toast.LENGTH_SHORT).show();
-                Log.e("MainActivity", "Error deleting profile image", exception);
+                Log.e("UpdateUserDetailsActivity", "Error deleting profile image", exception);
             }
         });
     }
 
-    private void deleteUserFromAllOrders(@NonNull FirebaseFirestore db, String emailToRemove) {
-
-        db.collection("orders").get()
-                .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
-                    @Override
-                    public void onComplete(@NonNull Task<QuerySnapshot> task) {
-                        if (task.isSuccessful()) {
-                            List<DocumentSnapshot> documents = task.getResult().getDocuments();
-                            for (DocumentSnapshot document : documents) {
-                                List<String> mails = (List<String>) document.get("listPeopleInOrder");
-                                String userEmail = document.getString("user_email");
-                                Long numberOfPeopleInOrder = document.getLong("NumberOfPeopleInOrder");
-
-                                if (mails != null && mails.contains(emailToRemove)) {
-
-                                    if (mails.size() == 1) {
-                                        // Mail is the only one in the list, delete the whole order
-                                        document.getReference().delete()
-                                                .addOnSuccessListener(new OnSuccessListener<Void>() {
-                                                    @Override
-                                                    public void onSuccess(Void aVoid) {
-                                                        Toast.makeText(UpdateUserDetailsActivity.this,
-                                                                "Order deleted successfully", Toast.LENGTH_SHORT).show();
-                                                        Log.d("MainActivity", "Order deleted successfully: " + document.getId());
-                                                    }
-                                                })
-                                                .addOnFailureListener(new OnFailureListener() {
-                                                    @Override
-                                                    public void onFailure(@NonNull Exception e) {
-                                                        Toast.makeText(UpdateUserDetailsActivity.this,
-                                                                "Failed to delete order", Toast.LENGTH_SHORT).show();
-                                                        Log.e("MainActivity", "Error deleting document", e);
-                                                    }
-                                                });
-                                    } else {
-                                        // Mail exists, remove it
-                                        mails.remove(emailToRemove);
-
-                                        // Decrease the number of people in order by one
-                                        long updatedNumberOfPeopleInOrder = numberOfPeopleInOrder != null ? numberOfPeopleInOrder - 1 : 0;
-
-                                        // If user_email matches emailToRemove, update it to the next email in the list
-                                        if (emailToRemove.equals(userEmail)) {
-                                            userEmail = mails.get(0); // Assuming we set it to the next email in the list
-                                        }
-
-                                        Map<String, Object> updates = new HashMap<>();
-                                        updates.put("listPeopleInOrder", mails);
-                                        updates.put("NumberOfPeopleInOrder", updatedNumberOfPeopleInOrder);
-                                        updates.put("user_email", userEmail);
-
-                                        document.getReference().update(updates)
-                                                .addOnSuccessListener(new OnSuccessListener<Void>() {
-                                                    @Override
-                                                    public void onSuccess(Void aVoid) {
-                                                        Toast.makeText(UpdateUserDetailsActivity.this,
-                                                                "User removed successfully from all orders", Toast.LENGTH_SHORT).show();
-                                                        Log.d("MainActivity", "Mail removed successfully from " + document.getId());
-                                                    }
-                                                })
-                                                .addOnFailureListener(new OnFailureListener() {
-                                                    @Override
-                                                    public void onFailure(@NonNull Exception e) {
-                                                        Toast.makeText(UpdateUserDetailsActivity.this,
-                                                                "Failed to remove user from all orders", Toast.LENGTH_SHORT).show();
-                                                        Log.e("MainActivity", "Error updating document", e);
-                                                    }
-                                                });
-                                        Log.d("MainActivity", document.getId() + " => " + document.getData());
-                                    }
+    private Task<Void> deleteUserFromAllOrders(@NonNull FirebaseFirestore db, String emailToRemove) {
+        Log.d("UpdateUserDetailsActivity", "deleteUserFromAllOrders called with email: " + emailToRemove);
+        return db.collection("orders").get().continueWithTask(task -> {
+            if (task.isSuccessful()) {
+                List<DocumentSnapshot> documents = task.getResult().getDocuments();
+                List<Task<Void>> updateTasks = new ArrayList<>();
+                for (DocumentSnapshot document : documents) {
+                    List<String> mails = (List<String>) document.get("listPeopleInOrder");
+                    String userEmail = document.getString("user_email");
+                    Long numberOfPeopleInOrder = document.getLong("NumberOfPeopleInOrder");
+                    Log.d("UpdateUserDetailsActivity", "Processing order document ID: " + document.getId());
+                    if (globalUserType.equals("Supplier") && userEmail != null && userEmail.equals(emailToRemove)) {
+                        Log.d("UpdateUserDetailsActivity", "Deleting order document for supplier.");
+                        updateTasks.add(document.getReference().delete());
+                    } else {
+                        if (mails != null && mails.contains(emailToRemove)) {
+                            if (mails.size() == 1) {
+                                Log.d("UpdateUserDetailsActivity", "Email is the only one in the list, deleting the whole order.");
+                                updateTasks.add(document.getReference().delete());
+                            } else {
+                                Log.d("UpdateUserDetailsActivity", "Email exists, removing it from the order.");
+                                mails.remove(emailToRemove);
+                                long updatedNumberOfPeopleInOrder = numberOfPeopleInOrder != null ? numberOfPeopleInOrder - 1 : 0;
+                                if (emailToRemove.equals(userEmail)) {
+                                    userEmail = mails.get(0); // Assuming we set it to the next email in the list
                                 }
+
+                                Map<String, Object> updates = new HashMap<>();
+                                updates.put("listPeopleInOrder", mails);
+                                updates.put("NumberOfPeopleInOrder", updatedNumberOfPeopleInOrder);
+                                updates.put("user_email", userEmail);
+
+                                updateTasks.add(document.getReference().update(updates));
                             }
-                        } else {
-                            Log.w("MainActivity", "Error getting documents.", task.getException());
                         }
                     }
-                });
+                }
+                return Tasks.whenAll(updateTasks);
+            } else {
+                Log.e("UpdateUserDetailsActivity", "Error getting orders collection.", task.getException());
+                throw task.getException();
+            }
+        });
     }
 
-    private void deleteUserDetails(@NonNull FirebaseFirestore db, String emailToRemove) {
-        //delete all user connected details
-        db.collection("users").document(emailToRemove).delete()
+    private Task<Void> deleteUserDetails(@NonNull FirebaseFirestore db, String emailToRemove) {
+        Log.d("UpdateUserDetailsActivity", "deleteUserDetails called with email: " + emailToRemove);
+        return db.collection("users").document(emailToRemove).delete()
                 .addOnSuccessListener(new OnSuccessListener<Void>() {
                     @Override
                     public void onSuccess(Void aVoid) {
                         Toast.makeText(UpdateUserDetailsActivity.this,
-                                "user details removed successfully", Toast.LENGTH_SHORT).show();
-                        Log.d("MainActivity", "Document successfully deleted!");
-
+                                "User details removed successfully", Toast.LENGTH_SHORT).show();
+                        Log.d("UpdateUserDetailsActivity", "User document successfully deleted.");
                     }
                 })
                 .addOnFailureListener(new OnFailureListener() {
                     @Override
                     public void onFailure(@NonNull Exception e) {
                         Toast.makeText(UpdateUserDetailsActivity.this,
-                                "failed to remove user details", Toast.LENGTH_SHORT).show();
-                        Log.w("MainActivity", "Error deleting document", e);
+                                "Failed to remove user details", Toast.LENGTH_SHORT).show();
+                        Log.w("UpdateUserDetailsActivity", "Error deleting user document.", e);
                     }
                 });
     }
 
-    private void deleteUser(FirebaseUser curr){
-        currentUser.delete()
-                .addOnSuccessListener(new OnSuccessListener<Void>() {
-                    @Override
-                    public void onSuccess(Void aVoid) {
-                        Toast.makeText(UpdateUserDetailsActivity.this,
-                                "Account successfully deleted! 111", Toast.LENGTH_SHORT).show();
-                        Log.d("MainActivity", "User account deleted.");
-                    }
-                })
-                .addOnFailureListener(new OnFailureListener() {
-                    @Override
-                    public void onFailure(@NonNull Exception e) {
-                        Log.e("MainActivity", "Error deleting user", e);
-                    }
-                });
+    private Task<Void> deleteUser(FirebaseUser curr) {
+        Log.d("UpdateUserDetailsActivity", "deleteUser called.");
+        return curr.delete().addOnSuccessListener(new OnSuccessListener<Void>() {
+            @Override
+            public void onSuccess(Void aVoid) {
+                Toast.makeText(UpdateUserDetailsActivity.this,
+                        "Account successfully deleted!", Toast.LENGTH_SHORT).show();
+                Log.d("UpdateUserDetailsActivity", "User account deleted.");
+            }
+        }).addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception e) {
+                Log.e("UpdateUserDetailsActivity", "Error deleting user account.", e);
+            }
+        });
     }
+
 
     public void changePassword() {
         Intent toy = new Intent(UpdateUserDetailsActivity.this, ChangePasswordActivity.class);
