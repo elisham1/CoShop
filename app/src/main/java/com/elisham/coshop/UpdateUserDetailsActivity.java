@@ -26,6 +26,7 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.text.Editable;
+import android.text.InputType;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.view.Menu;
@@ -45,13 +46,18 @@ import android.app.AlertDialog;
 import android.content.DialogInterface;
 
 import com.bumptech.glide.Glide;
+import com.google.android.gms.auth.api.signin.GoogleSignIn;
+import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.Tasks;
+import com.google.firebase.auth.AuthCredential;
+import com.google.firebase.auth.EmailAuthProvider;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.auth.GoogleAuthProvider;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -689,6 +695,7 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
     }
 
     public void deleteAccount() {
+        Log.d("UpdateUserDetailsActivity", "deleteAccount called.");
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("Delete Account");
         builder.setMessage("Are you sure you want to delete your account?")
@@ -696,34 +703,12 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
                 .setPositiveButton("OK", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
                         if (currentUser != null) {
-                            List<Task<?>> tasks = new ArrayList<>();
-
-                            // Add deleteUserProfileImage task
-                            if (picUrl != null && !picUrl.isEmpty()) {
-                                tasks.add(deleteUserProfileImage(picUrl));
-                            }
-
-                            // Add deleteUserFromAllOrders task
-                            tasks.add(deleteUserFromAllOrders(db, email));
-
-                            // Add deleteUserDetails task
-                            tasks.add(deleteUserDetails(db, email));
-
-                            // Add deleteUser task
-                            tasks.add(deleteUser(currentUser));
-
-                            // Execute tasks sequentially
-                            Tasks.whenAllComplete(tasks).addOnCompleteListener(new OnCompleteListener<List<Task<?>>>() {
-                                @Override
-                                public void onComplete(@NonNull Task<List<Task<?>>> task) {
-                                    menuUtils.logOut();
-                                    dialog.dismiss();
-                                }
-                            });
+                            Log.d("UpdateUserDetailsActivity", "User is signed in, proceeding to reauthenticateAndDeleteUser.");
+                            reauthenticateAndDeleteUser();
                         } else {
                             Toast.makeText(UpdateUserDetailsActivity.this,
                                     "No user is signed in", Toast.LENGTH_SHORT).show();
-                            Log.d("UpdateUserActivity", "No user is currently signed in.");
+                            Log.d("UpdateUserDetailsActivity", "No user is currently signed in.");
                         }
                     }
                 })
@@ -732,26 +717,141 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
         alert.show();
     }
 
+    private void reauthenticateAndDeleteUser() {
+        Log.d("UpdateUserDetailsActivity", "reauthenticateAndDeleteUser called.");
+        GoogleSignInAccount googleSignInAccount = GoogleSignIn.getLastSignedInAccount(this);
+        if (googleSignInAccount != null) {
+            Log.d("UpdateUserDetailsActivity", "GoogleSignInAccount found, using GoogleAuthProvider credential.");
+            AuthCredential credential = GoogleAuthProvider.getCredential(googleSignInAccount.getIdToken(), null);
+            reauthenticateUser(currentUser, credential);
+        } else {
+            Log.d("UpdateUserDetailsActivity", "No GoogleSignInAccount found, prompting for password.");
+            promptForPassword();
+        }
+    }
+
+    private void promptForPassword() {
+        Log.d("UpdateUserDetailsActivity", "promptForPassword called.");
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Re-authentication Required");
+        builder.setMessage("Please enter your password to continue:");
+
+        final EditText input = new EditText(this);
+        input.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
+        builder.setView(input);
+
+        builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                String password = input.getText().toString();
+                Log.d("UpdateUserDetailsActivity", "Password entered: " + password);
+                if (!password.isEmpty()) {
+                    reauthenticateWithPassword(password);
+                } else {
+                    Toast.makeText(UpdateUserDetailsActivity.this,
+                            "Password cannot be empty.", Toast.LENGTH_SHORT).show();
+                    Log.d("UpdateUserDetailsActivity", "Empty password entered.");
+                }
+            }
+        });
+        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.cancel();
+                Log.d("UpdateUserDetailsActivity", "Password prompt cancelled.");
+            }
+        });
+
+        builder.show();
+    }
+
+    private void reauthenticateWithPassword(String password) {
+        Log.d("UpdateUserDetailsActivity", "reauthenticateWithPassword called.");
+        String email = currentUser.getEmail();
+        if (email != null) {
+            Log.d("UpdateUserDetailsActivity", "User email: " + email);
+            AuthCredential credential = EmailAuthProvider.getCredential(email, password);
+            reauthenticateUser(currentUser, credential);
+        } else {
+            Toast.makeText(UpdateUserDetailsActivity.this,
+                    "No email associated with the current user.", Toast.LENGTH_SHORT).show();
+            Log.d("UpdateUserDetailsActivity", "No email associated with the current user.");
+        }
+    }
+
+    private void reauthenticateUser(FirebaseUser user, AuthCredential credential) {
+        Log.d("UpdateUserDetailsActivity", "reauthenticateUser called.");
+        user.reauthenticate(credential).addOnCompleteListener(new OnCompleteListener<Void>() {
+            @Override
+            public void onComplete(@NonNull Task<Void> task) {
+                if (task.isSuccessful()) {
+                    Log.d("UpdateUserDetailsActivity", "Re-authentication successful.");
+                    performDeleteTasks();
+                } else {
+                    Toast.makeText(UpdateUserDetailsActivity.this,
+                            "Re-authentication failed. Cannot delete account.", Toast.LENGTH_SHORT).show();
+                    Log.e("UpdateUserDetailsActivity", "Re-authentication failed.", task.getException());
+                }
+            }
+        });
+    }
+
+    private void performDeleteTasks() {
+        Log.d("UpdateUserDetailsActivity", "performDeleteTasks called.");
+        List<Task<?>> tasks = new ArrayList<>();
+
+        // Add deleteUserProfileImage task
+        if (picUrl != null && !picUrl.isEmpty()) {
+            Log.d("UpdateUserDetailsActivity", "Adding deleteUserProfileImage task.");
+            tasks.add(deleteUserProfileImage(picUrl));
+        }
+
+        // Add deleteUserFromAllOrders task
+        Log.d("UpdateUserDetailsActivity", "Adding deleteUserFromAllOrders task.");
+        tasks.add(deleteUserFromAllOrders(db, email));
+
+        // Add deleteUserDetails task
+        Log.d("UpdateUserDetailsActivity", "Adding deleteUserDetails task.");
+        tasks.add(deleteUserDetails(db, email));
+
+        // Add deleteUser task
+        Log.d("UpdateUserDetailsActivity", "Adding deleteUser task.");
+        tasks.add(deleteUser(currentUser));
+
+        // Execute tasks sequentially
+        Tasks.whenAllComplete(tasks).addOnCompleteListener(new OnCompleteListener<List<Task<?>>>() {
+            @Override
+            public void onComplete(@NonNull Task<List<Task<?>>> task) {
+                Log.d("UpdateUserDetailsActivity", "All deletion tasks completed.");
+                menuUtils.logOut();
+                Toast.makeText(UpdateUserDetailsActivity.this,
+                        "Account and associated data deleted successfully.", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
     private Task<Void> deleteUserProfileImage(String imageUrl) {
+        Log.d("UpdateUserDetailsActivity", "deleteUserProfileImage called with URL: " + imageUrl);
         StorageReference photoRef = storage.getReferenceFromUrl(imageUrl);
         return photoRef.delete().addOnSuccessListener(new OnSuccessListener<Void>() {
             @Override
             public void onSuccess(Void aVoid) {
                 Toast.makeText(UpdateUserDetailsActivity.this,
                         "Profile image deleted successfully", Toast.LENGTH_SHORT).show();
-                Log.d("MainActivity", "Profile image deleted.");
+                Log.d("UpdateUserDetailsActivity", "Profile image deleted.");
             }
         }).addOnFailureListener(new OnFailureListener() {
             @Override
             public void onFailure(@NonNull Exception exception) {
                 Toast.makeText(UpdateUserDetailsActivity.this,
                         "Failed to delete profile image", Toast.LENGTH_SHORT).show();
-                Log.e("MainActivity", "Error deleting profile image", exception);
+                Log.e("UpdateUserDetailsActivity", "Error deleting profile image", exception);
             }
         });
     }
 
     private Task<Void> deleteUserFromAllOrders(@NonNull FirebaseFirestore db, String emailToRemove) {
+        Log.d("UpdateUserDetailsActivity", "deleteUserFromAllOrders called with email: " + emailToRemove);
         return db.collection("orders").get().continueWithTask(task -> {
             if (task.isSuccessful()) {
                 List<DocumentSnapshot> documents = task.getResult().getDocuments();
@@ -760,15 +860,17 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
                     List<String> mails = (List<String>) document.get("listPeopleInOrder");
                     String userEmail = document.getString("user_email");
                     Long numberOfPeopleInOrder = document.getLong("NumberOfPeopleInOrder");
+                    Log.d("UpdateUserDetailsActivity", "Processing order document ID: " + document.getId());
                     if (globalUserType.equals("Supplier") && userEmail != null && userEmail.equals(emailToRemove)) {
+                        Log.d("UpdateUserDetailsActivity", "Deleting order document for supplier.");
                         updateTasks.add(document.getReference().delete());
                     } else {
                         if (mails != null && mails.contains(emailToRemove)) {
                             if (mails.size() == 1) {
-                                // Mail is the only one in the list, delete the whole order
+                                Log.d("UpdateUserDetailsActivity", "Email is the only one in the list, deleting the whole order.");
                                 updateTasks.add(document.getReference().delete());
                             } else {
-                                // Mail exists, remove it
+                                Log.d("UpdateUserDetailsActivity", "Email exists, removing it from the order.");
                                 mails.remove(emailToRemove);
                                 long updatedNumberOfPeopleInOrder = numberOfPeopleInOrder != null ? numberOfPeopleInOrder - 1 : 0;
                                 if (emailToRemove.equals(userEmail)) {
@@ -787,19 +889,21 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
                 }
                 return Tasks.whenAll(updateTasks);
             } else {
+                Log.e("UpdateUserDetailsActivity", "Error getting orders collection.", task.getException());
                 throw task.getException();
             }
         });
     }
 
     private Task<Void> deleteUserDetails(@NonNull FirebaseFirestore db, String emailToRemove) {
+        Log.d("UpdateUserDetailsActivity", "deleteUserDetails called with email: " + emailToRemove);
         return db.collection("users").document(emailToRemove).delete()
                 .addOnSuccessListener(new OnSuccessListener<Void>() {
                     @Override
                     public void onSuccess(Void aVoid) {
                         Toast.makeText(UpdateUserDetailsActivity.this,
                                 "User details removed successfully", Toast.LENGTH_SHORT).show();
-                        Log.d("MainActivity", "Document successfully deleted!");
+                        Log.d("UpdateUserDetailsActivity", "User document successfully deleted.");
                     }
                 })
                 .addOnFailureListener(new OnFailureListener() {
@@ -807,26 +911,28 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
                     public void onFailure(@NonNull Exception e) {
                         Toast.makeText(UpdateUserDetailsActivity.this,
                                 "Failed to remove user details", Toast.LENGTH_SHORT).show();
-                        Log.w("MainActivity", "Error deleting document", e);
+                        Log.w("UpdateUserDetailsActivity", "Error deleting user document.", e);
                     }
                 });
     }
 
     private Task<Void> deleteUser(FirebaseUser curr) {
+        Log.d("UpdateUserDetailsActivity", "deleteUser called.");
         return curr.delete().addOnSuccessListener(new OnSuccessListener<Void>() {
             @Override
             public void onSuccess(Void aVoid) {
                 Toast.makeText(UpdateUserDetailsActivity.this,
-                        "111Account successfully deleted!", Toast.LENGTH_SHORT).show();
-                Log.d("MainActivity", "User account deleted.");
+                        "Account successfully deleted!", Toast.LENGTH_SHORT).show();
+                Log.d("UpdateUserDetailsActivity", "User account deleted.");
             }
         }).addOnFailureListener(new OnFailureListener() {
             @Override
             public void onFailure(@NonNull Exception e) {
-                Log.e("MainActivity", "Error deleting user", e);
+                Log.e("UpdateUserDetailsActivity", "Error deleting user account.", e);
             }
         });
     }
+
 
     public void changePassword() {
         Intent toy = new Intent(UpdateUserDetailsActivity.this, ChangePasswordActivity.class);
