@@ -673,9 +673,7 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
                             fileReference.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
                                 @Override
                                 public void onSuccess(Uri uri) {
-                                    Toast.makeText(UpdateUserDetailsActivity.this, "Upload successful", Toast.LENGTH_SHORT).show();
                                     picUrl = uri.toString();
-                                    Toast.makeText(UpdateUserDetailsActivity.this, "2Upload successful", Toast.LENGTH_SHORT).show();
                                     userDetails.put("profileImageUrl", picUrl);
                                     // Update Firestore with the new details
                                     updateDB(userDetails);
@@ -798,37 +796,64 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
 
     private void performDeleteTasks() {
         Log.d("UpdateUserDetailsActivity", "performDeleteTasks called.");
-        List<Task<?>> tasks = new ArrayList<>();
 
-        // Add deleteUserProfileImage task
+        Task<Void> deleteProfileImageTask = Tasks.forResult(null);
         if (picUrl != null && !picUrl.isEmpty()) {
             Log.d("UpdateUserDetailsActivity", "Adding deleteUserProfileImage task.");
-            tasks.add(deleteUserProfileImage(picUrl));
+            deleteProfileImageTask = deleteUserProfileImage(picUrl);
         }
 
-        // Add deleteUserFromAllOrders task
-        Log.d("UpdateUserDetailsActivity", "Adding deleteUserFromAllOrders task.");
-        tasks.add(deleteUserFromAllOrders(db, email));
-
-        // Add deleteUserDetails task
-        Log.d("UpdateUserDetailsActivity", "Adding deleteUserDetails task.");
-        tasks.add(deleteUserDetails(db, email));
-
-        // Add deleteUser task
-        Log.d("UpdateUserDetailsActivity", "Adding deleteUser task.");
-        tasks.add(deleteUser(currentUser));
-
-        // Execute tasks sequentially
-        Tasks.whenAllComplete(tasks).addOnCompleteListener(new OnCompleteListener<List<Task<?>>>() {
-            @Override
-            public void onComplete(@NonNull Task<List<Task<?>>> task) {
-                Log.d("UpdateUserDetailsActivity", "All deletion tasks completed.");
-                menuUtils.logOut();
-                Toast.makeText(UpdateUserDetailsActivity.this,
-                        "Account and associated data deleted successfully.", Toast.LENGTH_SHORT).show();
-            }
-        });
+        deleteProfileImageTask
+                .continueWithTask(task -> {
+                    if (task.isSuccessful()) {
+                        Log.d("UpdateUserDetailsActivity", "UserProfileImage deleted successfully.");
+                        return deleteUserFromAllOrders(db, email);
+                    } else {
+                        Log.e("UpdateUserDetailsActivity", "Failed to delete UserProfileImage.", task.getException());
+                        throw task.getException();
+                    }
+                })
+                .continueWithTask(task -> {
+                    if (task.isSuccessful()) {
+                        Log.d("UpdateUserDetailsActivity", "User removed from all orders successfully.");
+                        return deleteUserNotifications(db, email);
+                    } else {
+                        Log.e("UpdateUserDetailsActivity", "Failed to remove user from all orders.", task.getException());
+                        throw task.getException();
+                    }
+                })
+                .continueWithTask(task -> {
+                    if (task.isSuccessful()) {
+                        Log.d("UpdateUserDetailsActivity", "User notifications deleted successfully.");
+                        return deleteUserDetails(db, email);
+                    } else {
+                        Log.e("UpdateUserDetailsActivity", "Failed to delete user notifications.", task.getException());
+                        throw task.getException();
+                    }
+                })
+                .continueWithTask(task -> {
+                    if (task.isSuccessful()) {
+                        Log.d("UpdateUserDetailsActivity", "User details deleted successfully.");
+                        return deleteUser(currentUser);
+                    } else {
+                        Log.e("UpdateUserDetailsActivity", "Failed to delete user details.", task.getException());
+                        throw task.getException();
+                    }
+                })
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        Log.d("UpdateUserDetailsActivity", "All deletion tasks completed successfully.");
+                        menuUtils.logOut();
+                        Toast.makeText(UpdateUserDetailsActivity.this,
+                                "Account and associated data deleted successfully.", Toast.LENGTH_SHORT).show();
+                    } else {
+                        Log.e("UpdateUserDetailsActivity", "Error in deletion tasks.", task.getException());
+                        Toast.makeText(UpdateUserDetailsActivity.this,
+                                "Error occurred while deleting account.", Toast.LENGTH_SHORT).show();
+                    }
+                });
     }
+
 
     private Task<Void> deleteUserProfileImage(String imageUrl) {
         Log.d("UpdateUserDetailsActivity", "deleteUserProfileImage called with URL: " + imageUrl);
@@ -836,8 +861,6 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
         return photoRef.delete().addOnSuccessListener(new OnSuccessListener<Void>() {
             @Override
             public void onSuccess(Void aVoid) {
-                Toast.makeText(UpdateUserDetailsActivity.this,
-                        "Profile image deleted successfully", Toast.LENGTH_SHORT).show();
                 Log.d("UpdateUserDetailsActivity", "Profile image deleted.");
             }
         }).addOnFailureListener(new OnFailureListener() {
@@ -861,6 +884,14 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
                     String userEmail = document.getString("user_email");
                     Long numberOfPeopleInOrder = document.getLong("NumberOfPeopleInOrder");
                     Log.d("UpdateUserDetailsActivity", "Processing order document ID: " + document.getId());
+
+                    // Delete chat collection if globalUserType is "Supplier" and user email matches
+                    if (globalUserType.equals("Supplier") && userEmail != null && userEmail.equals(emailToRemove)) {
+                        Log.d("UpdateUserDetailsActivity", "Deleting chat collection for order.");
+                        updateTasks.add(deleteOrderChat(document.getReference()));
+                    }
+
+                    // Delete order document if globalUserType is "Supplier" and user email matches
                     if (globalUserType.equals("Supplier") && userEmail != null && userEmail.equals(emailToRemove)) {
                         Log.d("UpdateUserDetailsActivity", "Deleting order document for supplier.");
                         updateTasks.add(document.getReference().delete());
@@ -868,6 +899,7 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
                         if (mails != null && mails.contains(emailToRemove)) {
                             if (mails.size() == 1) {
                                 Log.d("UpdateUserDetailsActivity", "Email is the only one in the list, deleting the whole order.");
+                                updateTasks.add(deleteOrderChat(document.getReference()));
                                 updateTasks.add(document.getReference().delete());
                             } else {
                                 Log.d("UpdateUserDetailsActivity", "Email exists, removing it from the order.");
@@ -895,14 +927,48 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
         });
     }
 
+    private Task<Void> deleteOrderChat(DocumentReference orderRef) {
+        Log.d("UpdateUserDetailsActivity", "deleteOrderChat called for order: " + orderRef.getId());
+        return orderRef.collection("chat").get().continueWithTask(task -> {
+            if (task.isSuccessful()) {
+                List<DocumentSnapshot> documents = task.getResult().getDocuments();
+                List<Task<Void>> deleteTasks = new ArrayList<>();
+                for (DocumentSnapshot document : documents) {
+                    Log.d("UpdateUserDetailsActivity", "Deleting chat document ID: " + document.getId());
+                    deleteTasks.add(document.getReference().delete());
+                }
+                return Tasks.whenAll(deleteTasks);
+            } else {
+                Log.e("UpdateUserDetailsActivity", "Error getting chat collection.", task.getException());
+                throw task.getException();
+            }
+        });
+    }
+
+    private Task<Void> deleteUserNotifications(@NonNull FirebaseFirestore db, String emailToRemove) {
+        Log.d("UpdateUserDetailsActivity", "deleteUserNotifications called with email: " + emailToRemove);
+        return db.collection("users").document(emailToRemove).collection("notifications").get().continueWithTask(task -> {
+            if (task.isSuccessful()) {
+                List<DocumentSnapshot> documents = task.getResult().getDocuments();
+                List<Task<Void>> deleteTasks = new ArrayList<>();
+                for (DocumentSnapshot document : documents) {
+                    Log.d("UpdateUserDetailsActivity", "Deleting notification document ID: " + document.getId());
+                    deleteTasks.add(document.getReference().delete());
+                }
+                return Tasks.whenAll(deleteTasks);
+            } else {
+                Log.e("UpdateUserDetailsActivity", "Error getting notifications collection.", task.getException());
+                throw task.getException();
+            }
+        });
+    }
+
     private Task<Void> deleteUserDetails(@NonNull FirebaseFirestore db, String emailToRemove) {
         Log.d("UpdateUserDetailsActivity", "deleteUserDetails called with email: " + emailToRemove);
         return db.collection("users").document(emailToRemove).delete()
                 .addOnSuccessListener(new OnSuccessListener<Void>() {
                     @Override
                     public void onSuccess(Void aVoid) {
-                        Toast.makeText(UpdateUserDetailsActivity.this,
-                                "User details removed successfully", Toast.LENGTH_SHORT).show();
                         Log.d("UpdateUserDetailsActivity", "User document successfully deleted.");
                     }
                 })
@@ -921,8 +987,6 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
         return curr.delete().addOnSuccessListener(new OnSuccessListener<Void>() {
             @Override
             public void onSuccess(Void aVoid) {
-                Toast.makeText(UpdateUserDetailsActivity.this,
-                        "Account successfully deleted!", Toast.LENGTH_SHORT).show();
                 Log.d("UpdateUserDetailsActivity", "User account deleted.");
             }
         }).addOnFailureListener(new OnFailureListener() {
@@ -932,6 +996,7 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
             }
         });
     }
+
 
 
     public void changePassword() {
