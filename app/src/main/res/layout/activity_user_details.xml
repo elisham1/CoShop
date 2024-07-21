@@ -51,7 +51,7 @@
                     android:contentDescription="Photo"
                     android:layoutDirection="ltr"
                     android:scaleType="centerCrop"
-                    android:src="@drawable/android" />
+                    android:src="@drawable/ic_profile" />
             </androidx.cardview.widget.CardView>
 
             <TextView
