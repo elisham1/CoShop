@@ -66,6 +66,9 @@ public class FilterActivity extends AppCompatActivity {
     private ImageButton clearURLButton;
     private String lastURL, globalUserType;
     private MenuUtils menuUtils;
+    private boolean isDatePickerDialogOpen = false;
+    private boolean isTimePickerDialogOpen = false;
+
     private boolean isCategoryListVisible = false;
 
 
@@ -736,16 +739,21 @@ public class FilterActivity extends AppCompatActivity {
     }
 
     public void showDatePickerDialog(View view) {
+        if (isDatePickerDialogOpen) {
+            return; // לא נפתח דיאלוג חדש אם כבר קיים אחד פתוח
+        }
+
+        isDatePickerDialogOpen = true;
         Locale.setDefault(Locale.ENGLISH);
         Calendar calendar = Calendar.getInstance();
         DatePickerDialog datePickerDialog = new DatePickerDialog(
                 FilterActivity.this,
                 android.R.style.Theme_Holo_Light_Dialog_MinWidth, // ערכת נושא שתבטיח שהדיאלוג יהיה רחב מספיק
                 (view1, year, month, dayOfMonth) -> {
+                    isDatePickerDialogOpen = false; // עדכון מצב לאחר סגירת הדיאלוג
                     Calendar selectedDate = Calendar.getInstance();
                     selectedDate.set(year, month, dayOfMonth);
 
-                    // אם כבר נבחרה שעה, מוודאים שהשעה לא בעבר
                     if (this.selectedTime != null) {
                         selectedDate.set(Calendar.HOUR_OF_DAY, this.selectedTime.get(Calendar.HOUR_OF_DAY));
                         selectedDate.set(Calendar.MINUTE, this.selectedTime.get(Calendar.MINUTE));
@@ -767,10 +775,17 @@ public class FilterActivity extends AppCompatActivity {
                 },
                 calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH)
         );
+
+        datePickerDialog.setOnDismissListener(dialog -> isDatePickerDialogOpen = false);
         datePickerDialog.show();
     }
 
     public void showTimePickerDialog(View view) {
+        if (isTimePickerDialogOpen) {
+            return; // לא נפתח דיאלוג חדש אם כבר קיים אחד פתוח
+        }
+
+        isTimePickerDialogOpen = true;
         Locale.setDefault(Locale.ENGLISH);
         Calendar calendar = Calendar.getInstance();
 
@@ -778,11 +793,11 @@ public class FilterActivity extends AppCompatActivity {
                 FilterActivity.this,
                 android.R.style.Theme_Holo_Light_Dialog_MinWidth, // ערכת נושא שתבטיח שהדיאלוג יהיה רחב מספיק
                 (view1, hourOfDay, minute) -> {
+                    isTimePickerDialogOpen = false; // עדכון מצב לאחר סגירת הדיאלוג
                     Calendar selectedTime = Calendar.getInstance();
                     selectedTime.set(Calendar.HOUR_OF_DAY, hourOfDay);
                     selectedTime.set(Calendar.MINUTE, minute);
 
-                    // אם כבר נבחר תאריך, מוודאים שהתאריך והשעה לא בעבר
                     if (this.selectedDate != null) {
                         selectedTime.set(Calendar.YEAR, this.selectedDate.get(Calendar.YEAR));
                         selectedTime.set(Calendar.MONTH, this.selectedDate.get(Calendar.MONTH));
@@ -805,6 +820,8 @@ public class FilterActivity extends AppCompatActivity {
                 },
                 calendar.get(Calendar.HOUR_OF_DAY), calendar.get(Calendar.MINUTE), true
         );
+
+        timePickerDialog.setOnDismissListener(dialog -> isTimePickerDialogOpen = false);
         timePickerDialog.show();
     }
 

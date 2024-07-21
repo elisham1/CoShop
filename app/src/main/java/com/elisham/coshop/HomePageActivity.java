@@ -191,7 +191,7 @@ public class HomePageActivity extends AppCompatActivity {
                     long numberOfPeopleInOrder = documentSnapshot.getLong("NumberOfPeopleInOrder");
                     long maxPeople = documentSnapshot.getLong("max_people");
 
-                    if (numberOfPeopleInOrder == maxPeople) continue; // דילוג על הזמנות מלאות
+                    
 
                     String orderId = documentSnapshot.getId();
                     String titleOfOrder = documentSnapshot.getString("titleOfOrder");
@@ -433,7 +433,7 @@ public class HomePageActivity extends AppCompatActivity {
         // Create and add the people count
         TextView peopleTextView = new TextView(this);
         if (maxPeople == 0) {
-            peopleTextView.setText("∞");
+            peopleTextView.setText("∞/"+numberOfPeopleInOrder);
         } else {
             peopleTextView.setText(numberOfPeopleInOrder + "/" + maxPeople);
         }

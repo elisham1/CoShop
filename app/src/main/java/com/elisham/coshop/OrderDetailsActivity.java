@@ -822,18 +822,27 @@ public class OrderDetailsActivity extends AppCompatActivity {
                 String firstName = documentSnapshot.getString("first name");
                 String familyName = documentSnapshot.getString("family name");
 
-                if (firstName != null && familyName != null) {
-                    groupInfoTextView.setText("People: " + numberOfPeopleInOrder + "/" + maxPeople + "\nThe group was created by " + firstName + " " + familyName + "\non " + formattedOpenOrderTime);
+                String peopleText;
+                if (maxPeople == 0) {
+                    peopleText = "People: " + numberOfPeopleInOrder + "/∞";
                 } else {
-                    groupInfoTextView.setText("People: " + numberOfPeopleInOrder + "/" + maxPeople + "\nThe group was created by " + userEmail + "\non " + formattedOpenOrderTime);
+                    peopleText = "People: " + numberOfPeopleInOrder + "/" + maxPeople;
+                }
+
+                if (firstName != null && familyName != null) {
+                    groupInfoTextView.setText(peopleText + "\nThe group was created by " + firstName + " " + familyName + "\non " + formattedOpenOrderTime);
+                } else {
+                    groupInfoTextView.setText(peopleText + "\nThe group was created by " + userEmail + "\non " + formattedOpenOrderTime);
                     Log.e("OrderDetailsActivity", "First name or family name is null for user: " + userEmail);
                 }
             } else {
-                groupInfoTextView.setText("People: " + numberOfPeopleInOrder + "/" + maxPeople + "\nThe group was created by " + userEmail + "\non " + formattedOpenOrderTime);
+                String peopleText = maxPeople == 0 ? "People: " + numberOfPeopleInOrder + "/∞" : "People: " + numberOfPeopleInOrder + "/" + maxPeople;
+                groupInfoTextView.setText(peopleText + "\nThe group was created by " + userEmail + "\non " + formattedOpenOrderTime);
                 Log.e("OrderDetailsActivity", "No document found for user: " + userEmail);
             }
         }).addOnFailureListener(e -> {
-            groupInfoTextView.setText("People: " + numberOfPeopleInOrder + "/" + maxPeople + "\nThe group was created by " + userEmail + "\non " + formattedOpenOrderTime);
+            String peopleText = maxPeople == 0 ? "People: " + numberOfPeopleInOrder + "/∞" : "People: " + numberOfPeopleInOrder + "/" + maxPeople;
+            groupInfoTextView.setText(peopleText + "\nThe group was created by " + userEmail + "\non " + formattedOpenOrderTime);
             Log.e("OrderDetailsActivity", "Failed to fetch user details", e);
             Toast.makeText(this, "Failed to fetch user details", Toast.LENGTH_SHORT).show();
         });
