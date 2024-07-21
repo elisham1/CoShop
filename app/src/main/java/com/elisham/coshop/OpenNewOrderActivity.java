@@ -89,6 +89,8 @@ public class OpenNewOrderActivity extends AppCompatActivity {
     private ActivityResultLauncher<Intent> locationWindowLauncher;
     private ActivityResultLauncher<String> requestPermissionLauncher;
     private MenuUtils menuUtils;
+    private boolean isDatePickerDialogOpen = false;
+    private boolean isTimePickerDialogOpen = false;
 
     private Calendar selectedDate;
     private Calendar selectedTime;
@@ -664,6 +666,9 @@ public class OpenNewOrderActivity extends AppCompatActivity {
     }
 
     public void showDatePickerDialog(View view) {
+        if (isDatePickerDialogOpen) return; // בדיקה אם הדיאלוג פתוח כבר
+        isDatePickerDialogOpen = true; // עדכון למצב פתוח
+
         Locale.setDefault(Locale.ENGLISH);
         Calendar calendar = Calendar.getInstance();
         DatePickerDialog datePickerDialog = new DatePickerDialog(
@@ -692,13 +697,18 @@ public class OpenNewOrderActivity extends AppCompatActivity {
                         ImageButton dateIcon = findViewById(R.id.date_icon);
                         dateIcon.setImageResource(R.drawable.baseline_calendar_month_24);
                     }
+                    isDatePickerDialogOpen = false; // עדכון למצב סגור לאחר סגירת הדיאלוג
                 },
                 calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH)
         );
+        datePickerDialog.setOnDismissListener(dialog -> isDatePickerDialogOpen = false); // עדכון למצב סגור אם הדיאלוג נסגר
         datePickerDialog.show();
     }
 
     public void showTimePickerDialog(View view) {
+        if (isTimePickerDialogOpen) return; // בדיקה אם הדיאלוג פתוח כבר
+        isTimePickerDialogOpen = true; // עדכון למצב פתוח
+
         Locale.setDefault(Locale.ENGLISH);
         Calendar calendar = Calendar.getInstance();
 
@@ -730,9 +740,11 @@ public class OpenNewOrderActivity extends AppCompatActivity {
                         ImageButton timeIcon = findViewById(R.id.time_icon);
                         timeIcon.setImageResource(R.drawable.ic_baseline_access_time_24);
                     }
+                    isTimePickerDialogOpen = false; // עדכון למצב סגור לאחר סגירת הדיאלוג
                 },
                 calendar.get(Calendar.HOUR_OF_DAY), calendar.get(Calendar.MINUTE), true
         );
+        timePickerDialog.setOnDismissListener(dialog -> isTimePickerDialogOpen = false); // עדכון למצב סגור אם הדיאלוג נסגר
         timePickerDialog.show();
     }
 
