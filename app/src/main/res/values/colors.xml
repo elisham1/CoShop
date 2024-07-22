@@ -24,7 +24,8 @@
     <color name="supplierPrimary">#E98654</color>
     <color name="supplierPrimaryDark">#C37040</color>
     <color name="supplierAccent">#AB5816</color>
-        <color name="active_dot">#105F86</color> <!-- צבע אדום פעיל -->
-        <color name="inactive_dot">#CCCCCC</color> <!-- צבע אפור לא פעיל -->
+    <color name="active_dot">#105F86</color>
+    <color name="inactive_dot">#CCCCCC</color>
+    <color name="unsaved_red">@android:color/holo_green_light</color>
 
 </resources>
