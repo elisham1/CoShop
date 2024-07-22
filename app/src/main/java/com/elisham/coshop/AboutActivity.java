@@ -2,7 +2,6 @@ package com.elisham.coshop;
 
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
-
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -17,18 +16,17 @@ public class AboutActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        // Set the theme based on the user type
         Intent intent = getIntent();
         globalUserType = intent.getStringExtra("userType");
 
         if (globalUserType != null && globalUserType.equals("Consumer")) {
             setTheme(R.style.ConsumerTheme);
-        }
-        if (globalUserType != null && globalUserType.equals("Supplier")) {
+        } else if (globalUserType != null && globalUserType.equals("Supplier")) {
             setTheme(R.style.SupplierTheme);
         }
+
         setContentView(R.layout.activity_about);
-        menuUtils = new MenuUtils(this ,globalUserType);
+        menuUtils = new MenuUtils(this, globalUserType);
     }
 
     @Override
@@ -47,7 +45,6 @@ public class AboutActivity extends AppCompatActivity {
                 menuUtils.myOrders();
                 return true;
             case R.id.About_Us:
-                menuUtils.aboutUs();
                 return true;
             case R.id.Contact_Us:
                 menuUtils.contactUs();
@@ -58,7 +55,7 @@ public class AboutActivity extends AppCompatActivity {
             case R.id.home:
                 menuUtils.home();
                 return true;
-            case R.id.chat_icon: // הוספת המקרה עבור אייקון ה-chat
+            case R.id.chat_icon:
                 menuUtils.allChats();
                 return true;
             case R.id.chat_notification:
@@ -68,6 +65,4 @@ public class AboutActivity extends AppCompatActivity {
                 return super.onOptionsItemSelected(item);
         }
     }
-
 }
-
