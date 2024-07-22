@@ -359,6 +359,7 @@ public class MyOrdersActivity extends AppCompatActivity {
                     List<Double> allRatings = allRatingsFuture.get();
                     double totalRating = allRatings.stream().mapToDouble(Double::doubleValue).sum();
                     double averageRating = totalRating / peopleInOrder.size();
+                    updateRatingOrderInFirestore(orderId, averageRating);
 
                     addOrderToLayout(orderId, titleOfOrder, location, numberOfPeopleInOrder, maxPeople,
                             categorie, distance, timestamp, averageRating);
@@ -369,7 +370,12 @@ public class MyOrdersActivity extends AppCompatActivity {
             });
         });
     }
-
+    private void updateRatingOrderInFirestore(String orderId, double averageRating) {
+        db.collection("orders").document(orderId)
+                .update("ratingOrder", averageRating)
+                .addOnSuccessListener(aVoid -> Log.d("Firestore", "ratingOrder successfully updated"))
+                .addOnFailureListener(e -> Log.w("Firestore", "Error updating ratingOrder", e));
+    }
     private Double calculateUserRating(DocumentSnapshot userDoc) {
         List<Map<String, Object>> userRatings = (List<Map<String, Object>>) userDoc.get("ratings");
         if (userRatings == null || userRatings.isEmpty()) {
