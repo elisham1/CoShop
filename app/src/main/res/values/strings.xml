@@ -19,4 +19,13 @@
         <item>Other</item>
     </string-array>
 
+    <string-array name="feedback_titles">
+        <item>Select Feedback Title</item>
+        <item>Your account</item>
+        <item>Questions</item>
+        <item>Report a bug</item>
+        <item>Suggest a feature</item>
+        <item>Other</item>
+    </string-array>
+
 </resources>
