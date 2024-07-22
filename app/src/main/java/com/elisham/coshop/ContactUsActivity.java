@@ -2,6 +2,7 @@ package com.elisham.coshop;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.text.Editable;
@@ -10,6 +11,7 @@ import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
@@ -147,6 +149,7 @@ public class ContactUsActivity extends AppCompatActivity {
         db.collection("feedbacks").add(feedback)
                 .addOnSuccessListener(documentReference -> {
                     // Feedback successfully added to the database
+                    hideKeyboard();
                     showFeedbackReceivedMessage();
                 })
                 .addOnFailureListener(e -> {
@@ -175,6 +178,14 @@ public class ContactUsActivity extends AppCompatActivity {
                 finish();
             }
         });
+    }
+
+    private void hideKeyboard() {
+        View view = this.getCurrentFocus();
+        if (view != null) {
+            InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+            imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
+        }
     }
 
     @Override
