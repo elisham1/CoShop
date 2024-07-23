@@ -108,7 +108,7 @@ public class OpenNewOrderActivity extends AppCompatActivity {
     private String globalUserType;
 
     private int[] imageResources = {
-            R.drawable.one, 
+            R.drawable.one,
             R.drawable.two,
             R.drawable.three,
             R.drawable.four,
@@ -434,7 +434,6 @@ public class OpenNewOrderActivity extends AppCompatActivity {
 
         // ננעל את הכפתור ונציג הודעת טעינה
         isSubmitting = true;
-        Toast.makeText(this, "Loading", Toast.LENGTH_SHORT).show();
         ProgressDialog progressDialog = new ProgressDialog(this);
         progressDialog.setMessage("Loading...");
         progressDialog.setCancelable(false);
