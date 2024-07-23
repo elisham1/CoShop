@@ -147,15 +147,14 @@ public class MyOrdersActivity extends AppCompatActivity {
             public void onClick(View v) {
                 Log.d("MyOrdersActivity", "Opened Orders clicked");
                 selectedOptions.remove(ALL_ORDERS);
+                selectedOptions.remove(WAIT_LIST);
                 if (selectedOptions.contains(OPENED_ORDERS)) {
                     selectedOptions.remove(OPENED_ORDERS);
                     if (selectedOptions.isEmpty()) {
                         selectedOptions.add(ALL_ORDERS);
                     }
                 } else {
-                    if (globalUserType.equals("Supplier")) {
-                        selectedOptions.clear();
-                    }
+                    selectedOptions.remove(CLOSED_ORDERS);
                     selectedOptions.add(OPENED_ORDERS);
                 }
                 readUserOrders(selectedOptions);
@@ -167,15 +166,14 @@ public class MyOrdersActivity extends AppCompatActivity {
             public void onClick(View v) {
                 Log.d("MyOrdersActivity", "Closed Orders clicked");
                 selectedOptions.remove(ALL_ORDERS);
+                selectedOptions.remove(WAIT_LIST);
                 if (selectedOptions.contains(CLOSED_ORDERS)) {
                     selectedOptions.remove(CLOSED_ORDERS);
                     if (selectedOptions.isEmpty()) {
                         selectedOptions.add(ALL_ORDERS);
                     }
                 } else {
-                    if (globalUserType.equals("Supplier")) {
-                        selectedOptions.clear();
-                    }
+                    selectedOptions.remove(OPENED_ORDERS);
                     selectedOptions.add(CLOSED_ORDERS);
                 }
                 readUserOrders(selectedOptions);
@@ -186,13 +184,17 @@ public class MyOrdersActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 Log.d("MyOrdersActivity", "Supplier Orders clicked");
-                selectedOptions.remove(ALL_ORDERS);
+                if (selectedOptions.contains(ALL_ORDERS) || selectedOptions.contains(WAIT_LIST)) {
+                    selectedOptions.remove(ALL_ORDERS);
+                    selectedOptions.remove(WAIT_LIST);
+                }
                 if (selectedOptions.contains(SUPPLIER_ORDERS)) {
                     selectedOptions.remove(SUPPLIER_ORDERS);
                     if (selectedOptions.isEmpty()) {
                         selectedOptions.add(ALL_ORDERS);
                     }
                 } else {
+                    selectedOptions.remove(CONSUMER_ORDERS);
                     selectedOptions.add(SUPPLIER_ORDERS);
                 }
                 readUserOrders(selectedOptions);
@@ -203,13 +205,17 @@ public class MyOrdersActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 Log.d("MyOrdersActivity", "Consumer Orders clicked");
-                selectedOptions.remove(ALL_ORDERS);
+                if (selectedOptions.contains(ALL_ORDERS) || selectedOptions.contains(WAIT_LIST)) {
+                    selectedOptions.remove(ALL_ORDERS);
+                    selectedOptions.remove(WAIT_LIST);
+                }
                 if (selectedOptions.contains(CONSUMER_ORDERS)) {
                     selectedOptions.remove(CONSUMER_ORDERS);
                     if (selectedOptions.isEmpty()) {
                         selectedOptions.add(ALL_ORDERS);
                     }
                 } else {
+                    selectedOptions.remove(SUPPLIER_ORDERS);
                     selectedOptions.add(CONSUMER_ORDERS);
                 }
                 readUserOrders(selectedOptions);
@@ -296,37 +302,74 @@ public class MyOrdersActivity extends AppCompatActivity {
                     }
 
                     List<DocumentSnapshot> ordersToDisplay = new ArrayList<>();
-                    for (String option : options) {
-                        if (option.equals(ALL_ORDERS)) {
-                            ordersToDisplay.clear();
-                            ordersToDisplay.addAll(allOrdersList);
-                        }
-                        if (option.equals(OPENED_ORDERS)) {
-                            Log.d("MyOrdersActivitySelection", "Opened Orders");
-                            for (DocumentSnapshot documentSnapshot : openedOrdersList) {
-                                if (!ordersToDisplay.contains(documentSnapshot))
-                                    ordersToDisplay.add(documentSnapshot);
+                    if (options.contains(ALL_ORDERS))
+                    {
+                        ordersToDisplay.addAll(allOrdersList);
+                    } else {
+                        if (options.contains(OPENED_ORDERS))
+                        {
+                            if (options.contains(SUPPLIER_ORDERS))
+                            {
+                                for (DocumentSnapshot documentSnapshot : supplierOrdersList) {
+                                    if (openedOrdersList.contains(documentSnapshot))
+                                        ordersToDisplay.add(documentSnapshot);
+                                }
+                            } else if (options.contains(CONSUMER_ORDERS))
+                            {
+                                for (DocumentSnapshot documentSnapshot : consumerOrdersList) {
+                                    if (openedOrdersList.contains(documentSnapshot))
+                                        ordersToDisplay.add(documentSnapshot);
+                                }
+                            } else {
+                                ordersToDisplay.addAll(openedOrdersList);
                             }
-                        }
-                        if (option.equals(CLOSED_ORDERS)) {
-                            Log.d("MyOrdersActivitySelection", "Closed Orders");
-                            for (DocumentSnapshot documentSnapshot : closedOrdersList) {
-                                if (!ordersToDisplay.contains(documentSnapshot))
-                                    ordersToDisplay.add(documentSnapshot);
+                        } else if (options.contains(CLOSED_ORDERS)){
+                            if (options.contains(SUPPLIER_ORDERS))
+                            {
+                                for (DocumentSnapshot documentSnapshot : supplierOrdersList) {
+                                    if (closedOrdersList.contains(documentSnapshot))
+                                        ordersToDisplay.add(documentSnapshot);
+                                }
+                            } else if (options.contains(CONSUMER_ORDERS))
+                            {
+                                for (DocumentSnapshot documentSnapshot : consumerOrdersList) {
+                                    if (closedOrdersList.contains(documentSnapshot))
+                                        ordersToDisplay.add(documentSnapshot);
+                                }
+                            } else {
+                                ordersToDisplay.addAll(closedOrdersList);
                             }
-                        }
-                        if (option.equals(SUPPLIER_ORDERS)) {
-                            Log.d("MyOrdersActivitySelection", "Supplier Orders");
-                            for (DocumentSnapshot documentSnapshot : supplierOrdersList) {
-                                if (!ordersToDisplay.contains(documentSnapshot))
-                                    ordersToDisplay.add(documentSnapshot);
+                        } else if (options.contains(SUPPLIER_ORDERS)){
+                            if (options.contains(OPENED_ORDERS))
+                            {
+                                for (DocumentSnapshot documentSnapshot : openedOrdersList) {
+                                    if (supplierOrdersList.contains(documentSnapshot))
+                                        ordersToDisplay.add(documentSnapshot);
+                                }
+                            } else if (options.contains(CLOSED_ORDERS))
+                            {
+                                for (DocumentSnapshot documentSnapshot : closedOrdersList) {
+                                    if (supplierOrdersList.contains(documentSnapshot))
+                                        ordersToDisplay.add(documentSnapshot);
+                                }
+                            } else {
+                                ordersToDisplay.addAll(supplierOrdersList);
                             }
-                        }
-                        if (option.equals(CONSUMER_ORDERS)) {
-                            Log.d("MyOrdersActivitySelection", "Consumer Orders");
-                            for (DocumentSnapshot documentSnapshot : consumerOrdersList) {
-                                if (!ordersToDisplay.contains(documentSnapshot))
-                                    ordersToDisplay.add(documentSnapshot);
+                        } else {
+                            if (options.contains(OPENED_ORDERS))
+                            {
+                                for (DocumentSnapshot documentSnapshot : openedOrdersList) {
+                                    if (consumerOrdersList.contains(documentSnapshot))
+                                        ordersToDisplay.add(documentSnapshot);
+                                }
+                            } else if (options.contains(CLOSED_ORDERS))
+                            {
+                                for (DocumentSnapshot documentSnapshot : closedOrdersList) {
+                                    if (consumerOrdersList.contains(documentSnapshot))
+                                        ordersToDisplay.add(documentSnapshot);
+                                }
+                            } else {
+                                ordersToDisplay.addAll(consumerOrdersList);
                             }
                         }
                     }
@@ -337,12 +380,8 @@ public class MyOrdersActivity extends AppCompatActivity {
                         Timestamp time2 = o2.getTimestamp("openOrderTime");
                         return time2 != null && time1 != null ? time2.compareTo(time1) : 0;
                     });
-
                     displayOrders(ordersToDisplay);
-
                 }
-
-
             }).addOnFailureListener(e -> {
                 Log.e("MyOrdersActivity", "Failed to retrieve orders", e);
                 Toast.makeText(MyOrdersActivity.this, "Failed to retrieve orders", Toast.LENGTH_SHORT).show();
