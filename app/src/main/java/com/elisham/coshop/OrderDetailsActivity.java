@@ -286,6 +286,7 @@ public class OrderDetailsActivity extends AppCompatActivity {
                             } else {
                                 waitingListButton.setImageResource(R.drawable.ic_waitlist);
                             }
+                            waitingListButton.setVisibility(View.VISIBLE);
                         } else {
                             joinIcon.setVisibility(View.VISIBLE);
                             waitingListButton.setVisibility(View.GONE);
