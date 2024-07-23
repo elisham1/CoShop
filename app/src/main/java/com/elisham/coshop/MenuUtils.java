@@ -3,8 +3,6 @@ package com.elisham.coshop;
 import android.content.Context;
 import android.content.Intent;
 import android.util.Log;
-import android.view.MenuItem;
-import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -38,24 +36,28 @@ public class MenuUtils {
         Intent intent = new Intent(context, UpdateUserDetailsActivity.class);
         intent.putExtra("userType", userType);
         context.startActivity(intent);
+        finishActivity();
     }
 
     public void myOrders() {
         Intent intent = new Intent(context, MyOrdersActivity.class);
         intent.putExtra("userType", userType);
         context.startActivity(intent);
+        finishActivity();
     }
 
     public void aboutUs() {
         Intent intent = new Intent(context, AboutActivity.class);
         intent.putExtra("userType", userType);
         context.startActivity(intent);
+        finishActivity();
     }
 
     public void contactUs() {
         Intent intent = new Intent(context, ContactUsActivity.class);
         intent.putExtra("userType", userType);
         context.startActivity(intent);
+        finishActivity();
     }
 
     public void logOut() {
@@ -81,34 +83,45 @@ public class MenuUtils {
     }
 
     public void home() {
-        Intent intent;
-        if (userType.equals("Consumer"))
-        {
-            intent = new Intent(context, HomePageActivity.class);
+        if (isHomePageActivity()) {
+            Intent intent;
+            if (userType.equals("Consumer")) {
+                intent = new Intent(context, HomePageActivity.class);
+            } else {
+                intent = new Intent(context, MyOrdersActivity.class);
+            }
+            intent.putExtra("userType", userType);
+            context.startActivity(intent);
+            finishActivity();
         }
-        else {
-            intent = new Intent(context, MyOrdersActivity.class);
-        }
-        intent.putExtra("userType", userType);
-        context.startActivity(intent);
-        finishActivity();
     }
 
     private void finishActivity() {
         if (context instanceof AppCompatActivity) {
-            ((AppCompatActivity) context).finish();
+            if (isHomePageActivity()){
+                ((AppCompatActivity) context).finish();
+            }
         }
     }
     public void allChats() {
         Intent intent = new Intent(context, AllChatOfUserActivity.class);
         intent.putExtra("userType", userType);
         context.startActivity(intent);
+        finishActivity();
     }
 
     public void chat_notification(){
         Intent intent = new Intent(context, notificationActivity.class);
         intent.putExtra("userType", userType);
         context.startActivity(intent);
+        finishActivity();
     }
 
+    public boolean isHomePageActivity() {
+        if (userType.equals("Supplier")) {
+            return !(context instanceof MyOrdersActivity);
+        } else {
+            return !(context instanceof HomePageActivity);
+        }
+    }
 }

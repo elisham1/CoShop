@@ -1,31 +1,49 @@
-<androidx.constraintlayout.widget.ConstraintLayout
+<ScrollView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:padding="16dp"
+    android:layoutDirection="ltr"
     tools:context=".OrderDetailsActivity">
 
-    <androidx.constraintlayout.widget.Guideline
-        android:id="@+id/guideline"
-        android:layout_width="wrap_content"
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        app:layout_constraintGuide_end="0dp"
-        app:layout_constraintGuide_percent="0.9" />
+        android:orientation="vertical"
+        android:layoutDirection="ltr">
 
-    <ScrollView
-        android:id="@+id/scrollView"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toTopOf="@id/guideline"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
-
+        <!-- Top layout with picture in the middle, icons on the left and right -->
         <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/mainTitleLayout"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:background="@drawable/border">
+
+            <!-- Left icons (Share and Chat) -->
+                <ImageView
+                    android:id="@+id/shareIcon"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="16dp"
+                    android:src="@drawable/ic_share_consumer"
+                    android:contentDescription="Share Icon"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"/>
+
+                <ImageView
+                    android:id="@+id/chatIcon"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="16dp"
+                    android:layout_marginStart="0dp"
+                    android:src="@drawable/ic_chat_consumer"
+                    android:contentDescription="Chat Icon"
+                    android:visibility="gone"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintStart_toEndOf="@id/shareIcon"/>
 
             <!-- עיגול עם תמונת הקטגוריה -->
             <com.elisham.coshop.CircularImageView
@@ -35,10 +53,58 @@
                 android:layout_marginTop="16dp"
                 android:background="@drawable/circle_background"
                 android:scaleType="centerCrop"
-                app:layout_constraintDimensionRatio="1:1"
-                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toTopOf="@id/titleTextView"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
+                app:layout_constraintEnd_toEndOf="parent" />
+
+            <!-- Right icon (Join) -->
+            <ImageView
+                android:id="@+id/joinIcon"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_margin="16dp"
+                android:src="@drawable/ic_join_consumer"
+                android:contentDescription="Join Icon"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toEndOf="@id/categoryImageView"/>
+
+            <ImageView
+                android:id="@+id/waitingListButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:visibility="gone"
+                android:src="@drawable/ic_waitlist"
+                android:layout_margin="16dp"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintStart_toEndOf="@id/categoryImageView"
+                app:layout_constraintEnd_toEndOf="parent" />
+
+            <ImageView
+                android:id="@+id/leaveButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:visibility="gone"
+                android:src="@drawable/ic_leave_consumer"
+                android:layout_margin="16dp"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintStart_toEndOf="@id/categoryImageView"
+                app:layout_constraintEnd_toEndOf="parent" />
+            <!-- Order title -->
+            <TextView
+                android:id="@+id/titleTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:textSize="24sp"
+                android:textStyle="bold"
+                android:textColor="@color/black"
+                android:gravity="center"
+                android:text="Order Title"
+                app:layout_constraintTop_toBottomOf="@id/categoryImageView"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent" />
 
             <!-- שם הקטגוריה מתחת לתמונה -->
             <TextView
@@ -46,369 +112,300 @@
                 style="@style/CustomTextViewStyle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:gravity="center"
-                android:layout_marginTop="8dp"
-                app:layout_constraintTop_toBottomOf="@id/categoryImageView"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"/>
-
-            <!-- הכותרת מתחת לשם הקטגוריה -->
-            <TextView
-                android:id="@+id/titleTextView"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textSize="24sp"
-                android:textStyle="bold"
-                android:textColor="#000000"
-                android:gravity="center"
-                app:layout_constraintTop_toBottomOf="@id/categoryTextView"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                android:layout_marginTop="8dp"/>
-
-            <!-- פרטים מתחת לכותרת -->
-            <TextView
-                android:id="@+id/groupInfoTextView"
-                style="@style/CustomTextViewStyle"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:gravity="center"
+                android:text="Members"
+                android:padding="2dp"
                 app:layout_constraintTop_toBottomOf="@id/titleTextView"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
-                android:layout_marginTop="4dp"/>
+                android:layoutDirection="ltr"/>
 
-            <!-- The timer layout -->
-            <LinearLayout
-                android:id="@+id/timerContainer"
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+
+        <!-- Layout for order details and time left -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:background="@drawable/border">
+
+            <TextView
+                android:id="@+id/groupInfoTextView"
                 android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Order Details"
+                android:gravity="center"
+                android:textSize="16sp"
+                android:textColor="@color/black"
+                android:textStyle="bold"/>
+
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
                 android:gravity="center"
-                android:visibility="visible"
-                app:layout_constraintTop_toBottomOf="@id/groupInfoTextView"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent">
+                android:layout_marginTop="1dp">
 
-                <LinearLayout
-                    android:id="@+id/daysContainer"
+                <TextView
+                    android:id="@+id/time_left"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical"
+                    android:text="Time Left:"
+                    android:padding="8dp"
+                    android:textSize="16sp"
+                    android:textColor="@color/black"
+                    android:textStyle="bold" />
+
+                <!-- The timer layout -->
+                <LinearLayout
+                    android:id="@+id/timerContainer"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
                     android:gravity="center"
-                    android:visibility="visible">
+                    android:visibility="visible"
+                    app:layout_constraintTop_toBottomOf="@id/groupInfoTextView"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent">
 
-                    <FrameLayout
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content">
-
-                        <TextView
-                            android:id="@+id/daysTextView"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:background="@android:color/black"
-                            android:textSize="10sp"
-                            android:textColor="@android:color/white"
-                            android:padding="4dp" />
-                    </FrameLayout>
-
-                    <TextView
-                        android:id="@+id/daysLabel"
+                    <LinearLayout
+                        android:id="@+id/daysContainer"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Day"
-                        android:textSize="8sp"
-                        android:textColor="@android:color/black"
-                        android:padding="2dp" />
-                </LinearLayout>
+                        android:orientation="vertical"
+                        android:gravity="center"
+                        android:visibility="visible">
 
-                <TextView
-                    android:id="@+id/colon1"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text=":"
-                    android:textSize="10sp"
-                    android:textColor="@android:color/black"
-                    android:padding="2dp"
-                    android:visibility="visible" />
+                        <FrameLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content">
 
-                <LinearLayout
-                    android:id="@+id/hoursContainer"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:gravity="center">
-
-                    <FrameLayout
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content">
+                            <TextView
+                                android:id="@+id/daysTextView"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:background="@android:color/black"
+                                android:textSize="10sp"
+                                android:textColor="@android:color/white"
+                                android:padding="4dp" />
+                        </FrameLayout>
 
                         <TextView
-                            android:id="@+id/hoursTextView"
+                            android:id="@+id/daysLabel"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:background="@android:color/black"
-                            android:textSize="10sp"
-                            android:textColor="@android:color/white"
-                            android:padding="4dp" />
-                    </FrameLayout>
+                            android:text="Day"
+                            android:textSize="8sp"
+                            android:textColor="@android:color/black"
+                            android:padding="2dp" />
+                    </LinearLayout>
 
                     <TextView
-                        android:id="@+id/hoursLabel"
+                        android:id="@+id/colon1"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Hour"
-                        android:textSize="8sp"
+                        android:text=":"
+                        android:textSize="10sp"
                         android:textColor="@android:color/black"
-                        android:padding="2dp" />
-                </LinearLayout>
+                        android:padding="2dp"
+                        android:visibility="visible" />
 
-                <TextView
-                    android:id="@+id/colon2"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text=":"
-                    android:textSize="10sp"
-                    android:textColor="@android:color/black"
-                    android:padding="2dp" />
-
-                <LinearLayout
-                    android:id="@+id/minutesContainer"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:gravity="center">
-
-                    <FrameLayout
+                    <LinearLayout
+                        android:id="@+id/hoursContainer"
                         android:layout_width="wrap_content"
-                        android:layout_height="wrap_content">
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:gravity="center">
+
+                        <FrameLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content">
+
+                            <TextView
+                                android:id="@+id/hoursTextView"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:background="@android:color/black"
+                                android:textSize="10sp"
+                                android:textColor="@android:color/white"
+                                android:padding="4dp" />
+                        </FrameLayout>
 
                         <TextView
-                            android:id="@+id/minutesTextView"
+                            android:id="@+id/hoursLabel"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:background="@android:color/black"
-                            android:textSize="10sp"
-                            android:textColor="@android:color/white"
-                            android:padding="4dp" />
-                    </FrameLayout>
+                            android:text="Hour"
+                            android:textSize="8sp"
+                            android:textColor="@android:color/black"
+                            android:padding="2dp" />
+                    </LinearLayout>
 
                     <TextView
-                        android:id="@+id/minutesLabel"
+                        android:id="@+id/colon2"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Min"
-                        android:textSize="8sp"
+                        android:text=":"
+                        android:textSize="10sp"
                         android:textColor="@android:color/black"
                         android:padding="2dp" />
-                </LinearLayout>
 
-                <TextView
-                    android:id="@+id/colon3"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text=":"
-                    android:textSize="10sp"
-                    android:textColor="@android:color/black"
-                    android:padding="2dp"
-                    android:visibility="visible" />
-
-                <LinearLayout
-                    android:id="@+id/secondsContainer"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:gravity="center"
-                    android:visibility="visible">
-
-                    <FrameLayout
+                    <LinearLayout
+                        android:id="@+id/minutesContainer"
                         android:layout_width="wrap_content"
-                        android:layout_height="wrap_content">
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:gravity="center">
+
+                        <FrameLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content">
+
+                            <TextView
+                                android:id="@+id/minutesTextView"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:background="@android:color/black"
+                                android:textSize="10sp"
+                                android:textColor="@android:color/white"
+                                android:padding="4dp" />
+                        </FrameLayout>
 
                         <TextView
-                            android:id="@+id/secondsTextView"
+                            android:id="@+id/minutesLabel"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:background="@android:color/black"
-                            android:textSize="10sp"
-                            android:textColor="@android:color/white"
-                            android:padding="4dp" />
-                    </FrameLayout>
+                            android:text="Min"
+                            android:textSize="8sp"
+                            android:textColor="@android:color/black"
+                            android:padding="2dp" />
+                    </LinearLayout>
 
                     <TextView
-                        android:id="@+id/secondsLabel"
+                        android:id="@+id/colon3"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Sec"
-                        android:textSize="8sp"
+                        android:text=":"
+                        android:textSize="10sp"
                         android:textColor="@android:color/black"
-                        android:padding="2dp" />
+                        android:padding="2dp"
+                        android:visibility="visible" />
+
+                    <LinearLayout
+                        android:id="@+id/secondsContainer"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:gravity="center"
+                        android:visibility="visible">
+
+                        <FrameLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content">
+
+                            <TextView
+                                android:id="@+id/secondsTextView"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:background="@android:color/black"
+                                android:textSize="10sp"
+                                android:textColor="@android:color/white"
+                                android:padding="4dp" />
+                        </FrameLayout>
+
+                        <TextView
+                            android:id="@+id/secondsLabel"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Sec"
+                            android:textSize="8sp"
+                            android:textColor="@android:color/black"
+                            android:padding="2dp" />
+                    </LinearLayout>
                 </LinearLayout>
             </LinearLayout>
+        </LinearLayout>
 
-            <!-- קו מתחת לתאריך -->
-            <View
-                android:id="@+id/underlineView"
-                android:layout_width="0dp"
-                android:layout_height="1dp"
-                android:layout_marginTop="4dp"
-                android:background="#000000"
-                app:layout_constraintTop_toBottomOf="@id/timerContainer"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"/>
-
-            <!-- Group description -->
+        <!-- Order description -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Order Description:"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:layoutDirection="ltr" />
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:background="@drawable/border"
+            android:layout_marginTop="1dp">
             <TextView
                 android:id="@+id/descriptionTextView"
-                style="@style/CustomTextViewStyle"
-                android:layout_width="0dp"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:gravity="start"
-                android:layout_marginTop="16dp"
-                android:paddingStart="13dp"
-                android:paddingEnd="13dp"
-                app:layout_constraintTop_toBottomOf="@id/underlineView"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"/>
-
-            <!-- קו מתחת ל-description -->
-            <View
-                android:id="@+id/descriptionUnderlineView"
-                android:layout_width="0dp"
-                android:layout_height="1dp"
-                android:layout_marginTop="4dp"
-                android:background="#000000"
-                app:layout_constraintTop_toBottomOf="@id/descriptionTextView"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"/>
-
-            <!-- שאר האלמנטים -->
-            <TextView
-                android:id="@+id/addressTextView"
-                style="@style/CustomTextViewStyle"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:gravity="start"
-                android:layout_marginTop="8dp"
-                android:paddingStart="13dp"
-                android:paddingEnd="13dp"
-                app:layout_constraintTop_toBottomOf="@id/descriptionUnderlineView"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"/>
-
-            <!-- קו מתחת לכתובת -->
-            <View
-                android:id="@+id/addressUnderlineView"
-                android:layout_width="0dp"
-                android:layout_height="1dp"
-                android:layout_marginTop="4dp"
-                android:background="#000000"
-                app:layout_constraintTop_toBottomOf="@id/addressTextView"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"/>
-
-            <!-- כפתור מתחת ל-קוד כתובת -->
+                android:text="Order Description"
+                android:minLines="2"
+                android:textSize="16sp"
+                android:textColor="@color/black"
+                android:textStyle="bold"
+                android:gravity="center" />
             <Button
                 android:id="@+id/siteButton"
-                android:layout_width="0dp"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:gravity="center"
-                android:layout_marginTop="4dp"
-                android:text="Click to Pay"
-                android:visibility="gone"
-                app:layout_constraintTop_toBottomOf="@id/addressUnderlineView"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"/>
+                android:text="Pay with paybox"
+                android:visibility="visible"
+                android:layout_margin="4dp"/>
+        </LinearLayout>
+        <!-- Order address -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Order Address:"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:layoutDirection="ltr" />
+        <TextView
+            android:id="@+id/addressTextView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="1dp"
+            android:text="Order Address"
+            android:textSize="16sp"
+            android:textColor="@color/black"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:minLines="2"
+            android:background="@drawable/border"/>
 
-            <!-- קו מתחת ל-כפתור -->
-            <View
-                android:id="@+id/siteButtonUnderlineView"
-                android:layout_width="0dp"
-                android:layout_height="1dp"
-                android:layout_marginTop="4dp"
-                android:background="#000000"
-                app:layout_constraintTop_toBottomOf="@id/siteButton"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"/>
+        <!-- Layout for users in order -->
+        <LinearLayout
+            android:id="@+id/userListLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginTop="8dp"
+            android:padding="8dp"/>
+        <!-- Add views for each user dynamically -->
 
-            <!-- TextView שמוסתר -->
-            <TextView
-                android:id="@+id/timeTextView"
-                style="@style/CustomTextViewStyle"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:gravity="start"
-                android:layout_marginTop="8dp"
-                android:paddingStart="13dp"
-                android:paddingEnd="13dp"
-                android:visibility="gone"
-                app:layout_constraintTop_toBottomOf="@id/siteButtonUnderlineView"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"/>
+        <!-- TextView שמוסתר -->
+        <TextView
+            android:id="@+id/timeTextView"
+            style="@style/CustomTextViewStyle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:gravity="start"
+            android:layout_marginTop="8dp"
+            android:paddingStart="13dp"
+            android:paddingEnd="13dp"
+            android:visibility="gone" />
+    </LinearLayout>
 
-            <!-- LinearLayout for User List -->
-            <LinearLayout
-                android:id="@+id/userListLayout"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:orientation="vertical"
-                android:padding="16dp"
-                app:layout_constraintTop_toBottomOf="@id/timeTextView"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"/>
-
-            <!-- אייקונים בצד השמאלי -->
-            <ImageView
-                android:id="@+id/shareIcon"
-                android:layout_width="30dp"
-                android:layout_height="30dp"
-                android:layout_marginTop="16dp"
-                android:layout_marginStart="16dp"
-                android:layout_marginEnd="10dp"
-                android:src="@drawable/share"
-                android:contentDescription="Share Icon"
-                app:layout_constraintTop_toTopOf="parent"
-                app:layout_constraintStart_toStartOf="parent" />
-
-            <ImageView
-                android:id="@+id/chatIcon"
-                android:layout_width="30dp"
-                android:layout_height="30dp"
-                android:layout_marginTop="16dp"
-                android:layout_marginStart="10dp"
-                android:layout_marginEnd="10dp"
-                android:src="@drawable/chat_icon"
-                android:contentDescription="Chat Icon"
-                android:visibility="gone"
-                app:layout_constraintTop_toTopOf="parent"
-                app:layout_constraintStart_toEndOf="@id/shareIcon"/>
-
-        </androidx.constraintlayout.widget.ConstraintLayout>
-    </ScrollView>
-
-    <!-- אייקון join בתחתית הדף -->
-    <ImageView
-        android:id="@+id/joinIcon"
-        android:layout_width="50dp"
-        android:layout_height="50dp"
-        android:layout_margin="16dp"
-        android:src="@drawable/join"
-        android:contentDescription="Join Icon"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.5"
-        app:layout_constraintStart_toStartOf="parent" />
-
-    <Button
-        android:id="@+id/waitingListButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_margin="16dp"
-        android:text="Entering the waiting list"
-        android:visibility="gone"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.5"
-        app:layout_constraintStart_toStartOf="parent" />
-</androidx.constraintlayout.widget.ConstraintLayout>
+</ScrollView>

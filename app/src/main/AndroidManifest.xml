@@ -73,7 +73,8 @@
         <activity
             android:name=".ContactUsActivity"
             android:exported="false"
-            android:theme="@style/Theme.CoShop" />
+            android:theme="@style/Theme.CoShop"
+            android:windowSoftInputMode="adjustResize"/>
         <activity
             android:name=".JoinOrderActivity"
             android:exported="false"

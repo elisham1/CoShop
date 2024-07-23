@@ -26,6 +26,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
@@ -40,7 +41,6 @@ import com.google.firebase.firestore.GeoPoint;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
-
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -59,17 +59,19 @@ public class MyOrdersActivity extends AppCompatActivity {
     private String userEmail, globalUserType;
     private GeoPoint userLocation;
     private Geocoder geocoder;
-    private TextView tvAllOrders, tvOpenedOrders, tvClosedOrders, tvSupplierOrders, tvConsumerOrders;
+    private TextView tvAllOrders, tvOpenedOrders, tvClosedOrders, tvSupplierOrders, tvConsumerOrders, tvWaitList;
     private static final String ALL_ORDERS = "All My Orders";
     private static final String OPENED_ORDERS = "Opened Orders";
     private static final String CLOSED_ORDERS = "Closed Orders";
     private static final String SUPPLIER_ORDERS = "Supplier Orders";
     private static final String CONSUMER_ORDERS = "Customer Orders";
+    private static final String WAIT_LIST = "Wait List";
     private List<String> selectedOptions = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Log.d("MyOrdersActivity", "onCreate called");
         // Set the theme based on the user type
         Intent intent = getIntent();
         globalUserType = intent.getStringExtra("userType");
@@ -82,7 +84,7 @@ public class MyOrdersActivity extends AppCompatActivity {
         }
         setContentView(R.layout.activity_my_orders);
         db = FirebaseFirestore.getInstance();
-        menuUtils = new MenuUtils(this,globalUserType);
+        menuUtils = new MenuUtils(this, globalUserType);
         ordersLayout = findViewById(R.id.ordersLayout);
 
         // Initialize Geocoder
@@ -92,34 +94,48 @@ public class MyOrdersActivity extends AppCompatActivity {
         FirebaseUser currentUser = mAuth.getCurrentUser();
         userEmail = currentUser.getEmail();
 
+        Log.d("MyOrdersActivity", "Fetching user location");
         db.collection("users").document(userEmail).get()
                 .addOnSuccessListener(documentSnapshot -> {
                     if (documentSnapshot.exists()) {
                         userLocation = documentSnapshot.getGeoPoint("location");
+                        Log.d("MyOrdersActivity", "User location fetched: " + userLocation);
                     }
                 }).addOnFailureListener(e -> {
                     Log.e("MyOrdersActivity", "Error getting user location", e);
                 });
 
+        tvWaitList = findViewById(R.id.tvWaitList);
         tvAllOrders = findViewById(R.id.tvAllOrders);
         tvOpenedOrders = findViewById(R.id.tvOpenedOrders);
         tvClosedOrders = findViewById(R.id.tvClosedOrders);
         tvSupplierOrders = findViewById(R.id.tvSupplierOrders);
         tvConsumerOrders = findViewById(R.id.tvConsumerOrders);
-        if (globalUserType.equals("Supplier"))
-        {
+
+        if (globalUserType.equals("Supplier")) {
             tvSupplierOrders.setVisibility(View.GONE);
             tvConsumerOrders.setVisibility(View.GONE);
+            tvWaitList.setVisibility(View.GONE);
         }
 
         // Set default view to All Orders
         selectedOptions.add(ALL_ORDERS);
         readUserOrders(selectedOptions);
-//        updateButtonColors(selectedOptions);
+
+        tvWaitList.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Log.d("MyOrdersActivity", "Wait List clicked");
+                selectedOptions.clear();
+                selectedOptions.add(WAIT_LIST);
+                readUserOrders(selectedOptions);
+            }
+        });
 
         tvAllOrders.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                Log.d("MyOrdersActivity", "All Orders clicked");
                 selectedOptions.clear();
                 selectedOptions.add(ALL_ORDERS);
                 readUserOrders(selectedOptions);
@@ -129,17 +145,16 @@ public class MyOrdersActivity extends AppCompatActivity {
         tvOpenedOrders.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                Log.d("MyOrdersActivity", "Opened Orders clicked");
                 selectedOptions.remove(ALL_ORDERS);
+                selectedOptions.remove(WAIT_LIST);
                 if (selectedOptions.contains(OPENED_ORDERS)) {
                     selectedOptions.remove(OPENED_ORDERS);
                     if (selectedOptions.isEmpty()) {
                         selectedOptions.add(ALL_ORDERS);
                     }
                 } else {
-                    if (globalUserType.equals("Supplier"))
-                    {
-                        selectedOptions.clear();
-                    }
+                    selectedOptions.remove(CLOSED_ORDERS);
                     selectedOptions.add(OPENED_ORDERS);
                 }
                 readUserOrders(selectedOptions);
@@ -149,17 +164,16 @@ public class MyOrdersActivity extends AppCompatActivity {
         tvClosedOrders.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                Log.d("MyOrdersActivity", "Closed Orders clicked");
                 selectedOptions.remove(ALL_ORDERS);
+                selectedOptions.remove(WAIT_LIST);
                 if (selectedOptions.contains(CLOSED_ORDERS)) {
                     selectedOptions.remove(CLOSED_ORDERS);
                     if (selectedOptions.isEmpty()) {
                         selectedOptions.add(ALL_ORDERS);
                     }
                 } else {
-                    if (globalUserType.equals("Supplier"))
-                    {
-                        selectedOptions.clear();
-                    }
+                    selectedOptions.remove(OPENED_ORDERS);
                     selectedOptions.add(CLOSED_ORDERS);
                 }
                 readUserOrders(selectedOptions);
@@ -169,13 +183,18 @@ public class MyOrdersActivity extends AppCompatActivity {
         tvSupplierOrders.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                selectedOptions.remove(ALL_ORDERS);
+                Log.d("MyOrdersActivity", "Supplier Orders clicked");
+                if (selectedOptions.contains(ALL_ORDERS) || selectedOptions.contains(WAIT_LIST)) {
+                    selectedOptions.remove(ALL_ORDERS);
+                    selectedOptions.remove(WAIT_LIST);
+                }
                 if (selectedOptions.contains(SUPPLIER_ORDERS)) {
                     selectedOptions.remove(SUPPLIER_ORDERS);
                     if (selectedOptions.isEmpty()) {
                         selectedOptions.add(ALL_ORDERS);
                     }
                 } else {
+                    selectedOptions.remove(CONSUMER_ORDERS);
                     selectedOptions.add(SUPPLIER_ORDERS);
                 }
                 readUserOrders(selectedOptions);
@@ -185,13 +204,18 @@ public class MyOrdersActivity extends AppCompatActivity {
         tvConsumerOrders.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                selectedOptions.remove(ALL_ORDERS);
+                Log.d("MyOrdersActivity", "Consumer Orders clicked");
+                if (selectedOptions.contains(ALL_ORDERS) || selectedOptions.contains(WAIT_LIST)) {
+                    selectedOptions.remove(ALL_ORDERS);
+                    selectedOptions.remove(WAIT_LIST);
+                }
                 if (selectedOptions.contains(CONSUMER_ORDERS)) {
                     selectedOptions.remove(CONSUMER_ORDERS);
                     if (selectedOptions.isEmpty()) {
                         selectedOptions.add(ALL_ORDERS);
                     }
                 } else {
+                    selectedOptions.remove(SUPPLIER_ORDERS);
                     selectedOptions.add(CONSUMER_ORDERS);
                 }
                 readUserOrders(selectedOptions);
@@ -199,14 +223,14 @@ public class MyOrdersActivity extends AppCompatActivity {
         });
 
         ImageButton newOrderButton = findViewById(R.id.newOrderButton);
-        if (globalUserType.equals("Supplier"))
-        {
+        if (globalUserType.equals("Supplier")) {
             newOrderButton.setVisibility(View.VISIBLE);
             newOrderButton.setImageResource(R.drawable.ic_plus_supplier);
         }
         newOrderButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                Log.d("MyOrdersActivity", "New Order button clicked");
                 Intent intent = new Intent(MyOrdersActivity.this, OpenNewOrderActivity.class);
                 intent.putExtra("userType", globalUserType);
                 startActivity(intent);
@@ -215,6 +239,7 @@ public class MyOrdersActivity extends AppCompatActivity {
     }
 
     private void readUserOrders(List<String> options) {
+        Log.d("MyOrdersActivity", "readUserOrders called with options: " + options);
 
         // Clear the existing orders
         ordersLayout.removeAllViews();
@@ -223,89 +248,149 @@ public class MyOrdersActivity extends AppCompatActivity {
 
         CollectionReference ordersRef = db.collection("orders");
 
-        // Query orders where the user's email is in the listPeopleInOrder array
-        Query allOrdersQuery = ordersRef.whereArrayContains("listPeopleInOrder", userEmail);
-        allOrdersQuery.get().addOnSuccessListener(new OnSuccessListener<QuerySnapshot>() {
-            @Override
-            public void onSuccess(QuerySnapshot queryDocumentSnapshots) {
-                List<DocumentSnapshot> allOrdersList = new ArrayList<>();
-                List<DocumentSnapshot> openedOrdersList = new ArrayList<>();
-                List<DocumentSnapshot> closedOrdersList = new ArrayList<>();
-                List<DocumentSnapshot> supplierOrdersList = new ArrayList<>();
-                List<DocumentSnapshot> consumerOrdersList = new ArrayList<>();
-
-                for (QueryDocumentSnapshot documentSnapshot : queryDocumentSnapshots) {
-
-                    // Add to the list of all orders
-                    allOrdersList.add(documentSnapshot);
-
-                    // Check if the order is open or closed based on the "time" field
-                    Timestamp orderTime = documentSnapshot.getTimestamp("time");
-                    Timestamp currentTime = Timestamp.now();
-                    if (orderTime != null && currentTime.compareTo(orderTime) >= 0) {
-                        closedOrdersList.add(documentSnapshot);
-                    } else {
-                        openedOrdersList.add(documentSnapshot);
+        if (selectedOptions.contains(WAIT_LIST)) {
+            Query allWaitingOrdersQuery = ordersRef.whereArrayContains("waitingList", userEmail);
+            allWaitingOrdersQuery.get().addOnSuccessListener(new OnSuccessListener<QuerySnapshot>() {
+                @Override
+                public void onSuccess(QuerySnapshot queryDocumentSnapshots) {
+                    Log.d("MyOrdersActivity", "All Waiting Orders query successful");
+                    List<DocumentSnapshot> allWaitingOrdersList = new ArrayList<>();
+                    for (QueryDocumentSnapshot documentSnapshot : queryDocumentSnapshots) {
+                        allWaitingOrdersList.add(documentSnapshot);
                     }
 
-                    // Check if the order type is supplier or consumer
-                    String orderType = documentSnapshot.getString("type_of_order");
-                    if ("supplier".equalsIgnoreCase(orderType)) {
-                        supplierOrdersList.add(documentSnapshot);
-                    } else {
-                        consumerOrdersList.add(documentSnapshot);
-                    }
+                    displayOrders(allWaitingOrdersList);
                 }
+            }).addOnFailureListener(e -> {
+                Log.e("MyOrdersActivity", "Failed to retrieve waiting list orders", e);
+                Toast.makeText(MyOrdersActivity.this, "Failed to retrieve waiting list orders", Toast.LENGTH_SHORT).show();
+            });
+        } else {
+            // Query orders where the user's email is in the listPeopleInOrder array
+            Query allOrdersQuery = ordersRef.whereArrayContains("listPeopleInOrder", userEmail);
+            allOrdersQuery.get().addOnSuccessListener(new OnSuccessListener<QuerySnapshot>() {
+                @Override
+                public void onSuccess(QuerySnapshot queryDocumentSnapshots) {
+                    Log.d("MyOrdersActivity", "All Orders query successful");
+                    List<DocumentSnapshot> allOrdersList = new ArrayList<>();
+                    List<DocumentSnapshot> openedOrdersList = new ArrayList<>();
+                    List<DocumentSnapshot> closedOrdersList = new ArrayList<>();
+                    List<DocumentSnapshot> supplierOrdersList = new ArrayList<>();
+                    List<DocumentSnapshot> consumerOrdersList = new ArrayList<>();
 
-                List<DocumentSnapshot> ordersToDisplay = new ArrayList<>();
-                for (String option : options) {
-                    if (option.equals(ALL_ORDERS)) {
-                        ordersToDisplay.clear();
+                    for (QueryDocumentSnapshot documentSnapshot : queryDocumentSnapshots) {
+
+                        // Add to the list of all orders
+                        allOrdersList.add(documentSnapshot);
+
+                        // Check if the order is open or closed based on the "time" field
+                        Timestamp orderTime = documentSnapshot.getTimestamp("time");
+                        Timestamp currentTime = Timestamp.now();
+                        if (orderTime != null && currentTime.compareTo(orderTime) >= 0) {
+                            closedOrdersList.add(documentSnapshot);
+                        } else {
+                            openedOrdersList.add(documentSnapshot);
+                        }
+
+                        // Check if the order type is supplier or consumer
+                        String orderType = documentSnapshot.getString("type_of_order");
+                        if ("supplier".equalsIgnoreCase(orderType)) {
+                            supplierOrdersList.add(documentSnapshot);
+                        } else {
+                            consumerOrdersList.add(documentSnapshot);
+                        }
+                    }
+
+                    List<DocumentSnapshot> ordersToDisplay = new ArrayList<>();
+                    if (options.contains(ALL_ORDERS))
+                    {
                         ordersToDisplay.addAll(allOrdersList);
-                    }
-                    if (option.equals(OPENED_ORDERS)) {
-                        Log.d("MyOrdersActivitySelection", "Opened Orders");
-                        for (DocumentSnapshot documentSnapshot : openedOrdersList) {
-                            if (!ordersToDisplay.contains(documentSnapshot))
-                                ordersToDisplay.add(documentSnapshot);
+                    } else {
+                        if (options.contains(OPENED_ORDERS))
+                        {
+                            if (options.contains(SUPPLIER_ORDERS))
+                            {
+                                for (DocumentSnapshot documentSnapshot : supplierOrdersList) {
+                                    if (openedOrdersList.contains(documentSnapshot))
+                                        ordersToDisplay.add(documentSnapshot);
+                                }
+                            } else if (options.contains(CONSUMER_ORDERS))
+                            {
+                                for (DocumentSnapshot documentSnapshot : consumerOrdersList) {
+                                    if (openedOrdersList.contains(documentSnapshot))
+                                        ordersToDisplay.add(documentSnapshot);
+                                }
+                            } else {
+                                ordersToDisplay.addAll(openedOrdersList);
+                            }
+                        } else if (options.contains(CLOSED_ORDERS)){
+                            if (options.contains(SUPPLIER_ORDERS))
+                            {
+                                for (DocumentSnapshot documentSnapshot : supplierOrdersList) {
+                                    if (closedOrdersList.contains(documentSnapshot))
+                                        ordersToDisplay.add(documentSnapshot);
+                                }
+                            } else if (options.contains(CONSUMER_ORDERS))
+                            {
+                                for (DocumentSnapshot documentSnapshot : consumerOrdersList) {
+                                    if (closedOrdersList.contains(documentSnapshot))
+                                        ordersToDisplay.add(documentSnapshot);
+                                }
+                            } else {
+                                ordersToDisplay.addAll(closedOrdersList);
+                            }
+                        } else if (options.contains(SUPPLIER_ORDERS)){
+                            if (options.contains(OPENED_ORDERS))
+                            {
+                                for (DocumentSnapshot documentSnapshot : openedOrdersList) {
+                                    if (supplierOrdersList.contains(documentSnapshot))
+                                        ordersToDisplay.add(documentSnapshot);
+                                }
+                            } else if (options.contains(CLOSED_ORDERS))
+                            {
+                                for (DocumentSnapshot documentSnapshot : closedOrdersList) {
+                                    if (supplierOrdersList.contains(documentSnapshot))
+                                        ordersToDisplay.add(documentSnapshot);
+                                }
+                            } else {
+                                ordersToDisplay.addAll(supplierOrdersList);
+                            }
+                        } else {
+                            if (options.contains(OPENED_ORDERS))
+                            {
+                                for (DocumentSnapshot documentSnapshot : openedOrdersList) {
+                                    if (consumerOrdersList.contains(documentSnapshot))
+                                        ordersToDisplay.add(documentSnapshot);
+                                }
+                            } else if (options.contains(CLOSED_ORDERS))
+                            {
+                                for (DocumentSnapshot documentSnapshot : closedOrdersList) {
+                                    if (consumerOrdersList.contains(documentSnapshot))
+                                        ordersToDisplay.add(documentSnapshot);
+                                }
+                            } else {
+                                ordersToDisplay.addAll(consumerOrdersList);
+                            }
                         }
                     }
-                    if (option.equals(CLOSED_ORDERS)) {
-                        Log.d("MyOrdersActivitySelection", "Closed Orders");
-                        for (DocumentSnapshot documentSnapshot : closedOrdersList) {
-                            if (!ordersToDisplay.contains(documentSnapshot))
-                                ordersToDisplay.add(documentSnapshot);
-                        }
-                    }
-                    if (option.equals(SUPPLIER_ORDERS)) {
-                        Log.d("MyOrdersActivitySelection", "Supplier Orders");
-                        for (DocumentSnapshot documentSnapshot : supplierOrdersList) {
-                            if (!ordersToDisplay.contains(documentSnapshot))
-                                ordersToDisplay.add(documentSnapshot);
-                        }
-                    }
-                    if (option.equals(CONSUMER_ORDERS)) {
-                        Log.d("MyOrdersActivitySelection", "Consumer Orders");
-                        for (DocumentSnapshot documentSnapshot : consumerOrdersList) {
-                            if (!ordersToDisplay.contains(documentSnapshot))
-                                ordersToDisplay.add(documentSnapshot);
-                        }
-                    }
+
+                    // Sort the orders by open time
+                    ordersToDisplay.sort((o1, o2) -> {
+                        Timestamp time1 = o1.getTimestamp("openOrderTime");
+                        Timestamp time2 = o2.getTimestamp("openOrderTime");
+                        return time2 != null && time1 != null ? time2.compareTo(time1) : 0;
+                    });
+                    displayOrders(ordersToDisplay);
                 }
-
-                // Sort the orders by open time
-                ordersToDisplay.sort((o1, o2) -> {
-                    Timestamp time1 = o1.getTimestamp("openOrderTime");
-                    Timestamp time2 = o2.getTimestamp("openOrderTime");
-                    return time2 != null && time1 != null ? time2.compareTo(time1) : 0;
-                });
-
-                displayOrders(ordersToDisplay);
-            }
-        });
+            }).addOnFailureListener(e -> {
+                Log.e("MyOrdersActivity", "Failed to retrieve orders", e);
+                Toast.makeText(MyOrdersActivity.this, "Failed to retrieve orders", Toast.LENGTH_SHORT).show();
+            });
+        }
     }
 
     private void displayOrders(List<DocumentSnapshot> orders) {
+        Log.d("MyOrdersActivity", "displayOrders called with " + orders.size() + " orders");
 
         if (orders.isEmpty()) {
             showNoOrdersFoundMessage();
@@ -337,6 +422,7 @@ public class MyOrdersActivity extends AppCompatActivity {
     private void calculateAndDisplayRatings(String orderId, String titleOfOrder, String location,
                                             long numberOfPeopleInOrder, long maxPeople, String categorie,
                                             float distance, Timestamp timestamp) {
+        Log.d("MyOrdersActivity", "calculateAndDisplayRatings called for order: " + orderId);
         db.collection("orders").document(orderId).get().addOnSuccessListener(documentSnapshot -> {
             List<String> peopleInOrder = (List<String>) documentSnapshot.get("listPeopleInOrder");
             if (peopleInOrder == null || peopleInOrder.isEmpty()) {
@@ -364,19 +450,24 @@ public class MyOrdersActivity extends AppCompatActivity {
                     addOrderToLayout(orderId, titleOfOrder, location, numberOfPeopleInOrder, maxPeople,
                             categorie, distance, timestamp, averageRating);
                 } catch (InterruptedException | ExecutionException e) {
+                    Log.e("MyOrdersActivity", "Error calculating ratings", e);
                     e.printStackTrace();
                     // Handle exception
                 }
             });
         });
     }
+
     private void updateRatingOrderInFirestore(String orderId, double averageRating) {
+        Log.d("MyOrdersActivity", "Updating ratingOrder in Firestore for order: " + orderId);
         db.collection("orders").document(orderId)
                 .update("ratingOrder", averageRating)
                 .addOnSuccessListener(aVoid -> Log.d("Firestore", "ratingOrder successfully updated"))
                 .addOnFailureListener(e -> Log.w("Firestore", "Error updating ratingOrder", e));
     }
+
     private Double calculateUserRating(DocumentSnapshot userDoc) {
+        Log.d("MyOrdersActivity", "Calculating user rating for user: " + userDoc.getId());
         List<Map<String, Object>> userRatings = (List<Map<String, Object>>) userDoc.get("ratings");
         if (userRatings == null || userRatings.isEmpty()) {
             return 0.0;
@@ -397,6 +488,7 @@ public class MyOrdersActivity extends AppCompatActivity {
                                   String location, long numberOfPeopleInOrder,
                                   long maxPeople, String categorie, double distance,
                                   Timestamp timestamp, double averageRating) {
+        Log.d("MyOrdersActivity", "Adding order to layout: " + orderId);
         // Create a new RelativeLayout for the order
         RelativeLayout orderLayout = new RelativeLayout(this);
         RelativeLayout.LayoutParams orderLayoutParams = new RelativeLayout.LayoutParams(
@@ -408,6 +500,7 @@ public class MyOrdersActivity extends AppCompatActivity {
 
         // Set onClickListener to open order details
         orderLayout.setOnClickListener(v -> {
+            Log.d("MyOrdersActivity", "Order clicked: " + orderId);
             Intent intent = new Intent(MyOrdersActivity.this, OrderDetailsActivity.class);
             intent.putExtra("userType", globalUserType);
             intent.putExtra("orderId", orderId);
@@ -447,7 +540,7 @@ public class MyOrdersActivity extends AppCompatActivity {
         // Create and add the people count
         TextView peopleTextView = new TextView(this);
         if (maxPeople == 0) {
-            peopleTextView.setText("∞/"+numberOfPeopleInOrder);
+            peopleTextView.setText("∞/" + numberOfPeopleInOrder);
             //peopleText = "People: " + numberOfPeopleInOrder + "/∞";
 
         } else {
@@ -597,7 +690,6 @@ public class MyOrdersActivity extends AppCompatActivity {
         locationTextView.setTextColor(Color.BLACK); // Set text color to black
         orderLayout.addView(locationTextView);
 
-
         // Fetch the type of order from Firestore and add it below the location
         db.collection("orders").document(orderId).get().addOnSuccessListener(documentSnapshot -> {
             String typeOfOrder = documentSnapshot.getString("type_of_order");
@@ -630,10 +722,10 @@ public class MyOrdersActivity extends AppCompatActivity {
             // Check if the order is open or closed using existing variables
             boolean isOrderOpen = timestamp.toDate().getTime() > currentTime;
 
-// Create and add the open/close text view
+            // Create and add the open/close text view
             TextView openCloseTextView = new TextView(this);
 
-// Create a SpannableString to apply different styles and colors
+            // Create a SpannableString to apply different styles and colors
             SpannableString spannableString;
             if (isOrderOpen) {
                 spannableString = new SpannableString("Open");
@@ -716,7 +808,6 @@ public class MyOrdersActivity extends AppCompatActivity {
         }
     }
 
-
     private int dpToPx(int dp) {
         return (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, dp, getResources().getDisplayMetrics());
     }
@@ -726,9 +817,11 @@ public class MyOrdersActivity extends AppCompatActivity {
             List<Address> addresses = geocoder.getFromLocation(latitude, longitude, 1);
             if (addresses != null && !addresses.isEmpty()) {
                 Address address = addresses.get(0);
+                Log.d("MyOrdersActivity", "Address fetched: " + address.getAddressLine(0));
                 return address.getAddressLine(0);
             }
         } catch (IOException e) {
+            Log.e("MyOrdersActivity", "Error fetching address", e);
             e.printStackTrace();
         }
         return "N/A";
@@ -775,13 +868,12 @@ public class MyOrdersActivity extends AppCompatActivity {
     }
 
     private void updateButtonColors(List<String> selectedOptions) {
+        Log.d("MyOrdersActivity", "Updating button colors for options: " + selectedOptions);
 
         if (globalUserType.equals("Supplier")) {
             tvAllOrders.setBackgroundResource(R.drawable.bg_selected_supplier);
-        }
-        else {
-            if (selectedOptions.size() == 4)
-            {
+        } else {
+            if (selectedOptions.size() == 4) {
                 selectedOptions.clear();
                 selectedOptions.add(ALL_ORDERS);
             }
@@ -793,39 +885,45 @@ public class MyOrdersActivity extends AppCompatActivity {
         tvSupplierOrders.setBackgroundResource(R.drawable.bg_unselected);
         tvConsumerOrders.setBackgroundResource(R.drawable.bg_unselected);
 
-
-
-        for (String option : selectedOptions)
-        {
+        for (String option : selectedOptions) {
             if (option.equals(ALL_ORDERS)) {
                 if (globalUserType.equals("Supplier")) {
                     tvAllOrders.setBackgroundResource(R.drawable.bg_selected_supplier);
-                }
-                else {
+                } else {
                     tvAllOrders.setBackgroundResource(R.drawable.bg_selected_consumer);
                 }
                 tvOpenedOrders.setBackgroundResource(R.drawable.bg_unselected);
                 tvClosedOrders.setBackgroundResource(R.drawable.bg_unselected);
                 tvSupplierOrders.setBackgroundResource(R.drawable.bg_unselected);
                 tvConsumerOrders.setBackgroundResource(R.drawable.bg_unselected);
+                tvWaitList.setBackgroundResource(R.drawable.bg_unselected);
                 break;
-            }
-            else  {
+            } else if (option.equals(WAIT_LIST)) {
                 tvAllOrders.setBackgroundResource(R.drawable.bg_unselected);
+                tvOpenedOrders.setBackgroundResource(R.drawable.bg_unselected);
+                tvClosedOrders.setBackgroundResource(R.drawable.bg_unselected);
+                tvSupplierOrders.setBackgroundResource(R.drawable.bg_unselected);
+                tvConsumerOrders.setBackgroundResource(R.drawable.bg_unselected);
+                if (globalUserType.equals("Supplier")) {
+                    tvWaitList.setBackgroundResource(R.drawable.bg_selected_supplier);
+                } else {
+                    tvWaitList.setBackgroundResource(R.drawable.bg_selected_consumer);
+                }
+            } else {
+                tvAllOrders.setBackgroundResource(R.drawable.bg_unselected);
+                tvWaitList.setBackgroundResource(R.drawable.bg_unselected);
 
                 if (option.equals(OPENED_ORDERS)) {
                     if (globalUserType.equals("Supplier")) {
                         tvOpenedOrders.setBackgroundResource(R.drawable.bg_selected_supplier);
-                    }
-                    else {
+                    } else {
                         tvOpenedOrders.setBackgroundResource(R.drawable.bg_selected_consumer);
                     }
                 }
                 if (option.equals(CLOSED_ORDERS)) {
                     if (globalUserType.equals("Supplier")) {
                         tvClosedOrders.setBackgroundResource(R.drawable.bg_selected_supplier);
-                    }
-                    else {
+                    } else {
                         tvClosedOrders.setBackgroundResource(R.drawable.bg_selected_consumer);
                     }
                 }
@@ -840,6 +938,7 @@ public class MyOrdersActivity extends AppCompatActivity {
     }
 
     private void showNoOrdersFoundMessage() {
+        Log.d("MyOrdersActivity", "No orders found");
         ordersLayout.removeAllViews();
         TextView noOrdersTextView = new TextView(this);
         noOrdersTextView.setText("No orders found for this filter.");
@@ -850,6 +949,7 @@ public class MyOrdersActivity extends AppCompatActivity {
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
+        Log.d("MyOrdersActivity", "onCreateOptionsMenu called");
         getMenuInflater().inflate(R.menu.menu_items, menu);
         if ("Supplier".equals(globalUserType)) {
             MenuItem item = menu.findItem(R.id.chat_notification);
@@ -862,34 +962,42 @@ public class MyOrdersActivity extends AppCompatActivity {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
+        Log.d("MyOrdersActivity", "onOptionsItemSelected called with itemId: " + item.getItemId());
         switch (item.getItemId()) {
             case R.id.Personal_info:
+                Log.d("MyOrdersActivity", "Personal info selected");
                 menuUtils.personalInfo();
                 return true;
             case R.id.My_Orders:
+                Log.d("MyOrdersActivity", "My Orders selected");
                 menuUtils.myOrders();
                 return true;
             case R.id.About_Us:
+                Log.d("MyOrdersActivity", "About Us selected");
                 menuUtils.aboutUs();
                 return true;
             case R.id.Contact_Us:
+                Log.d("MyOrdersActivity", "Contact Us selected");
                 menuUtils.contactUs();
                 return true;
             case R.id.Log_Out:
+                Log.d("MyOrdersActivity", "Log Out selected");
                 menuUtils.logOut();
                 return true;
             case R.id.home:
+                Log.d("MyOrdersActivity", "Home selected");
                 menuUtils.home();
                 return true;
             case R.id.chat_icon:
+                Log.d("MyOrdersActivity", "Chat icon selected");
                 menuUtils.allChats();
                 return true;
             case R.id.chat_notification:
+                Log.d("MyOrdersActivity", "Chat notification selected");
                 menuUtils.chat_notification();
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
         }
     }
-
 }
