@@ -98,7 +98,7 @@ public class MyOrdersActivity extends AppCompatActivity {
         db.collection("users").document(userEmail).get()
                 .addOnSuccessListener(documentSnapshot -> {
                     if (documentSnapshot.exists()) {
-                        userLocation = documentSnapshot.getGeoPoint("location");
+                        userLocation = documentSnapshot.getGeoPoint("address");
                         Log.d("MyOrdersActivity", "User location fetched: " + userLocation);
                     }
                 }).addOnFailureListener(e -> {
@@ -410,6 +410,8 @@ public class MyOrdersActivity extends AppCompatActivity {
             long numberOfPeopleInOrder = documentSnapshot.getLong("NumberOfPeopleInOrder");
             long maxPeople = documentSnapshot.getLong("max_people");
             String categorie = documentSnapshot.getString("categorie");
+            Log.d("HomePageActivity", "Calculated distance: " + userLocation);
+            Log.d("HomePageActivity", "Calculated distance: " + orderLocation);
             float distance = calculateDistance(userLocation, orderLocation);
             Timestamp timestamp = documentSnapshot.getTimestamp("time");
 
