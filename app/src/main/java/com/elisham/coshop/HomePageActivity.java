@@ -14,6 +14,7 @@ import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.text.Spannable;
 import android.text.SpannableString;
+import android.text.TextUtils;
 import android.text.style.ForegroundColorSpan;
 import android.text.style.StyleSpan;
 import android.util.Log;
@@ -611,10 +612,12 @@ public class HomePageActivity extends AppCompatActivity {
         }
         orderLayout.addView(rightSquareContainer);
 
-        // Create and add the location
+// Create and add the location
         TextView locationTextView = new TextView(this);
-        locationTextView.setText(location);
         locationTextView.setId(View.generateViewId());
+        locationTextView.setSingleLine(true);
+        locationTextView.setEllipsize(TextUtils.TruncateAt.END);
+        locationTextView.setText(location);
         RelativeLayout.LayoutParams locationParams = new RelativeLayout.LayoutParams(
                 ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         locationParams.addRule(RelativeLayout.BELOW, rightSquareContainer.getId()); // או כל אלמנט אחר מעל המיקום
@@ -626,6 +629,7 @@ public class HomePageActivity extends AppCompatActivity {
         locationTextView.setTypeface(null, Typeface.BOLD); // Bold text
         locationTextView.setTextColor(Color.BLACK); // Set text color to black
         orderLayout.addView(locationTextView);
+
 
         // Fetch the type of order from Firestore and add it below the location
         db.collection("orders").document(orderId).get().addOnSuccessListener(documentSnapshot -> {
@@ -711,6 +715,7 @@ public class HomePageActivity extends AppCompatActivity {
         // Add the order layout to the container
         ordersContainer.addView(orderLayout);
     }
+
 
     private void addStarsToLayout(LinearLayout layout, double rating) {
         int fullStars = (int) rating;

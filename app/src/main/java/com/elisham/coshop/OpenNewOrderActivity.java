@@ -76,6 +76,8 @@ import java.util.Map;
 
 public class OpenNewOrderActivity extends AppCompatActivity {
     private FirebaseFirestore db;
+    private boolean isSubmitting = false;
+
     private Spinner categorySpinner;
     private EditText urlEditText;
     private EditText descriptionEditText;
@@ -424,6 +426,15 @@ public class OpenNewOrderActivity extends AppCompatActivity {
     }
 
     public void goToMyOrders(View v) {
+        if (isSubmitting) {
+            // אם הכפתור כבר נלחץ וההזמנה בעיצומה, לא נעשה כלום
+            return;
+        }
+
+        // ננעל את הכפתור ונציג הודעת טעינה
+        isSubmitting = true;
+        Toast.makeText(this, "Loading", Toast.LENGTH_SHORT).show();
+
         String url = urlEditText.getText().toString().trim();
         String description = descriptionEditText.getText().toString().trim();
         String title = titleEditText.getText().toString().trim();
@@ -433,49 +444,59 @@ public class OpenNewOrderActivity extends AppCompatActivity {
             url = "";
         } else if (!url.contains("://")) {
             Toast.makeText(this, "Invalid URL. Please enter a valid URL", Toast.LENGTH_SHORT).show();
+            isSubmitting = false; // שחרור הכפתור אם יש שגיאה
             return;
         }
 
         if (title.isEmpty()) {
             Toast.makeText(this, "Title is required", Toast.LENGTH_SHORT).show();
+            isSubmitting = false; // שחרור הכפתור אם יש שגיאה
             return;
         }
 
         if (saveNewCategorieName.isEmpty() || saveNewCategorieName.equals("Choose Categorie")) {
             Toast.makeText(this, "Category is required", Toast.LENGTH_SHORT).show();
+            isSubmitting = false; // שחרור הכפתור אם יש שגיאה
             return;
         }
 
         if (lastLatitude == 0.0 && lastLongitude == 0.0) {
             Toast.makeText(this, "Location is required", Toast.LENGTH_SHORT).show();
+            isSubmitting = false; // שחרור הכפתור אם יש שגיאה
             return;
         }
 
         if (description.isEmpty()) {
             Toast.makeText(this, "Description is required", Toast.LENGTH_SHORT).show();
+            isSubmitting = false; // שחרור הכפתור אם יש שגיאה
             return;
         }
 
         if (selectedDate == null) {
             Toast.makeText(this, "Date is required", Toast.LENGTH_SHORT).show();
+            isSubmitting = false; // שחרור הכפתור אם יש שגיאה
             return;
         }
 
         if (selectedTime == null) {
             Toast.makeText(this, "Time is required", Toast.LENGTH_SHORT).show();
+            isSubmitting = false; // שחרור הכפתור אם יש שגיאה
             return;
         }
 
         if (maxPeople == 0) {
             Toast.makeText(this, "Maximum people is required it's can't be zero", Toast.LENGTH_SHORT).show();
+            isSubmitting = false; // שחרור הכפתור אם יש שגיאה
             return;
         }
         if (maxPeople == 1) {
             Toast.makeText(this, "Choose minimum two participants", Toast.LENGTH_SHORT).show();
+            isSubmitting = false; // שחרור הכפתור אם יש שגיאה
             return;
         }
         if (maxPeople < 0) {
             Toast.makeText(this, "You cannot choose a negative number", Toast.LENGTH_SHORT).show();
+            isSubmitting = false; // שחרור הכפתור אם יש שגיאה
             return;
         }
         addCategorieToDataBase();
@@ -491,16 +512,20 @@ public class OpenNewOrderActivity extends AppCompatActivity {
                                         Intent intent = new Intent(OpenNewOrderActivity.this, MyOrdersActivity.class);
                                         intent.putExtra("userType", globalUserType);
                                         startActivity(intent);
+                                        finish(); // סיום הפעילות הנוכחית כדי למנוע חזרה
                                     } else {
                                         Toast.makeText(this, "Error in notification process", Toast.LENGTH_SHORT).show();
+                                        isSubmitting = false; // שחרור הכפתור אם יש שגיאה
                                     }
                                 });
                             } else {
                                 Toast.makeText(this, "Error in notification process", Toast.LENGTH_SHORT).show();
+                                isSubmitting = false; // שחרור הכפתור אם יש שגיאה
                             }
                         });
             } else {
                 Toast.makeText(this, "Failed to save order", Toast.LENGTH_SHORT).show();
+                isSubmitting = false; // שחרור הכפתור אם יש שגיאה
             }
         });
     }

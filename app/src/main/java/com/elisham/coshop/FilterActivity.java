@@ -269,12 +269,16 @@ public class FilterActivity extends AppCompatActivity {
             plusIcon.setImageResource(R.drawable.tick);
         }
         isCategoryListVisible = !isCategoryListVisible;
+
+        updateCategoryTextView(); // עדכון ה־TextView לאחר שינוי ברשימת הקטגוריות
     }
+
     public void OrderFiltering(View v) {
         String address = searchAddressText.getText().toString();
         String urlOrString = editTextURL.getText().toString();
-        List<String> selectedCategories = getSelectedCategories();
 
+        List<String> selectedCategories = getSelectedCategories();
+        updateCategoryTextView();
         boolean filterByLocation = !address.isEmpty() || lastAddress != null;
         boolean filterByURLOrString = !urlOrString.isEmpty();
         boolean filterByCategory = selectedCategories != null && !selectedCategories.isEmpty();
@@ -542,6 +546,16 @@ public class FilterActivity extends AppCompatActivity {
                 startActivity(intent);
             }
         });
+    }
+    private void updateCategoryTextView() {
+        TextView categoryTextView = findViewById(R.id.category_text);
+        List<String> selectedCategories = getSelectedCategories();
+        if (selectedCategories.isEmpty()) {
+            categoryTextView.setText("Open Category list");
+        } else {
+            String categoriesText = String.join(", ", selectedCategories);
+            categoryTextView.setText(categoriesText);
+        }
     }
 
     private void fetchOrdersByUrl(String url, String address, List<String> selectedCategories, boolean filterByCategory, boolean filterByConsumer, boolean filterBySupplied, boolean filterByPeopleLimit, int peopleLimit, boolean filterByUnlimitedPeople, boolean filterByTime, Calendar selectedDate, Calendar selectedTime) {
