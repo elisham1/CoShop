@@ -4,7 +4,9 @@ import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.view.ViewCompat;
 
+import android.annotation.SuppressLint;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.location.Address;
@@ -22,8 +24,10 @@ import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
@@ -62,6 +66,10 @@ public class HomePageActivity extends AppCompatActivity {
     private Geocoder geocoder;
     private MenuUtils menuUtils;
     private String userEmail, globalUserType;
+    private static final String PREFS_NAME = "AppPrefs";
+    private static final String KEY_FIRST_TIME = "firstTime";
+    private RelativeLayout explanationLayout;
+    private int currentStep = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -84,7 +92,83 @@ public class HomePageActivity extends AppCompatActivity {
         initializeUI();
     }
 
+    private void showExplanationsIfNeeded() {
+        SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+        boolean firstTime = prefs.getBoolean(KEY_FIRST_TIME, true);
+        firstTime = true;
 
+        if (firstTime) {
+            explanationLayout = (RelativeLayout) getLayoutInflater().inflate(R.layout.explanation_layout, null);
+            addContentView(explanationLayout, new RelativeLayout.LayoutParams(
+                    RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.MATCH_PARENT));
+
+            explanationLayout.setOnTouchListener((v, event) -> {
+                if (event.getAction() == MotionEvent.ACTION_DOWN) {
+                    showNextExplanationStep();
+                    return true;
+                }
+                return false;
+            });
+
+            Button btnDismiss = explanationLayout.findViewById(R.id.btnDismiss);
+            btnDismiss.setOnClickListener(v -> {
+                // Dismiss the explanations
+                explanationLayout.setVisibility(View.GONE);
+
+                // Update the shared preferences to mark that the user has seen the explanations
+                SharedPreferences.Editor editor = prefs.edit();
+                editor.putBoolean(KEY_FIRST_TIME, false);
+                editor.apply();
+            });
+
+            // Show the first explanation step
+            showNextExplanationStep();
+        }
+    }
+
+    private void showNextExplanationStep() {
+        ImageView arrowToPlus = explanationLayout.findViewById(R.id.arrow_to_plus);
+        TextView textPlus = explanationLayout.findViewById(R.id.text_plus);
+        ImageView arrowToMenu = explanationLayout.findViewById(R.id.arrow_to_menu);
+        TextView textMenu = explanationLayout.findViewById(R.id.text_menu);
+        ImageView arrowToFilter = explanationLayout.findViewById(R.id.arrow_to_filter);
+        TextView textFilter = explanationLayout.findViewById(R.id.text_filter);
+        Button btnDismiss = explanationLayout.findViewById(R.id.btnDismiss);
+        TextView textEnjoy = explanationLayout.findViewById(R.id.text_enjoy);
+
+        // Hide all elements initially
+        arrowToPlus.setVisibility(View.GONE);
+        textPlus.setVisibility(View.GONE);
+        arrowToMenu.setVisibility(View.GONE);
+        textMenu.setVisibility(View.GONE);
+        arrowToFilter.setVisibility(View.GONE);
+        textFilter.setVisibility(View.GONE);
+        btnDismiss.setVisibility(View.GONE);
+        textEnjoy.setVisibility(View.GONE);
+
+        // Show elements based on the current step
+        switch (currentStep) {
+            case 0:
+                currentStep++;
+                arrowToPlus.setVisibility(View.VISIBLE);
+                textPlus.setVisibility(View.VISIBLE);
+                break;
+            case 1:
+                currentStep++;
+                arrowToMenu.setVisibility(View.VISIBLE);
+                textMenu.setVisibility(View.VISIBLE);
+                break;
+            case 2:
+                currentStep++;
+                arrowToFilter.setVisibility(View.VISIBLE);
+                textFilter.setVisibility(View.VISIBLE);
+                break;
+            case 3:
+                textEnjoy.setVisibility(View.VISIBLE);
+                btnDismiss.setVisibility(View.VISIBLE);
+                break;
+        }
+    }
 
     private void initializeUI() {
         if (currentUser != null) {
@@ -173,7 +257,10 @@ public class HomePageActivity extends AppCompatActivity {
                         }
                     });
         }
+        // Show explanations if it's the user's first time
+        showExplanationsIfNeeded();
     }
+
     private void getUserLocationAndShowFilteredOrderIds(String filteredOrderIds) {
         if (currentUser != null) {
             userEmail = currentUser.getEmail();
