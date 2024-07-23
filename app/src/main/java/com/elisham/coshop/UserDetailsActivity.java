@@ -648,6 +648,7 @@ public class UserDetailsActivity extends AppCompatActivity {
         // Clear the activity stack and start as a new task
         homeIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
         homeIntent.putExtra("userType", userType);
+        homeIntent.putExtra("source", "user_details");
         startActivity(homeIntent);
 
         // Finish UserDetailsActivity

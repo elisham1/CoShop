@@ -1,333 +1,306 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:fillViewport="true"
-    tools:context=".OpenNewOrderActivity">
+    android:orientation="vertical"
+    android:padding="16dp"
+    tools:context=".OpenNewOrderActivity"
+    android:layoutDirection="ltr">
 
-    <LinearLayout
-        android:layout_width="match_parent"
+    <TextView
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="16dp"
+        android:layout_gravity="center"
+        android:layout_marginBottom="8dp"
+        android:text="Open New Order"
+        android:textSize="25sp"
+        android:textStyle="bold"
+        android:textColor="@color/black"
+        android:layoutDirection="ltr" />
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:fillViewport="true"
         android:layoutDirection="ltr">
 
-        <!-- Header with title -->
         <LinearLayout
-            android:id="@+id/button_id"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"
-            android:padding="4dp"
-            android:layout_marginLeft="16dp"
-            android:layout_marginTop="16dp"
-            android:layout_marginRight="16dp"
-            android:layout_marginBottom="0dp"
+            android:orientation="vertical"
+            android:gravity="center_horizontal"
             android:layoutDirection="ltr">
 
-            <RelativeLayout
+            <!-- Title Input -->
+            <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:gravity="center_vertical">
-
-                <TextView
-                    android:id="@+id/newOrderTitle"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_centerInParent="true"
-                    android:fontFamily="sans-serif"
-                    android:text="Open New Order"
-                    android:textColor="#000000"
-                    android:textSize="25sp"
-                    android:textStyle="bold" />
-            </RelativeLayout>
-        </LinearLayout>
-
-        <!-- Title input -->
-        <LinearLayout
-            android:id="@+id/title_id"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"
-            android:padding="4dp"
-            android:layout_marginLeft="16dp"
-            android:layout_marginTop="16dp"
-            android:layout_marginRight="16dp"
-            android:layout_marginBottom="0dp"
-            android:layoutDirection="ltr">
+                android:layout_marginTop="8dp"
+                android:text="Title:"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:layoutDirection="ltr" />
 
             <EditText
                 android:id="@+id/title"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="50dp"
                 android:ems="10"
                 android:textSize="15sp"
                 android:inputType="text"
                 android:hint="Enter Title (max 25 characters)"
-                android:layout_marginBottom="10dp"
-                android:minHeight="48dp"
+                android:background="@drawable/border"
                 android:padding="12dp"
-                android:maxLength="30"/>
-        </LinearLayout>
+                android:maxLength="30"
+                android:layoutDirection="ltr" />
 
-        <!-- URL input -->
-        <LinearLayout
-            android:id="@+id/url_id"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-
-            android:gravity="center_vertical"
-            android:orientation="horizontal"
-            android:padding="4dp"
-            android:layout_marginLeft="16dp"
-            android:layout_marginTop="16dp"
-            android:layout_marginRight="16dp"
-            android:layout_marginBottom="0dp"
-            android:layoutDirection="ltr">
-
-            <EditText
-                android:id="@+id/url"
-                android:layout_width="0dp"
+            <!-- URL Input -->
+            <TextView
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:ems="10"
-                android:textSize="15sp"
-                android:inputType="textUri"
-                android:hint="Insert a secure payment link."
-                android:layout_marginBottom="10dp"
-                android:padding="12dp"
-                android:minHeight="48dp"/>
-
-            <ImageButton
-                android:id="@+id/tap_icon"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:background="?android:attr/selectableItemBackground"
-                android:contentDescription="Tap icon"
-                android:scaleType="fitCenter"
-                android:src="@drawable/tap"
+                android:layout_marginTop="8dp"
+                android:text="Payment Link:"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:layoutDirection="ltr" />
+            <LinearLayout
+                android:id="@+id/url_row"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:orientation="horizontal"
+                android:background="@drawable/border"
                 android:padding="8dp"
-                android:layout_marginBottom="11dp"
-                />
-        </LinearLayout>
+                android:layoutDirection="ltr">
+                <EditText
+                    android:id="@+id/url"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:background="@android:color/transparent"
+                    android:textSize="15sp"
+                    android:inputType="textUri"
+                    android:hint="Insert a secure payment link."
+                    android:layoutDirection="ltr" />
 
-        <!-- Category selection -->
-        <LinearLayout
-            android:id="@+id/category_id"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"
-            android:padding="4dp"
-            android:layout_marginLeft="16dp"
-            android:layout_marginTop="16dp"
-            android:layout_marginRight="16dp"
-            android:layout_marginBottom="0dp"
-            android:layoutDirection="ltr">
+                <ImageButton
+                    android:id="@+id/tap_icon"
+                    android:layout_width="40dp"
+                    android:layout_height="match_parent"
+                    android:background="?android:attr/selectableItemBackground"
+                    android:contentDescription="Tap icon"
+                    android:scaleType="fitCenter"
+                    android:src="@drawable/tap"
+                    android:layoutDirection="ltr" />
+            </LinearLayout>
 
+            <!-- Category Selection -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="Category:"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:layoutDirection="ltr" />
             <Spinner
                 android:id="@+id/category"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="-2dp"
-                android:layout_marginBottom="10dp"
-                android:entries="@array/category_options"
-                android:prompt="@string/choose_category"
-                android:minHeight="48dp"
-                android:padding="12dp"/>
-        </LinearLayout>
+                android:layout_height="50dp"
+                android:background="@drawable/bg_spinner"
+                android:padding="8dp"
+                android:layoutDirection="ltr" />
 
-        <LinearLayout
-            android:id="@+id/search_row"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"
-            android:padding="4dp"
-            android:layout_marginLeft="16dp"
-            android:layout_marginTop="16dp"
-            android:layout_marginRight="16dp"
-            android:layout_marginBottom="0dp"
-            android:layoutDirection="ltr">
-
-            <ImageButton
-                android:id="@+id/edit_address_button"
-                android:layout_width="48dp"
-                android:layout_height="match_parent"
-                android:background="?android:attr/selectableItemBackground"
-                android:contentDescription="Edit address"
-                android:padding="10dp"
-                android:src="@drawable/edit"
-                android:visibility="gone" />
-
+            <!-- Search Address -->
             <TextView
-                android:id="@+id/search_address_text"
-                android:layout_width="0dp"
-                android:layout_height="38dp"
-                android:layout_weight="1"
-                android:gravity="center_vertical|start"
-                android:hint="Search address"
-                android:paddingStart="12dp"
-                android:textSize="15sp" />
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="Address:"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:layoutDirection="ltr" />
+            <LinearLayout
+                android:id="@+id/search_row"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:orientation="horizontal"
+                android:background="@drawable/border"
+                android:layoutDirection="ltr">
+                <ImageButton
+                    android:id="@+id/search_address_button"
+                    android:layout_width="48dp"
+                    android:layout_height="match_parent"
+                    android:background="?android:attr/selectableItemBackground"
+                    android:contentDescription="Search address"
+                    android:src="@drawable/baseline_search_24"
+                    android:layoutDirection="ltr" />
+                <TextView
+                    android:id="@+id/search_address_text"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:gravity="center_vertical|start"
+                    android:hint="Search address"
+                    android:paddingStart="8dp"
+                    android:textSize="16sp"
+                    android:textColor="@color/black"
+                    android:textStyle="bold"
+                    android:layoutDirection="ltr"/>
+                <ImageButton
+                    android:id="@+id/edit_address_button"
+                    android:layout_width="48dp"
+                    android:layout_height="match_parent"
+                    android:background="?android:attr/selectableItemBackground"
+                    android:contentDescription="Edit address"
+                    android:src="@drawable/edit"
+                    android:visibility="gone"
+                    android:layoutDirection="ltr" />
+            </LinearLayout>
 
-            <ImageButton
-                android:id="@+id/search_address_button"
-                android:layout_width="48dp"
-                android:layout_height="match_parent"
-                android:adjustViewBounds="true"
-                android:background="?android:attr/selectableItemBackground"
-                android:clickable="false"
-                android:contentDescription="Search address"
-                android:focusable="false"
-                android:paddingLeft="0dp"
-                android:paddingTop="8dp"
-                android:paddingRight="0dp"
-                android:paddingBottom="8dp"
-                android:scaleType="fitEnd"
-                android:src="@drawable/baseline_search_24" />
-        </LinearLayout>
-
-        <!-- Description input -->
-        <LinearLayout
-            android:id="@+id/description_id"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"
-            android:padding="4dp"
-            android:layout_marginLeft="16dp"
-            android:layout_marginTop="16dp"
-            android:layout_marginRight="16dp"
-            android:layout_marginBottom="0dp"
-            android:layoutDirection="ltr">
-
+            <!-- Description Input -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="Description:"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:layoutDirection="ltr" />
             <EditText
                 android:id="@+id/description"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:ems="10"
-                android:inputType="text"
+                android:layout_height="50dp"
+                android:inputType="textMultiLine"
                 android:hint="Describe your order"
                 android:textSize="15sp"
-                android:layout_marginBottom="10dp"
-                android:minHeight="48dp"
-                android:padding="12dp"/>
-        </LinearLayout>
+                android:background="@drawable/border"
+                android:padding="12dp"
+                android:layoutDirection="ltr" />
 
-        <!-- Date and Time selection row -->
-        <LinearLayout
-            android:id="@+id/date_time"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"
-            android:padding="4dp"
-            android:layout_marginLeft="16dp"
-            android:layout_marginTop="16dp"
-            android:layout_marginRight="16dp"
-            android:layout_marginBottom="0dp"
-            android:layoutDirection="ltr">
-
-            <!-- Date selection -->
-            <ImageButton
-                android:id="@+id/date_icon"
-                android:layout_width="48dp"
-                android:layout_height="match_parent"
-                android:background="?android:attr/selectableItemBackground"
-                android:contentDescription="Select Date"
-                android:src="@drawable/baseline_calendar_month_24"
-                android:padding="20dp"
-                android:onClick="showDatePickerDialog" />
-
+            <!-- Date and Time Selection -->
             <TextView
-                android:id="@+id/date_text"
-                android:layout_width="0dp"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Select Date"
-                android:textSize="15sp"
-                android:fontFamily="sans-serif"
-                android:gravity="center_vertical"
-                android:padding="16dp"
-                android:clickable="true"
-                android:onClick="showDatePickerDialog" />
+                android:layout_marginTop="8dp"
+                android:text="Date and Time:"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:layoutDirection="ltr" />
 
-            <!-- Time selection -->
-            <ImageButton
-                android:id="@+id/time_icon"
-                android:layout_width="48dp"
-                android:layout_height="match_parent"
-                android:background="?android:attr/selectableItemBackground"
-                android:contentDescription="Select Time"
-                android:src="@drawable/ic_baseline_access_time_24"
-                android:padding="20dp"
-                android:onClick="showTimePickerDialog" />
+            <!-- Date and Time Selection -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:orientation="horizontal"
+                android:layoutDirection="ltr">
 
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:orientation="horizontal"
+                    android:background="@drawable/border"
+                    android:layoutDirection="ltr">
+
+                    <ImageButton
+                        android:id="@+id/date_icon"
+                        android:layout_width="48dp"
+                        android:layout_height="match_parent"
+                        android:background="?android:attr/selectableItemBackground"
+                        android:contentDescription="Select Date"
+                        android:src="@drawable/baseline_calendar_month_24"
+                        android:onClick="showDatePickerDialog"
+                        android:layoutDirection="ltr" />
+                    <TextView
+                        android:id="@+id/date_text"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:text="Select Date"
+                        android:textSize="15sp"
+                        android:fontFamily="sans-serif"
+                        android:gravity="center_vertical"
+                        android:padding="16dp"
+                        android:clickable="true"
+                        android:onClick="showDatePickerDialog"
+                        android:layoutDirection="ltr" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="50dp"
+                    android:layout_weight="1"
+                    android:orientation="horizontal"
+                    android:background="@drawable/border"
+                    android:layoutDirection="ltr">
+
+                    <ImageButton
+                        android:id="@+id/time_icon"
+                        android:layout_width="48dp"
+                        android:layout_height="match_parent"
+                        android:background="?android:attr/selectableItemBackground"
+                        android:contentDescription="Select Time"
+                        android:src="@drawable/ic_baseline_access_time_24"
+                        android:onClick="showTimePickerDialog"
+                        android:layoutDirection="ltr" />
+                    <TextView
+                        android:id="@+id/time_text"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:text="Select Time"
+                        android:textSize="15sp"
+                        android:fontFamily="sans-serif"
+                        android:gravity="center_vertical"
+                        android:padding="16dp"
+                        android:clickable="true"
+                        android:onClick="showTimePickerDialog"
+                        android:layoutDirection="ltr" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- Max People Input -->
             <TextView
-                android:id="@+id/time_text"
-                android:layout_width="0dp"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Select Time"
-                android:textSize="15sp"
-                android:fontFamily="sans-serif"
-                android:gravity="center_vertical"
-                android:padding="16dp"
-                android:clickable="true"
-                android:onClick="showTimePickerDialog" />
-        </LinearLayout>
-
-        <!-- Max People input -->
-        <LinearLayout
-            android:id="@+id/max_people"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"
-            android:padding="4dp"
-            android:layout_marginLeft="16dp"
-            android:layout_marginTop="16dp"
-            android:layout_marginRight="16dp"
-            android:layout_marginBottom="0dp"
-            android:layoutDirection="ltr">
-
+                android:layout_marginTop="8dp"
+                android:text="Max People:"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:layoutDirection="ltr" />
             <EditText
                 android:id="@+id/maxPeopleEditText"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="50dp"
                 android:ems="10"
                 android:inputType="number"
                 android:hint="Maximum people"
                 android:textSize="15sp"
-                android:layout_marginTop="8dp"
-                android:minHeight="48dp"
-                android:padding="12dp"/>
+                android:background="@drawable/border"
+                android:padding="12dp"
+                android:layoutDirection="ltr" />
         </LinearLayout>
+    </ScrollView>
 
-        <!-- Submit button -->
-        <LinearLayout
-            android:id="@+id/date_time_row"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center"
-            android:orientation="horizontal"
-            android:padding="4dp"
-            android:layoutDirection="ltr">
-
-            <ImageButton
-                android:id="@+id/submit_button"
-                android:layout_width="50dp"
-                android:layout_height="50dp"
-                android:layout_marginTop="1dp"
-                android:layout_gravity="center"
-                android:contentDescription="Submit new order"
-                android:onClick="goToMyOrders"
-                android:background="@android:color/transparent"
-                app:srcCompat="@drawable/ic_plus_consumer"/>
-        </LinearLayout>
+    <!-- Submit Button -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:orientation="horizontal"
+        android:padding="4dp"
+        android:layoutDirection="ltr">
+        <ImageButton
+            android:id="@+id/submit_button"
+            android:layout_width="60dp"
+            android:layout_height="60dp"
+            android:contentDescription="Submit new order"
+            android:onClick="goToMyOrders"
+            android:background="@android:color/transparent"
+            app:srcCompat="@drawable/ic_plus_consumer"
+            android:layoutDirection="ltr" />
     </LinearLayout>
-</ScrollView>
+</LinearLayout>

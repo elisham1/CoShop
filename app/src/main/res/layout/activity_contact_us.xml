@@ -33,6 +33,7 @@
         android:hint="Write your feedback here..."
         android:layout_marginTop="8dp"
         android:padding="8dp"
+        android:gravity="top"
         android:background="@drawable/border"
         android:inputType="textMultiLine"
         android:scrollbars="vertical"/>
