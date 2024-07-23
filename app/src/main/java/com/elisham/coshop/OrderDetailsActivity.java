@@ -62,23 +62,19 @@ import java.util.Map;
 public class OrderDetailsActivity extends AppCompatActivity {
 
     private FirebaseFirestore db;
-    private TextView descriptionTextView, siteTextView, categoryTextView, addressTextView, timeTextView, titleTextView, groupInfoTextView;
-    private ImageView categoryImageView;
-    private ImageView joinIcon;
-    private Button waitingListButton; // הוספת כפתור המתנה
-    private String orderId;
     private FirebaseAuth mAuth;
     private FirebaseUser currentUser;
+    private TextView descriptionTextView, categoryTextView,
+            addressTextView, timeTextView, titleTextView, groupInfoTextView;
+    private ImageView categoryImageView, joinIcon,
+            waitingListButton, leaveButton, chatIcon;
+    private String orderId, globalUserType, email;
     private Geocoder geocoder;
     private MenuUtils menuUtils;
-
     private LinearLayout userListLayout;
     private List<String> listPeopleInOrder;
-    private boolean showAllUsers = false;
-    private boolean inOrder = false;
-    private ImageView chatIcon;
-    private String globalUserType;
-    private boolean inWaitingList = false;
+    private boolean showAllUsers = false, inOrder = false,
+            inWaitingList = false, orderDeleted = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -102,9 +98,16 @@ public class OrderDetailsActivity extends AppCompatActivity {
         currentUser = mAuth.getCurrentUser();
         geocoder = new Geocoder(this, Locale.ENGLISH);
 
+        // Get the orderId from the intent
+        orderId = intent.getStringExtra("orderId");
+        email = currentUser.getEmail();
+        initializeUI();
+
+    }
+
+    private void initializeUI() {
         // Initialize TextViews and ImageView
         descriptionTextView = findViewById(R.id.descriptionTextView);
-        siteTextView = findViewById(R.id.siteButton);
         categoryTextView = findViewById(R.id.categoryTextView);
         addressTextView = findViewById(R.id.addressTextView);
         timeTextView = findViewById(R.id.timeTextView);
@@ -113,33 +116,21 @@ public class OrderDetailsActivity extends AppCompatActivity {
         categoryImageView = findViewById(R.id.categoryImageView);
         chatIcon = findViewById(R.id.chatIcon);
         joinIcon = findViewById(R.id.joinIcon);
-        waitingListButton = findViewById(R.id.waitingListButton); // אתחול כפתור המתנה
-
-        // Initialize userListLayout
+        waitingListButton = findViewById(R.id.waitingListButton);
+        leaveButton = findViewById(R.id.leaveButton);
         userListLayout = findViewById(R.id.userListLayout);
-
-        // Get the orderId from the intent
-        orderId = intent.getStringExtra("orderId");
 
         if (orderId != null) {
             checkUserInList();
             // Fetch order details and then user details
-            fetchOrderDetails(orderId, currentUser.getEmail());
-            checkIfUserInWaitingList(); // הוספת הקריאה לפונקציה החדשה כאן
+            fetchOrderDetails(orderId, email);
         } else {
             Toast.makeText(this, "Order ID is null", Toast.LENGTH_SHORT).show();
         }
 
         joinIcon.setOnClickListener(v -> {
-            if (joinIcon.getContentDescription().toString().equals("Join Icon")) {
-                addUserToOrder();
-                inOrder = true;
-            } else {
-                Intent chatIntent = new Intent(OrderDetailsActivity.this, ChatActivity.class);
-                chatIntent.putExtra("userType", globalUserType);
-                chatIntent.putExtra("orderId", orderId);
-                startActivity(chatIntent);
-            }
+            addUserToOrder();
+            inOrder = true;
         });
 
         chatIcon.setOnClickListener(v -> {
@@ -160,7 +151,6 @@ public class OrderDetailsActivity extends AppCompatActivity {
                             }
                         })
                         .setNegativeButton("Cancel", null)
-                        .setIcon(R.drawable.checklist)
                         .show();
             } else {
                 new AlertDialog.Builder(OrderDetailsActivity.this)
@@ -172,16 +162,142 @@ public class OrderDetailsActivity extends AppCompatActivity {
                             }
                         })
                         .setNegativeButton("Cancel", null)
-                        .setIcon(R.drawable.checklist)
                         .show();
             }
         });
 
+        leaveButton.setOnClickListener(v -> {
+            removeUserFromOrder();
+        });
+
         ImageView shareIcon = findViewById(R.id.shareIcon);
+        if (globalUserType.equals("Supplier")) {
+            shareIcon.setImageResource(R.drawable.ic_share_supplier);
+        }
+        if (globalUserType.equals("Consumer")){
+            shareIcon.setImageResource(R.drawable.ic_share_consumer);
+        }
         shareIcon.setOnClickListener(v -> {
             Log.d("OrderDetailsActivity", "Share icon clicked");
             shareOrderDetails();
         });
+    }
+
+    // Inside OrderDetailsActivity.java
+    private void fetchOrderDetails(String orderId, String currentUserEmail) {
+        DocumentReference orderRef = db.collection("orders").document(orderId);
+        orderRef.get().addOnSuccessListener(documentSnapshot -> {
+            if (documentSnapshot.exists()) {
+                // Fetch order details from the document
+                String categorie = documentSnapshot.getString("categorie");
+                String description = documentSnapshot.getString("description");
+                GeoPoint geoPoint = documentSnapshot.getGeoPoint("location");
+                double latitude = geoPoint.getLatitude();
+                double longitude = geoPoint.getLongitude();
+                String address = getAddressFromLatLng(latitude, longitude);
+                Timestamp timestamp = documentSnapshot.getTimestamp("time");
+                int numberOfPeopleInOrder = documentSnapshot.getLong("NumberOfPeopleInOrder").intValue();
+                int maxPeople = documentSnapshot.getLong("max_people").intValue();
+                String titleOfOrder = documentSnapshot.getString("titleOfOrder");
+                String userEmail = documentSnapshot.getString("user_email");
+                Timestamp openOrderTime = documentSnapshot.getTimestamp("openOrderTime");
+                String siteUrl = documentSnapshot.getString("URL");
+
+                // Convert timestamps to Date objects
+                Date date = timestamp != null ? timestamp.toDate() : null;
+                Date openOrderDate = openOrderTime != null ? openOrderTime.toDate() : null;
+                SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm");
+                String formattedTime = date != null ? sdf.format(date) : "N/A";
+                String formattedOpenOrderTime = openOrderDate != null ? sdf.format(openOrderDate) : "N/A";
+
+                // Update TextViews and ImageView with order details
+                descriptionTextView.setText(description);
+
+                // Update Button logic
+                Button siteButton = findViewById(R.id.siteButton);
+                if (siteUrl != null && !siteUrl.isEmpty()) {
+                    siteButton.setVisibility(View.VISIBLE);
+                    siteButton.setOnClickListener(v -> {
+                        Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(siteUrl));
+                        startActivity(browserIntent);
+                    });
+                } else {
+                    siteButton.setVisibility(View.GONE);
+                }
+
+                String peopleText;
+                if (maxPeople == 0) {
+                    peopleText = " | " + numberOfPeopleInOrder + "/∞ Members";
+                } else {
+                    peopleText = " | " + numberOfPeopleInOrder + "/" + maxPeople + " Members";
+                }
+
+                String category = categorie + peopleText;
+                categoryTextView.setText(category);
+                addressTextView.setText(address);
+                timeTextView.setText(formattedTime);
+                timeTextView.setTag(timestamp); // Store the timestamp in the tag
+                titleTextView.setText(titleOfOrder);
+
+                // Load icon from URL
+                String iconUrl = "https://firebasestorage.googleapis.com/v0/b/coshop-6fecd.appspot.com/o/icons%2F" + categorie + ".png?alt=media";
+                Glide.with(this)
+                        .load(iconUrl)
+                        .diskCacheStrategy(DiskCacheStrategy.ALL)
+                        .placeholder(R.drawable.star)
+                        .error(R.drawable.star2)
+                        .into(categoryImageView);
+
+                // Fetch user details and update groupInfoTextView
+                fetchUserDetails(userEmail, formattedOpenOrderTime);
+
+                // Update the timer
+                if (timestamp != null) {
+                    startCountdownTimer(timestamp);
+                }
+
+                // Fetch list of users in order
+                listPeopleInOrder = (List<String>) documentSnapshot.get("listPeopleInOrder");
+                if (listPeopleInOrder != null && !listPeopleInOrder.isEmpty()) {
+                    fetchAndShowUsersInOrder(listPeopleInOrder, userEmail, currentUserEmail);
+                }
+
+                if (listPeopleInOrder != null) {
+                    // Always show joinIcon and hide waitingListButton when max_people is 0 and user is not in the list
+                    if (maxPeople == 0 && (listPeopleInOrder.isEmpty() || !listPeopleInOrder.contains(email))) {
+                        joinIcon.setVisibility(View.VISIBLE);
+                        chatIcon.setVisibility(View.GONE);
+                        waitingListButton.setVisibility(View.GONE);
+                        leaveButton.setVisibility(View.GONE);
+                    } else {
+                        // Existing logic to check if the user is in the order or waiting list
+                        if (listPeopleInOrder.contains(email)) {
+                            inOrder = true;
+                            joinIcon.setVisibility(View.GONE); // Hide the join icon
+                            chatIcon.setVisibility(View.VISIBLE); // Show the chat icon
+                            waitingListButton.setVisibility(View.GONE); // Hide the waiting list button
+                            leaveButton.setVisibility(View.VISIBLE); // Show the leave button
+                        } else if (numberOfPeopleInOrder >= maxPeople) {
+                            joinIcon.setVisibility(View.GONE);
+                            chatIcon.setVisibility(View.GONE);
+                            leaveButton.setVisibility(View.GONE);
+                            if (inWaitingList) {
+                                waitingListButton.setImageResource(R.drawable.ic_unwaitlist);
+                            } else {
+                                waitingListButton.setImageResource(R.drawable.ic_waitlist);
+                            }
+                        } else {
+                            joinIcon.setVisibility(View.VISIBLE);
+                            waitingListButton.setVisibility(View.GONE);
+                            chatIcon.setVisibility(View.GONE);
+                            leaveButton.setVisibility(View.GONE);
+                        }
+                    }
+                }
+            } else {
+                Toast.makeText(this, "No such document", Toast.LENGTH_SHORT).show();
+            }
+        }).addOnFailureListener(e -> Toast.makeText(this, "Failed to fetch document", Toast.LENGTH_SHORT).show());
     }
 
     private void shareOrderDetails() {
@@ -201,34 +317,6 @@ public class OrderDetailsActivity extends AppCompatActivity {
                 Toast.makeText(OrderDetailsActivity.this, "Failed to create shareable link", Toast.LENGTH_SHORT).show();
             }
         });
-    }
-    private void checkIfUserInWaitingList() {
-        DocumentReference orderRef = db.collection("orders").document(orderId);
-        orderRef.get().addOnSuccessListener(documentSnapshot -> {
-            if (documentSnapshot.exists()) {
-                List<String> waitingList = (List<String>) documentSnapshot.get("waitingList");
-                List<String> listPeopleInOrder = (List<String>) documentSnapshot.get("listPeopleInOrder");
-                int numberOfPeopleInOrder = documentSnapshot.getLong("NumberOfPeopleInOrder").intValue();
-                int maxPeople = documentSnapshot.getLong("max_people").intValue();
-
-                // Always show joinIcon and hide waitingListButton when max_people is 0 and user is not in the list
-                if (maxPeople == 0 && (listPeopleInOrder == null || !listPeopleInOrder.contains(currentUser.getEmail()))) {
-                    joinIcon.setVisibility(View.VISIBLE);
-                    waitingListButton.setVisibility(View.GONE);
-                } else {
-                    if (waitingList != null && waitingList.contains(currentUser.getEmail())) {
-                        inWaitingList = true;
-                        waitingListButton.setText("Get off the waiting list"); // Change button text
-                        waitingListButton.setVisibility(View.VISIBLE); // Show the waiting list button
-                    } else if (numberOfPeopleInOrder >= maxPeople && (listPeopleInOrder == null || !listPeopleInOrder.contains(currentUser.getEmail()))) {
-                        waitingListButton.setText("Get on the waiting list"); // Change button text
-                        waitingListButton.setVisibility(View.VISIBLE); // Show the waiting list button
-                    } else {
-                        waitingListButton.setVisibility(View.GONE); // Hide the waiting list button
-                    }
-                }
-            }
-        }).addOnFailureListener(e -> Toast.makeText(this, "Failed to check waiting list", Toast.LENGTH_SHORT).show());
     }
 
     private String buildShareText(String shortLink) {
@@ -282,118 +370,18 @@ public class OrderDetailsActivity extends AppCompatActivity {
         void onLinkCreated(String shortLink);
     }
 
-    // Inside OrderDetailsActivity.java
-    private void fetchOrderDetails(String orderId, String currentUserEmail) {
-        DocumentReference orderRef = db.collection("orders").document(orderId);
-        orderRef.get().addOnSuccessListener(documentSnapshot -> {
-            if (documentSnapshot.exists()) {
-                // Fetch order details from the document
-                String categorie = documentSnapshot.getString("categorie");
-                String description = documentSnapshot.getString("description");
-                GeoPoint geoPoint = documentSnapshot.getGeoPoint("location");
-                double latitude = geoPoint.getLatitude();
-                double longitude = geoPoint.getLongitude();
-                String address = getAddressFromLatLng(latitude, longitude);
-                Timestamp timestamp = documentSnapshot.getTimestamp("time");
-                int numberOfPeopleInOrder = documentSnapshot.getLong("NumberOfPeopleInOrder").intValue();
-                int maxPeople = documentSnapshot.getLong("max_people").intValue();
-                String titleOfOrder = documentSnapshot.getString("titleOfOrder");
-                String userEmail = documentSnapshot.getString("user_email");
-                Timestamp openOrderTime = documentSnapshot.getTimestamp("openOrderTime");
-                String siteUrl = documentSnapshot.getString("URL");
-
-                // Convert timestamps to Date objects
-                Date date = timestamp != null ? timestamp.toDate() : null;
-                Date openOrderDate = openOrderTime != null ? openOrderTime.toDate() : null;
-                SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm");
-                String formattedTime = date != null ? sdf.format(date) : "N/A";
-                String formattedOpenOrderTime = openOrderDate != null ? sdf.format(openOrderDate) : "N/A";
-
-                // Update TextViews and ImageView with order details
-                descriptionTextView.setText("Group description:\n" + description);
-
-                // Update Button logic
-                Button siteButton = findViewById(R.id.siteButton);
-                if (siteUrl != null && !siteUrl.isEmpty()) {
-                    siteButton.setVisibility(View.VISIBLE);
-                    siteButton.setOnClickListener(v -> {
-                        Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(siteUrl));
-                        startActivity(browserIntent);
-                    });
-                } else {
-                    siteButton.setVisibility(View.GONE);
-                }
-
-                categoryTextView.setText(categorie);
-                addressTextView.setText("Address: " + address);
-                timeTextView.setText(formattedTime);
-                timeTextView.setTag(timestamp); // Store the timestamp in the tag
-                titleTextView.setText(titleOfOrder);
-
-                // Load icon from URL
-                String iconUrl = "https://firebasestorage.googleapis.com/v0/b/coshop-6fecd.appspot.com/o/icons%2F" + categorie + ".png?alt=media";
-                Glide.with(this)
-                        .load(iconUrl)
-                        .diskCacheStrategy(DiskCacheStrategy.ALL)
-                        .placeholder(R.drawable.star)
-                        .error(R.drawable.star2)
-                        .into(categoryImageView);
-
-                // Fetch user details and update groupInfoTextView
-                fetchUserDetails(userEmail, numberOfPeopleInOrder, maxPeople, formattedOpenOrderTime);
-
-                // Update the timer
-                if (timestamp != null) {
-                    startCountdownTimer(timestamp);
-                }
-
-                // Fetch list of users in order
-                listPeopleInOrder = (List<String>) documentSnapshot.get("listPeopleInOrder");
-                if (listPeopleInOrder != null && !listPeopleInOrder.isEmpty()) {
-                    fetchAndShowUsersInOrder(listPeopleInOrder, userEmail, currentUserEmail);
-                }
-
-                // Always show joinIcon and hide waitingListButton when max_people is 0 and user is not in the list
-                if (maxPeople == 0 && (listPeopleInOrder == null || !listPeopleInOrder.contains(currentUser.getEmail()))) {
-                    joinIcon.setVisibility(View.VISIBLE);
-                    waitingListButton.setVisibility(View.GONE);
-                } else {
-                    // Existing logic to check if the user is in the order or waiting list
-                    if (listPeopleInOrder != null && listPeopleInOrder.contains(currentUser.getEmail())) {
-                        inOrder = true;
-                        joinIcon.setVisibility(View.GONE); // Hide the join icon
-                        chatIcon.setVisibility(View.VISIBLE); // Show the chat icon
-                        waitingListButton.setVisibility(View.GONE); // Hide the waiting list button
-                    } else if (numberOfPeopleInOrder >= maxPeople) {
-                        joinIcon.setVisibility(View.GONE);
-                        if (!inWaitingList) {
-                            waitingListButton.setVisibility(View.VISIBLE);
-                        } else {
-                            waitingListButton.setVisibility(View.GONE);
-                        }
-                    } else {
-                        joinIcon.setVisibility(View.VISIBLE);
-                        waitingListButton.setVisibility(View.GONE);
-                    }
-                }
-
-            } else {
-                Toast.makeText(this, "No such document", Toast.LENGTH_SHORT).show();
-            }
-        }).addOnFailureListener(e -> Toast.makeText(this, "Failed to fetch document", Toast.LENGTH_SHORT).show());
-    }
     private void removeUserFromWaitingList() {
         DocumentReference orderRef = db.collection("orders").document(orderId);
         db.runTransaction(transaction -> {
             DocumentSnapshot snapshot = transaction.get(orderRef);
             List<String> waitingList = (List<String>) snapshot.get("waitingList");
-            if (waitingList != null && waitingList.contains(currentUser.getEmail())) {
-                transaction.update(orderRef, "waitingList", FieldValue.arrayRemove(currentUser.getEmail()));
+            if (waitingList != null && waitingList.contains(email)) {
+                transaction.update(orderRef, "waitingList", FieldValue.arrayRemove(email));
             }
             return null;
         }).addOnSuccessListener(aVoid -> {
             Toast.makeText(this, "Removed from waiting list", Toast.LENGTH_SHORT).show();
-            waitingListButton.setText("Enter the waiting list"); // Update button text
+            waitingListButton.setImageResource(R.drawable.ic_waitlist); // Update button text
             inWaitingList = false; // Update the inWaitingList flag
         }).addOnFailureListener(e -> {
             Toast.makeText(this, "Failed to remove from waiting list", Toast.LENGTH_SHORT).show();
@@ -478,18 +466,153 @@ public class OrderDetailsActivity extends AppCompatActivity {
             if (waitingList == null) {
                 waitingList = new ArrayList<>();
             }
-            if (!waitingList.contains(currentUser.getEmail())) {
-                transaction.update(orderRef, "waitingList", FieldValue.arrayUnion(currentUser.getEmail()));
+            if (!waitingList.contains(email)) {
+                transaction.update(orderRef, "waitingList", FieldValue.arrayUnion(email));
             }
             return null;
         }).addOnSuccessListener(aVoid -> {
             Toast.makeText(this, "Added to waiting list", Toast.LENGTH_SHORT).show();
             inWaitingList = true; // Update the inWaitingList flag
-            waitingListButton.setText("Get off the waiting list"); // Update button text
+            waitingListButton.setImageResource(R.drawable.ic_unwaitlist); // Update button text
             waitingListButton.setVisibility(View.VISIBLE); // Show the waiting list button
         }).addOnFailureListener(e -> {
             Toast.makeText(this, "Failed to add to waiting list", Toast.LENGTH_SHORT).show();
         });
+    }
+
+    private Task<Void> removeUserFromOrderList(String orderId, String userEmail) {
+        DocumentReference orderRef = db.collection("orders").document(orderId);
+
+        return orderRef.get().continueWithTask(task -> {
+            if (task.isSuccessful()) {
+                DocumentSnapshot snapshot = task.getResult();
+                List<String> listPeopleInOrder = (List<String>) snapshot.get("listPeopleInOrder");
+                List<String> waitingList = (List<String>) snapshot.get("waitingList");
+                String currentOrderCreator = snapshot.getString("user_email");
+
+                if (listPeopleInOrder != null && listPeopleInOrder.contains(userEmail)) {
+                    listPeopleInOrder.remove(userEmail);
+                    inOrder = false;
+                    Long numberOfPeopleInOrder = snapshot.getLong("NumberOfPeopleInOrder");
+                    numberOfPeopleInOrder = (numberOfPeopleInOrder != null) ? numberOfPeopleInOrder - 1 : 0;
+
+                    // Check if user is the order creator
+                    if (userEmail.equals(currentOrderCreator) && !listPeopleInOrder.isEmpty()) {
+                        currentOrderCreator = listPeopleInOrder.get(0);
+                    }
+
+                    Map<String, Object> updates = new HashMap<>();
+                    updates.put("listPeopleInOrder", listPeopleInOrder);
+                    updates.put("NumberOfPeopleInOrder", numberOfPeopleInOrder);
+                    updates.put("user_email", currentOrderCreator);
+
+                    // Move user from waiting list if exists
+                    if (waitingList != null && !waitingList.isEmpty()) {
+                        String firstWaitingUser = waitingList.remove(0);
+                        listPeopleInOrder.add(firstWaitingUser);
+                        numberOfPeopleInOrder += 1;
+
+                        updates.put("waitingList", waitingList);
+                        updates.put("listPeopleInOrder", listPeopleInOrder);
+                        updates.put("NumberOfPeopleInOrder", numberOfPeopleInOrder);
+                    }
+
+                    return orderRef.update(updates);
+                } else {
+                    return Tasks.forException(new Exception("User not part of the order"));
+                }
+            } else {
+                return Tasks.forException(task.getException());
+            }
+        });
+    }
+
+    private Task<Void> updateOrderInfoAfterRemoval(String orderId, String userEmail) {
+        DocumentReference orderRef = db.collection("orders").document(orderId);
+
+        return orderRef.get().continueWithTask(task -> {
+            if (task.isSuccessful()) {
+                DocumentSnapshot snapshot = task.getResult();
+                List<String> listPeopleInOrder = (List<String>) snapshot.get("listPeopleInOrder");
+
+                if (listPeopleInOrder == null || listPeopleInOrder.isEmpty()) {
+                    // Delete the order if no one is left
+                    orderDeleted = true;
+                    return orderRef.delete();
+                } else {
+                    // Ensure the correct order creator is set
+                    String currentOrderCreator = snapshot.getString("user_email");
+                    if (userEmail.equals(currentOrderCreator) && !listPeopleInOrder.isEmpty()) {
+                        currentOrderCreator = listPeopleInOrder.get(0);
+                        return orderRef.update("user_email", currentOrderCreator);
+                    }
+                    return Tasks.forResult(null);
+                }
+            } else {
+                return Tasks.forException(task.getException());
+            }
+        });
+    }
+
+    private Task<Void> checkAndDeleteOrderChatIfNeeded(String orderId) {
+        if (orderDeleted) {
+            return deleteOrderChat(orderId);
+        } else {
+            return Tasks.forResult(null);
+        }
+    }
+
+    private Task<Void> deleteOrderChat(String orderId) {
+        DocumentReference orderRef = db.collection("orders").document(orderId);
+
+        return orderRef.collection("chat").get().continueWithTask(task -> {
+            if (task.isSuccessful()) {
+                List<DocumentSnapshot> documents = task.getResult().getDocuments();
+                List<Task<Void>> deleteTasks = new ArrayList<>();
+                for (DocumentSnapshot document : documents) {
+                    deleteTasks.add(document.getReference().delete());
+                }
+                return Tasks.whenAll(deleteTasks);
+            } else {
+                return Tasks.forException(task.getException());
+            }
+        });
+    }
+
+    private void removeUserFromOrder() {
+        String userEmail = mAuth.getCurrentUser().getEmail();
+
+        removeUserFromOrderList(orderId, userEmail)
+                .continueWithTask(task -> {
+                    if (task.isSuccessful()) {
+                        return updateOrderInfoAfterRemoval(orderId, userEmail);
+                    } else {
+                        throw task.getException();
+                    }
+                })
+                .continueWithTask(task -> {
+                    if (task.isSuccessful()) {
+                        return checkAndDeleteOrderChatIfNeeded(orderId);
+                    } else {
+                        throw task.getException();
+                    }
+                })
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        if (orderDeleted) {
+                            Toast.makeText(OrderDetailsActivity.this, "Order deleted", Toast.LENGTH_SHORT).show();
+                            Intent intent = new Intent(OrderDetailsActivity.this, MyOrdersActivity.class);
+                            intent.putExtra("userType", globalUserType);
+                            startActivity(intent);
+                            finish();
+                        } else {
+                            Toast.makeText(OrderDetailsActivity.this, "You left the order", Toast.LENGTH_SHORT).show();
+                            fetchOrderDetails(orderId, userEmail);
+                        }
+                    } else {
+                        Toast.makeText(OrderDetailsActivity.this, "Failed to leave the order", Toast.LENGTH_SHORT).show();
+                    }
+                });
     }
 
     private void showUsersInOrder(List<UserDetail> userDetailList) {
@@ -568,7 +691,7 @@ public class OrderDetailsActivity extends AppCompatActivity {
                 .into(userProfileImageView);
 
         if (isOrderCreator) {
-            userItemView.setBackgroundColor(ContextCompat.getColor(this, R.color.colorAccent));
+            userItemView.setBackgroundResource(R.drawable.border_creator);
         }
 
         if (!inOrder) {
@@ -618,7 +741,7 @@ public class OrderDetailsActivity extends AppCompatActivity {
                 List<Map<String, Object>> ratings = (List<Map<String, Object>>) documentSnapshot.get("ratings");
                 if (ratings != null) {
                     for (Map<String, Object> rating : ratings) {
-                        if (rating.get("email").equals(currentUser.getEmail()) && rating.get("order").equals(orderId)) {
+                        if (rating.get("email").equals(email) && rating.get("order").equals(orderId)) {
                             selectedRating[0] = ((Long) rating.get("rating")).intValue();
                             updateStarUI(stars, selectedRating[0]);
                             break;
@@ -674,7 +797,7 @@ public class OrderDetailsActivity extends AppCompatActivity {
 
     private void submitReport(String reportedUserEmail, String orderID, String reason, String details) {
         if (currentUser != null) {
-            String reporterEmail = currentUser.getEmail();
+            String reporterEmail = email;
 
             Map<String, Object> reportData = new HashMap<>();
             reportData.put("orderId", orderID);
@@ -786,7 +909,7 @@ public class OrderDetailsActivity extends AppCompatActivity {
 
             boolean ratingExists = false;
             for (Map<String, Object> rating : ratings) {
-                if (rating.get("email").equals(currentUser.getEmail()) && rating.get("order").equals(order)) {
+                if (rating.get("email").equals(email) && rating.get("order").equals(order)) {
                     ratingExists = true;
                     rating.put("rating", newRating); // Update existing rating
                     break;
@@ -796,7 +919,7 @@ public class OrderDetailsActivity extends AppCompatActivity {
             if (!ratingExists) {
                 // Add new rating if not exists
                 Map<String, Object> newRatingMap = new HashMap<>();
-                newRatingMap.put("email", currentUser.getEmail());
+                newRatingMap.put("email", email);
                 newRatingMap.put("order", order);
                 newRatingMap.put("rating", newRating);
                 ratings.add(newRatingMap);
@@ -807,7 +930,7 @@ public class OrderDetailsActivity extends AppCompatActivity {
         }).addOnSuccessListener(aVoid -> {
             Toast.makeText(this, "User rated successfully", Toast.LENGTH_SHORT).show();
             // Refresh the user list to show updated ratings
-            fetchOrderDetails(orderId, currentUser.getEmail());
+            fetchOrderDetails(orderId, email);
         }).addOnFailureListener(e -> Toast.makeText(this, "Failed to rate user", Toast.LENGTH_SHORT).show());
     }
 
@@ -824,34 +947,33 @@ public class OrderDetailsActivity extends AppCompatActivity {
         return "N/A";
     }
 
-    private void fetchUserDetails(String userEmail, int numberOfPeopleInOrder, int maxPeople, String formattedOpenOrderTime) {
+    private void fetchUserDetails(String userEmail, String formattedOpenOrderTime) {
         DocumentReference userRef = db.collection("users").document(userEmail);
         userRef.get().addOnSuccessListener(documentSnapshot -> {
             if (documentSnapshot.exists()) {
                 String firstName = documentSnapshot.getString("first name");
                 String familyName = documentSnapshot.getString("family name");
 
-                String peopleText;
-                if (maxPeople == 0) {
-                    peopleText = "People: " + numberOfPeopleInOrder + "/∞";
-                } else {
-                    peopleText = "People: " + numberOfPeopleInOrder + "/" + maxPeople;
+                String fullname = null;
+                if (firstName != null) {
+                    fullname = firstName;
+                    if (familyName != null) {
+                        fullname += " " + familyName;
+                    }
                 }
 
-                if (firstName != null && familyName != null) {
-                    groupInfoTextView.setText(peopleText + "\nThe group was created by " + firstName + " " + familyName + "\non " + formattedOpenOrderTime);
+                if (fullname != null) {
+                    groupInfoTextView.setText("Order created by " + fullname + "\non " + formattedOpenOrderTime);
                 } else {
-                    groupInfoTextView.setText(peopleText + "\nThe group was created by " + userEmail + "\non " + formattedOpenOrderTime);
+                    groupInfoTextView.setText("Created by " + userEmail + " on " + formattedOpenOrderTime);
                     Log.e("OrderDetailsActivity", "First name or family name is null for user: " + userEmail);
                 }
             } else {
-                String peopleText = maxPeople == 0 ? "People: " + numberOfPeopleInOrder + "/∞" : "People: " + numberOfPeopleInOrder + "/" + maxPeople;
-                groupInfoTextView.setText(peopleText + "\nThe group was created by " + userEmail + "\non " + formattedOpenOrderTime);
+                groupInfoTextView.setText("Order created by " + userEmail + "\non " + formattedOpenOrderTime);
                 Log.e("OrderDetailsActivity", "No document found for user: " + userEmail);
             }
         }).addOnFailureListener(e -> {
-            String peopleText = maxPeople == 0 ? "People: " + numberOfPeopleInOrder + "/∞" : "People: " + numberOfPeopleInOrder + "/" + maxPeople;
-            groupInfoTextView.setText(peopleText + "\nThe group was created by " + userEmail + "\non " + formattedOpenOrderTime);
+            groupInfoTextView.setText("Order created by " + userEmail + "\non " + formattedOpenOrderTime);
             Log.e("OrderDetailsActivity", "Failed to fetch user details", e);
             Toast.makeText(this, "Failed to fetch user details", Toast.LENGTH_SHORT).show();
         });
@@ -940,18 +1062,11 @@ public class OrderDetailsActivity extends AppCompatActivity {
                 List<String> listPeopleInOrder = (List<String>) documentSnapshot.get("listPeopleInOrder");
                 List<String> waitingList = (List<String>) documentSnapshot.get("waitingList");
 
-                if (listPeopleInOrder != null && listPeopleInOrder.contains(currentUser.getEmail())) {
+                if (listPeopleInOrder != null && listPeopleInOrder.contains(email)) {
                     inOrder = true;
-                    joinIcon.setVisibility(View.GONE); // Hide the join icon
-                    chatIcon.setVisibility(View.VISIBLE); // Show the chat icon
-                    waitingListButton.setVisibility(View.GONE); // Hide the waiting list button
-                } else if (waitingList != null && waitingList.contains(currentUser.getEmail())) {
+                }
+                if (waitingList != null && waitingList.contains(email)) {
                     inWaitingList = true;
-                    waitingListButton.setText("Get off the waiting list"); // Change button text
-                    waitingListButton.setVisibility(View.VISIBLE); // Show the waiting list button
-                } else {
-                    joinIcon.setVisibility(View.VISIBLE); // Show the join icon
-                    waitingListButton.setVisibility(View.VISIBLE); // Show the waiting list button
                 }
             }
         }).addOnFailureListener(e -> Toast.makeText(this, "Failed to check user in list", Toast.LENGTH_SHORT).show());
@@ -962,21 +1077,22 @@ public class OrderDetailsActivity extends AppCompatActivity {
         db.runTransaction(transaction -> {
             DocumentSnapshot snapshot = transaction.get(orderRef);
             List<String> listPeopleInOrder = (List<String>) snapshot.get("listPeopleInOrder");
-            if (listPeopleInOrder != null && !listPeopleInOrder.contains(currentUser.getEmail())) {
-                transaction.update(orderRef, "listPeopleInOrder", FieldValue.arrayUnion(currentUser.getEmail()));
+            String userEmail = snapshot.getString("user_email");
+            if (listPeopleInOrder != null && !listPeopleInOrder.contains(email)) {
+                transaction.update(orderRef, "listPeopleInOrder", FieldValue.arrayUnion(email));
                 Long currentNumberOfPeople = snapshot.getLong("NumberOfPeopleInOrder");
                 transaction.update(orderRef, "NumberOfPeopleInOrder", currentNumberOfPeople + 1);
             }
             return null;
         }).addOnSuccessListener(aVoid -> {
             Toast.makeText(this, "Added to order", Toast.LENGTH_SHORT).show();
-            joinIcon.setVisibility(View.GONE); // Hide the join icon
-            chatIcon.setVisibility(View.VISIBLE); // Show the chat icon
-            waitingListButton.setVisibility(View.GONE); // Hide the waiting list button
-            Intent chatIntent = new Intent(OrderDetailsActivity.this, ChatActivity.class);
-            chatIntent.putExtra("userType", globalUserType);
-            chatIntent.putExtra("orderId", orderId);
-            startActivity(chatIntent);
+//            joinIcon.setVisibility(View.GONE); // Hide the join icon
+//            chatIcon.setImageResource(R.drawable.ic_chat_consumer);
+//            chatIcon.setVisibility(View.VISIBLE); // Show the chat icon
+//            waitingListButton.setVisibility(View.GONE); // Hide the waiting list button
+//            leaveButton.setImageResource(R.drawable.ic_leave_consumer);
+//            leaveButton.setVisibility(View.VISIBLE); // Show the leave button
+            fetchOrderDetails(orderId, email);
         }).addOnFailureListener(e -> Toast.makeText(this, "Failed to add user to order", Toast.LENGTH_SHORT).show());
     }
 
