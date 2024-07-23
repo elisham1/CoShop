@@ -12,6 +12,7 @@ import android.location.Location;
 import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.text.SpannableString;
+import android.text.TextUtils;
 import android.text.style.ForegroundColorSpan;
 import android.text.style.StyleSpan;
 import android.util.Log;
@@ -98,7 +99,7 @@ public class MyOrdersActivity extends AppCompatActivity {
         db.collection("users").document(userEmail).get()
                 .addOnSuccessListener(documentSnapshot -> {
                     if (documentSnapshot.exists()) {
-                        userLocation = documentSnapshot.getGeoPoint("location");
+                        userLocation = documentSnapshot.getGeoPoint("address");
                         Log.d("MyOrdersActivity", "User location fetched: " + userLocation);
                     }
                 }).addOnFailureListener(e -> {
@@ -410,6 +411,8 @@ public class MyOrdersActivity extends AppCompatActivity {
             long numberOfPeopleInOrder = documentSnapshot.getLong("NumberOfPeopleInOrder");
             long maxPeople = documentSnapshot.getLong("max_people");
             String categorie = documentSnapshot.getString("categorie");
+            Log.d("HomePageActivity", "Calculated distance: " + userLocation);
+            Log.d("HomePageActivity", "Calculated distance: " + orderLocation);
             float distance = calculateDistance(userLocation, orderLocation);
             Timestamp timestamp = documentSnapshot.getTimestamp("time");
 
@@ -674,10 +677,12 @@ public class MyOrdersActivity extends AppCompatActivity {
 
         orderLayout.addView(rightSquareContainer);
 
-        // Create and add the location
+// Create and add the location
         TextView locationTextView = new TextView(this);
-        locationTextView.setText(location);
         locationTextView.setId(View.generateViewId());
+        locationTextView.setSingleLine(true);
+        locationTextView.setEllipsize(TextUtils.TruncateAt.END);
+        locationTextView.setText(location);
         RelativeLayout.LayoutParams locationParams = new RelativeLayout.LayoutParams(
                 ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         locationParams.addRule(RelativeLayout.BELOW, rightSquareContainer.getId()); // או כל אלמנט אחר מעל המיקום
@@ -689,6 +694,7 @@ public class MyOrdersActivity extends AppCompatActivity {
         locationTextView.setTypeface(null, Typeface.BOLD); // Bold text
         locationTextView.setTextColor(Color.BLACK); // Set text color to black
         orderLayout.addView(locationTextView);
+
 
         // Fetch the type of order from Firestore and add it below the location
         db.collection("orders").document(orderId).get().addOnSuccessListener(documentSnapshot -> {

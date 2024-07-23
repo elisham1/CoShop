@@ -269,12 +269,16 @@ public class FilterActivity extends AppCompatActivity {
             plusIcon.setImageResource(R.drawable.tick);
         }
         isCategoryListVisible = !isCategoryListVisible;
+
+        updateCategoryTextView(); // עדכון ה־TextView לאחר שינוי ברשימת הקטגוריות
     }
+
     public void OrderFiltering(View v) {
         String address = searchAddressText.getText().toString();
         String urlOrString = editTextURL.getText().toString();
-        List<String> selectedCategories = getSelectedCategories();
 
+        List<String> selectedCategories = getSelectedCategories();
+        updateCategoryTextView();
         boolean filterByLocation = !address.isEmpty() || lastAddress != null;
         boolean filterByURLOrString = !urlOrString.isEmpty();
         boolean filterByCategory = selectedCategories != null && !selectedCategories.isEmpty();
@@ -414,6 +418,7 @@ public class FilterActivity extends AppCompatActivity {
         }
     }
 
+    // שינוי בפונקציה fetchOrders
     private void fetchOrders(double userLat, double userLon, int distance, List<String> selectedCategories, boolean filterByCategory, boolean filterByConsumer, boolean filterBySupplied, boolean filterByPeopleLimit, int peopleLimit, boolean filterByUnlimitedPeople, boolean filterByTime, Calendar selectedDate, Calendar selectedTime) {
         CollectionReference ordersRef = db.collection("orders");
         ordersRef.get().addOnCompleteListener(task -> {
@@ -426,6 +431,8 @@ public class FilterActivity extends AppCompatActivity {
                 }
 
                 StringBuilder results = new StringBuilder();
+                StringBuilder orderIds = new StringBuilder();  // אוסף את ה-IDs של ההזמנות
+
                 long currentTimeMillis = System.currentTimeMillis();
                 for (QueryDocumentSnapshot documentSnapshot : task.getResult()) {
                     Timestamp timestamp = documentSnapshot.getTimestamp("time");
@@ -504,28 +511,51 @@ public class FilterActivity extends AppCompatActivity {
                     }
 
                     if (matchesCategory && matchesLocation && matchesTypeOfOrder && matchesPeopleLimit && matchesTime) {
-                        results.append(documentSnapshot.getId()).append(";")
-                                .append(documentSnapshot.getString("titleOfOrder")).append(";")
-                                .append(documentSnapshot.getGeoPoint("location").getLatitude()).append(",").append(documentSnapshot.getGeoPoint("location").getLongitude()).append(";")
-                                .append(documentSnapshot.getLong("NumberOfPeopleInOrder")).append(";")
-                                .append(documentSnapshot.getLong("max_people")).append(";")
-                                .append(documentSnapshot.getString("categorie")).append(";")
-                                .append(distanceInKm).append(";")
-                                .append(documentSnapshot.getTimestamp("time").getSeconds()).append("\n");
+                        if (distance > 0) {
+                            results.append(documentSnapshot.getId()).append(";")
+                                    .append(documentSnapshot.getString("titleOfOrder")).append(";")
+                                    .append(documentSnapshot.getGeoPoint("location").getLatitude()).append(",").append(documentSnapshot.getGeoPoint("location").getLongitude()).append(";")
+                                    .append(documentSnapshot.getLong("NumberOfPeopleInOrder")).append(";")
+                                    .append(documentSnapshot.getLong("max_people")).append(";")
+                                    .append(documentSnapshot.getString("categorie")).append(";")
+                                    .append(distanceInKm).append(";")
+                                    .append(documentSnapshot.getTimestamp("time").getSeconds()).append("\n");
+                        } else {
+                            orderIds.append(documentSnapshot.getId()).append("\n");
+                        }
                     }
                 }
 
                 Intent intent = new Intent(FilterActivity.this, HomePageActivity.class);
                 intent.putExtra("userType", globalUserType);
                 intent.putExtra("filterActive", true); // תמיד מציינים שסינון פעיל
-                if (results.length() == 0) {
-                    intent.putExtra("noOrdersFound", true);
+
+                if (distance > 0) {
+                    if (results.length() == 0) {
+                        intent.putExtra("noOrdersFound", true);
+                    } else {
+                        intent.putExtra("filteredOrders", results.toString());
+                    }
                 } else {
-                    intent.putExtra("filteredOrders", results.toString());
+                    if (orderIds.length() == 0) {
+                        intent.putExtra("noOrdersFound", true);
+                    } else {
+                        intent.putExtra("filteredOrderIds", orderIds.toString());
+                    }
                 }
                 startActivity(intent);
             }
         });
+    }
+    private void updateCategoryTextView() {
+        TextView categoryTextView = findViewById(R.id.category_text);
+        List<String> selectedCategories = getSelectedCategories();
+        if (selectedCategories.isEmpty()) {
+            categoryTextView.setText("Open Category list");
+        } else {
+            String categoriesText = String.join(", ", selectedCategories);
+            categoryTextView.setText(categoriesText);
+        }
     }
 
     private void fetchOrdersByUrl(String url, String address, List<String> selectedCategories, boolean filterByCategory, boolean filterByConsumer, boolean filterBySupplied, boolean filterByPeopleLimit, int peopleLimit, boolean filterByUnlimitedPeople, boolean filterByTime, Calendar selectedDate, Calendar selectedTime) {
