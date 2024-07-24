@@ -296,7 +296,13 @@ public class OrderDetailsActivity extends AppCompatActivity {
                     }
                 }
             } else {
-                Toast.makeText(this, "No such document", Toast.LENGTH_SHORT).show();
+
+                Toast.makeText(this, "Order deleted", Toast.LENGTH_SHORT).show();
+                Intent intent = new Intent(OrderDetailsActivity.this, OrderDeletedActivity.class);
+                intent.putExtra("userType", globalUserType);
+                startActivity(intent);
+                finish();
+                startActivity(intent);
             }
         }).addOnFailureListener(e -> Toast.makeText(this, "Failed to fetch document", Toast.LENGTH_SHORT).show());
     }

@@ -61,6 +61,11 @@ import java.util.stream.Collectors;
 public class HomePageActivity extends AppCompatActivity {
 
     private FirebaseUser currentUser;
+    private Boolean clickOnStar=false;
+    private List<OrderData> orderDataList = new ArrayList<>();
+
+    private List<String> displayedOrderIds;
+
     private FirebaseFirestore db;
     private LinearLayout ordersContainer;
     private Geocoder geocoder;
@@ -77,6 +82,7 @@ public class HomePageActivity extends AppCompatActivity {
         FirebaseAuth mAuth = FirebaseAuth.getInstance();
         currentUser = mAuth.getCurrentUser();
         db = FirebaseFirestore.getInstance();
+        displayedOrderIds = new ArrayList<>();
 
         // Set the theme based on the user type
         Intent intent = getIntent();
@@ -226,11 +232,35 @@ public class HomePageActivity extends AppCompatActivity {
             if (starButton.getTag().equals("star")) {
                 starButton.setImageResource(R.drawable.star);
                 starButton.setTag("star2");
+                clickOnStar=true;
+                // קבל את המיקום של המשתמש מהפיירבייס
+                db.collection("users").document(userEmail)
+                        .get()
+                        .addOnCompleteListener(task -> {
+                            if (task.isSuccessful() && task.getResult() != null) {
+                                GeoPoint userLocation = task.getResult().getGeoPoint("address");
+
+                                if (userLocation != null) {
+                                    // קריאה לפונקציה החדשה עם המיקום של המשתמש
+                                    calculateDisplayedOrdersRecommendationRatings(currentUser, userLocation);
+                                } else {
+                                    Toast.makeText(this, "User location not found", Toast.LENGTH_SHORT).show();
+                                }
+                            } else {
+                                Toast.makeText(this, "Failed to get user location", Toast.LENGTH_SHORT).show();
+                            }
+                        });
             } else {
                 starButton.setImageResource(R.drawable.star2);
+                clickOnStar=false;
                 starButton.setTag("star");
+                Intent refreshIntent = new Intent(HomePageActivity.this, HomePageActivity.class);
+                refreshIntent.putExtra("userType", globalUserType);
+                startActivity(refreshIntent);
+                finish();
             }
         });
+
 
         TextView filterBarText1 = findViewById(R.id.filterBarText1);
 
@@ -376,6 +406,34 @@ public class HomePageActivity extends AppCompatActivity {
         });
     }
 
+    class OrderData {
+        String orderId;
+        String titleOfOrder;
+        String location;
+        long numberOfPeopleInOrder;
+        long maxPeople;
+        String categorie;
+        double distance;
+        Timestamp timestamp;
+        double averageRating;
+        double totalScore;
+        double categoryScore; // שדה חדש עבור categoryScore
+        double ratingScore;   // שדה חדש עבור ratingScore
+        double distanceScore; // שדה חדש עבור distanceScore
+
+        public OrderData(String orderId, String titleOfOrder, String location, long numberOfPeopleInOrder, long maxPeople, String categorie, double distance, Timestamp timestamp, double averageRating) {
+            this.orderId = orderId;
+            this.titleOfOrder = titleOfOrder;
+            this.location = location;
+            this.numberOfPeopleInOrder = numberOfPeopleInOrder;
+            this.maxPeople = maxPeople;
+            this.categorie = categorie;
+            this.distance = distance;
+            this.timestamp = timestamp;
+            this.averageRating = averageRating;
+        }
+    }
+
     private void calculateAndDisplayRatings(String orderId, String titleOfOrder, String location,
                                             long numberOfPeopleInOrder, long maxPeople, String categorie,
                                             float distance, Timestamp timestamp) {
@@ -401,10 +459,20 @@ public class HomePageActivity extends AppCompatActivity {
                     List<Double> allRatings = allRatingsFuture.get();
                     double totalRating = allRatings.stream().mapToDouble(Double::doubleValue).sum();
                     double averageRating = totalRating / peopleInOrder.size();
+
+                    // עיגול הדירוג
+                    averageRating = Math.round(averageRating * 2) / 2.0;
+
                     updateRatingOrderInFirestore(orderId, averageRating);
 
                     addOrderToLayout(orderId, titleOfOrder, location, numberOfPeopleInOrder, maxPeople,
                             categorie, distance, timestamp, averageRating);
+
+                    orderDataList.add(new OrderData(orderId, titleOfOrder, location, numberOfPeopleInOrder, maxPeople, categorie, distance, timestamp, averageRating));
+
+                    // הוספת מזהה ההזמנה לרשימה
+                    displayedOrderIds.add(orderId);
+
                 } catch (InterruptedException | ExecutionException e) {
                     e.printStackTrace();
                     // Handle exception
@@ -412,6 +480,95 @@ public class HomePageActivity extends AppCompatActivity {
             });
         });
     }
+
+    // פונקציה חדשה שתחשב את הציונים על סמך ההזמנות שהוצגו בדף הבית
+    private void calculateDisplayedOrdersRecommendationRatings(FirebaseUser currentUser, GeoPoint userLocation) {
+        getUserPreferredCategories(currentUser, userPreferredCategories -> {
+            db.collection("orders").get().addOnCompleteListener(task -> {
+                if (task.isSuccessful() && task.getResult() != null) {
+                    double minDistance = Double.MAX_VALUE;
+                    double maxDistance = Double.MIN_VALUE;
+                    List<DocumentSnapshot> orders = new ArrayList<>();
+                    List<Float> distances = new ArrayList<>();
+
+                    for (QueryDocumentSnapshot documentSnapshot : task.getResult()) {
+                        String orderId = documentSnapshot.getId();
+                        if (!displayedOrderIds.contains(orderId)) continue;
+
+                        GeoPoint orderLocation = documentSnapshot.getGeoPoint("location");
+                        if (orderLocation != null) {
+                            float distance = calculateDistance(userLocation, orderLocation);
+                            distances.add(distance);
+                            if (distance < minDistance) {
+                                minDistance = distance;
+                            }
+                            if (distance > maxDistance) {
+                                maxDistance = distance;
+                            }
+                        }
+                        orders.add(documentSnapshot);
+                    }
+
+                    List<OrderData> sortedOrderDataList = new ArrayList<>();
+
+                    for (int i = 0; i < orders.size(); i++) {
+                        DocumentSnapshot documentSnapshot = orders.get(i);
+                        float distance = distances.get(i);
+
+                        String orderId = documentSnapshot.getId();
+                        String categorie = documentSnapshot.getString("categorie");
+                        GeoPoint orderLocation = documentSnapshot.getGeoPoint("location");
+                        Double rating = documentSnapshot.getDouble("ratingOrder");
+                        Log.d("RecommendationRating", "distance: " + distance);
+
+                        double categoryScore = calculateCategoryScore(categorie, userPreferredCategories);
+                        double ratingScore = calculateRatingScore(rating);
+                        double distanceScore = calculateDistanceScore(distance, minDistance, maxDistance);
+
+                        double totalScore = categoryScore + ratingScore + distanceScore;
+
+                        Log.d("RecommendationRating", "Order ID: " + orderId);
+                        Log.d("RecommendationRating", "Category Score: " + categoryScore);
+                        Log.d("RecommendationRating", "Rating Score: " + ratingScore);
+                        Log.d("RecommendationRating", "Distance Score: " + distanceScore);
+                        Log.d("RecommendationRating", "Total Score: " + totalScore);
+
+                        // מצרף את הנתונים לרשימה הממוינת
+                        OrderData orderData = findOrderDataById(orderId);
+                        if (orderData != null) {
+                            orderData.totalScore = totalScore;
+                            orderData.categoryScore = categoryScore; // הוספת categoryScore
+                            orderData.ratingScore = ratingScore;     // הוספת ratingScore
+                            orderData.distanceScore = distanceScore; // הוספת distanceScore
+                            sortedOrderDataList.add(orderData);
+                        }
+                    }
+
+                    // ממיין את הרשימה לפי totalScore מהגבוה לנמוך
+                    sortedOrderDataList.sort((o1, o2) -> Double.compare(o2.totalScore, o1.totalScore));
+
+                    // מנקה את המסך מהזמנות קיימות
+                    ordersContainer.removeAllViews();
+
+                    // מציג את ההזמנות לפי הסדר הממוין
+                    for (OrderData orderData : sortedOrderDataList) {
+                        addOrderToLayout(orderData.orderId, orderData.titleOfOrder, orderData.location, orderData.numberOfPeopleInOrder, orderData.maxPeople, orderData.categorie, orderData.distance, orderData.timestamp, orderData.averageRating);
+                    }
+                }
+            });
+        });
+    }
+
+    // מחפש את OrderData לפי orderId
+    private OrderData findOrderDataById(String orderId) {
+        for (OrderData orderData : orderDataList) {
+            if (orderData.orderId.equals(orderId)) {
+                return orderData;
+            }
+        }
+        return null;
+    }
+
     private void updateRatingOrderInFirestore(String orderId, double averageRating) {
         db.collection("orders").document(orderId)
                 .update("ratingOrder", averageRating)
@@ -801,9 +958,117 @@ public class HomePageActivity extends AppCompatActivity {
 
         // Add the order layout to the container
         ordersContainer.addView(orderLayout);
+
+        if (clickOnStar == true) {
+            // מציאת ה-OrderData המתאים לפי orderId
+            OrderData orderData = findOrderDataById(orderId);
+            if (orderData != null) {
+                // יצירת RelativeLayout עבור האייקונים והציונים
+                RelativeLayout scoresLayout = new RelativeLayout(this);
+                RelativeLayout.LayoutParams scoresLayoutParams = new RelativeLayout.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+                scoresLayoutParams.addRule(RelativeLayout.BELOW, locationTextView.getId());
+                scoresLayoutParams.setMargins(0, dpToPx(40), 0, dpToPx(5));
+                scoresLayout.setLayoutParams(scoresLayoutParams);
+
+                // יצירת TextView עבור totalScore בצד START של השורה
+                TextView totalScoreTextView = new TextView(this);
+                totalScoreTextView.setText(String.format(" matches for you %s", formatScore(orderData.totalScore)));
+                totalScoreTextView.setId(View.generateViewId());
+                totalScoreTextView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
+                totalScoreTextView.setTypeface(null, Typeface.BOLD);
+                totalScoreTextView.setTextColor(Color.BLACK);
+
+                RelativeLayout.LayoutParams totalScoreParams = new RelativeLayout.LayoutParams(
+                        ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+                totalScoreParams.addRule(RelativeLayout.ALIGN_PARENT_START);
+                totalScoreTextView.setLayoutParams(totalScoreParams);
+                scoresLayout.addView(totalScoreTextView);
+
+                // יצירת LinearLayout עבור האייקונים והציונים בצד END של השורה
+                LinearLayout iconsLayout = new LinearLayout(this);
+                iconsLayout.setOrientation(LinearLayout.HORIZONTAL);
+                RelativeLayout.LayoutParams iconsLayoutParams = new RelativeLayout.LayoutParams(
+                        ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+                iconsLayoutParams.addRule(RelativeLayout.ALIGN_PARENT_END);
+                iconsLayoutParams.addRule(RelativeLayout.CENTER_VERTICAL);
+                iconsLayout.setLayoutParams(iconsLayoutParams);
+
+                // יצירת ImageView ו-TextView עבור קטגוריה
+                ImageView categoryIcon = new ImageView(this);
+                categoryIcon.setImageResource(R.drawable.category);
+                LinearLayout.LayoutParams categoryIconParams = new LinearLayout.LayoutParams(
+                        dpToPx(16), dpToPx(16));
+                categoryIconParams.setMargins(dpToPx(5), 0, dpToPx(5), 0);
+                categoryIcon.setLayoutParams(categoryIconParams);
+                iconsLayout.addView(categoryIcon);
+
+                TextView categoryScoreTextView = new TextView(this);
+                categoryScoreTextView.setText(formatScore(orderData.categoryScore));
+                categoryScoreTextView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
+                categoryScoreTextView.setTypeface(null, Typeface.BOLD);
+                categoryScoreTextView.setTextColor(Color.BLACK);
+                LinearLayout.LayoutParams categoryScoreParams = new LinearLayout.LayoutParams(
+                        ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+                categoryScoreTextView.setLayoutParams(categoryScoreParams);
+                iconsLayout.addView(categoryScoreTextView);
+
+                // יצירת ImageView ו-TextView עבור מיקום
+                ImageView locationIcon = new ImageView(this);
+                locationIcon.setImageResource(R.drawable.location);
+                LinearLayout.LayoutParams locationIconParams = new LinearLayout.LayoutParams(
+                        dpToPx(16), dpToPx(16));
+                locationIconParams.setMargins(dpToPx(5), 0, dpToPx(5), 0);
+                locationIcon.setLayoutParams(locationIconParams);
+                iconsLayout.addView(locationIcon);
+
+                TextView distanceScoreTextView = new TextView(this);
+                distanceScoreTextView.setText(formatScore(orderData.distanceScore));
+                distanceScoreTextView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
+                distanceScoreTextView.setTypeface(null, Typeface.BOLD);
+                distanceScoreTextView.setTextColor(Color.BLACK);
+                LinearLayout.LayoutParams distanceScoreParams = new LinearLayout.LayoutParams(
+                        ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+                distanceScoreTextView.setLayoutParams(distanceScoreParams);
+                iconsLayout.addView(distanceScoreTextView);
+
+                // יצירת ImageView ו-TextView עבור דירוג
+                ImageView ratingIcon = new ImageView(this);
+                ratingIcon.setImageResource(R.drawable.star);
+                LinearLayout.LayoutParams ratingIconParams = new LinearLayout.LayoutParams(
+                        dpToPx(16), dpToPx(16));
+                ratingIconParams.setMargins(dpToPx(5), 0, dpToPx(5), 0);
+                ratingIcon.setLayoutParams(ratingIconParams);
+                iconsLayout.addView(ratingIcon);
+
+                TextView ratingScoreTextView = new TextView(this);
+                ratingScoreTextView.setText(formatScore(orderData.ratingScore));
+                ratingScoreTextView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
+                ratingScoreTextView.setTypeface(null, Typeface.BOLD);
+                ratingScoreTextView.setTextColor(Color.BLACK);
+                LinearLayout.LayoutParams ratingScoreParams = new LinearLayout.LayoutParams(
+                        ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+                ratingScoreTextView.setLayoutParams(ratingScoreParams);
+                iconsLayout.addView(ratingScoreTextView);
+
+                // הוספת iconsLayout ל-scoresLayout
+                scoresLayout.addView(iconsLayout);
+
+                // הוספת scoresLayout ל-orderLayout
+                orderLayout.addView(scoresLayout);
+            }
+        }
     }
 
-
+    private String formatScore(double score) {
+        if (score % 1 == 0) {
+            return String.format(Locale.getDefault(), "%.0f%%", score);
+        } else if (score * 10 % 1 == 0) {
+            return String.format(Locale.getDefault(), "%.1f%%", score);
+        } else {
+            return String.format(Locale.getDefault(), "%.2f%%", score);
+        }
+    }
     private void addStarsToLayout(LinearLayout layout, double rating) {
         int fullStars = (int) rating;
         boolean hasHalfStar = rating - fullStars > 0;
@@ -927,5 +1192,54 @@ public class HomePageActivity extends AppCompatActivity {
         toy.putExtra("userType", globalUserType);
         startActivity(toy);
     }
+
+
+    private double calculateCategoryScore(String orderCategory, List<String> userPreferredCategories) {
+        if (userPreferredCategories != null && userPreferredCategories.contains(orderCategory)) {
+            return (100/3);
+        }
+        return 0;
+    }
+
+
+
+    private void getUserPreferredCategories(FirebaseUser currentUser, OnCategoriesRetrievedListener listener) {
+        if (currentUser != null) {
+            String userEmail = currentUser.getEmail();
+            db.collection("users").document(userEmail).get().addOnCompleteListener(task -> {
+                if (task.isSuccessful() && task.getResult() != null) {
+                    List<String> userPreferredCategories = (List<String>) task.getResult().get("favorite categories");
+                    listener.onCategoriesRetrieved(userPreferredCategories);
+                } else {
+                    listener.onCategoriesRetrieved(new ArrayList<>());
+                }
+            });
+        } else {
+            listener.onCategoriesRetrieved(new ArrayList<>());
+        }
+    }
+    private interface OnCategoriesRetrievedListener {
+        void onCategoriesRetrieved(List<String> categories);
+    }
+
+
+
+    private double calculateRatingScore(Double rating) {
+        if (rating == null) {
+            return 0;
+        }
+        return Math.round((rating / 5.0) * (100/3) * 2) / 2.0;
+    }
+
+    private double calculateDistanceScore(float distanceInKm, double minDistance, double maxDistance) {
+        if (distanceInKm <= minDistance) {
+            return (100/3);
+        } else if (distanceInKm >= maxDistance) {
+            return 0;
+        } else {
+            return (1 - (distanceInKm - minDistance) / (maxDistance - minDistance)) * (100/3);
+        }
+    }
+
 
 }
