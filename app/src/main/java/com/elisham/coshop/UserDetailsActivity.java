@@ -92,6 +92,18 @@ public class UserDetailsActivity extends AppCompatActivity {
 
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Intent intent = getIntent();
+        if (intent != null) {
+            isGoogleSignUp = intent.getBooleanExtra("google_sign_up", false);
+            email = intent.getStringExtra("email");
+            firstName = intent.getStringExtra("firstName");
+            familyName = intent.getStringExtra("familyName");
+            selectedCategories = intent.getStringArrayListExtra("selectedCategories");
+            userType = intent.getStringExtra("userType");
+        }
+        if (userType == null) {
+            setTheme(R.style.ConsumerTheme);
+        }
         setContentView(R.layout.activity_user_details);
 
         db = FirebaseFirestore.getInstance();
@@ -110,14 +122,8 @@ public class UserDetailsActivity extends AppCompatActivity {
         searchAddressButton = findViewById(R.id.search_address_button);
         editAddressButton = findViewById(R.id.edit_address_button);
 
-        Intent intent = getIntent();
-        if (intent != null) {
-            isGoogleSignUp = intent.getBooleanExtra("google_sign_up", false);
-            email = intent.getStringExtra("email");
-            firstName = intent.getStringExtra("firstName");
-            familyName = intent.getStringExtra("familyName");
-            selectedCategories = intent.getStringArrayListExtra("selectedCategories");
-        }
+
+
 
         String fullName = firstName + " " + familyName;
         emailEditText.setText(email);
