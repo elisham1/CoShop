@@ -47,11 +47,13 @@
             android:name=".OrderDetailsActivity"
             android:exported="true"
             android:theme="@style/Theme.CoShop"/>
-
+        <activity android:name=".OrderDeletedActivity"></activity>
         <activity
             android:name=".DeepLinkHandlerActivity"
             android:theme="@style/FullscreenTheme"
             android:exported="true">
+
+
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
 
