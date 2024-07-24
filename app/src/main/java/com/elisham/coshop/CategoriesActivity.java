@@ -6,6 +6,7 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Intent;
+import android.graphics.Typeface;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Gravity;
@@ -189,6 +190,8 @@ public class CategoriesActivity extends AppCompatActivity {
                                     textView.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
                                     textView.setPadding(4, 4, 4, 4);
                                     textView.setText(categoryName);
+                                    textView.setTextColor(getResources().getColor(R.color.black));
+                                    textView.setTypeface(textView.getTypeface(), Typeface.BOLD);
                                     // Set content description for the text view
                                     textView.setContentDescription("Category: " + categoryName);
 
@@ -200,8 +203,7 @@ public class CategoriesActivity extends AppCompatActivity {
                                     categoryLayout.setLayoutParams(new GridLayout.LayoutParams());
                                     categoryLayout.addView(imageView);
                                     categoryLayout.addView(textView);
-                                    categoryLayout.setOnClickListener(this::onCategoryImageClick);
-
+                                    categoryLayout.setOnClickListener(view -> onCategoryImageClick(categoryLayout, textView));
                                     categoryGrid.addView(categoryLayout);
                                 }
 
@@ -217,14 +219,15 @@ public class CategoriesActivity extends AppCompatActivity {
                 });
     }
 
-    public void onCategoryImageClick(View view) {
-        LinearLayout categoryLayout = (LinearLayout) view;
+    public void onCategoryImageClick(LinearLayout categoryLayout, TextView textView) {
         String category = (String) categoryLayout.getTag();
         if (selectedCategories.contains(category)) {
             selectedCategories.remove(category);
+            textView.setTextColor(getResources().getColor(R.color.black));
             categoryLayout.setBackgroundResource(R.drawable.border);  // Set default background
         } else {
             selectedCategories.add(category);
+            textView.setTextColor(getResources().getColor(R.color.white));
             if (globalUserType.equals("Supplier"))
                 categoryLayout.setBackgroundResource(R.drawable.bg_category_supplier);
             if (globalUserType.equals("Consumer"))
