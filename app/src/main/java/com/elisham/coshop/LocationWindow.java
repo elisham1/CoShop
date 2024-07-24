@@ -71,11 +71,12 @@ public class LocationWindow extends AppCompatActivity {
         Intent intent = getIntent();
         globalUserType = intent.getStringExtra("userType");
 
-        if (globalUserType != null && globalUserType.equals("Consumer")) {
-            setTheme(R.style.ConsumerTheme);
-        }
+
         if (globalUserType != null && globalUserType.equals("Supplier")) {
             setTheme(R.style.SupplierTheme);
+        }
+        else {
+            setTheme(R.style.ConsumerTheme);
         }
 
         setContentView(R.layout.location_window);

@@ -52,10 +52,13 @@ public class CategoriesActivity extends AppCompatActivity {
         Intent intent = getIntent();
         globalUserType = intent.getStringExtra("userType");
 
-        if (globalUserType != null && globalUserType.equals("Consumer")) {
+        if (globalUserType == null) {
+            globalUserType = "Consumer";
+        }
+        if (globalUserType.equals("Consumer")) {
             setTheme(R.style.ConsumerTheme);
         }
-        if (globalUserType != null && globalUserType.equals("Supplier")) {
+        if (globalUserType.equals("Supplier")) {
             setTheme(R.style.SupplierTheme);
         }
         setContentView(R.layout.activity_categories);
@@ -230,7 +233,7 @@ public class CategoriesActivity extends AppCompatActivity {
             textView.setTextColor(getResources().getColor(R.color.white));
             if (globalUserType.equals("Supplier"))
                 categoryLayout.setBackgroundResource(R.drawable.bg_category_supplier);
-            if (globalUserType.equals("Consumer"))
+            else
                 categoryLayout.setBackgroundResource(R.drawable.bg_category_consumer);  // Set selected background
         }
     }
@@ -280,6 +283,7 @@ public class CategoriesActivity extends AppCompatActivity {
             toy.putExtra("firstName", firstName);
             toy.putExtra("familyName", familyName);
             toy.putStringArrayListExtra("selectedCategories", new ArrayList<>(selectedCategories));
+            toy.putExtra("userType", globalUserType);
             startActivity(toy);
             finish();
         }
