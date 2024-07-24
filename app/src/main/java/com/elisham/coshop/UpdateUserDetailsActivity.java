@@ -11,6 +11,7 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
 
+import android.app.ProgressDialog;
 import android.content.res.Resources;
 import android.location.Address;
 import android.location.Geocoder;
@@ -492,16 +493,25 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
     }
 
     private void showNameEditDialog() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(this);
         View dialogView = getLayoutInflater().inflate(R.layout.dialog_edit_name, null);
         EditText firstNameEditText = dialogView.findViewById(R.id.firstNameEditText);
         EditText familyNameEditText = dialogView.findViewById(R.id.familyNameEditText);
-        ImageView clearFirstNameIcon = dialogView.findViewById(R.id.clearFirstNameIcon); // Icon view
-        ImageView clearFamilyNameIcon = dialogView.findViewById(R.id.clearFamilyNameIcon); // Icon view
+        ImageView clearFirstNameIcon = dialogView.findViewById(R.id.clearFirstNameIcon);
+        ImageView clearFamilyNameIcon = dialogView.findViewById(R.id.clearFamilyNameIcon);
+        LinearLayout firstNameLayout = dialogView.findViewById(R.id.firstNameLayout);
+        TextView firstNameError = dialogView.findViewById(R.id.firstNameError);
 
         // Set current values
-        firstNameEditText.setText(firstName);
-        familyNameEditText.setText(familyName);
+        if (firstName != null) {
+            firstNameError.setVisibility(View.GONE);
+            firstNameEditText.setText(firstName);
+            clearFirstNameIcon.setVisibility(View.VISIBLE);
+        }
+        if (familyName != null && !familyName.isEmpty()) {
+            familyNameEditText.setText(familyName);
+            clearFamilyNameIcon.setVisibility(View.VISIBLE);
+        }
 
         // Set onClickListener for the  first name clear icon
         clearFirstNameIcon.setOnClickListener(new View.OnClickListener() {
@@ -519,29 +529,48 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
             }
         });
 
+        firstNameEditText.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                if (s.length() > 0) {
+                    firstNameError.setVisibility(View.GONE);
+                    firstNameLayout.setBackgroundResource(R.drawable.border);
+                    clearFirstNameIcon.setVisibility(View.VISIBLE);
+                } else {
+                    firstNameLayout.setBackgroundResource(R.drawable.red_border);
+                    firstNameError.setVisibility(View.VISIBLE);
+                    clearFirstNameIcon.setVisibility(View.INVISIBLE);
+                }
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+            }
+        });
+
+        familyNameEditText.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                if (s.length() > 0) {
+                    clearFamilyNameIcon.setVisibility(View.VISIBLE);
+                } else {
+                    clearFamilyNameIcon.setVisibility(View.INVISIBLE);
+                }
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+            }
+        });
+
         builder.setView(dialogView)
-                .setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        newFirstName = firstNameEditText.getText().toString().trim();
-                        firstName = newFirstName;
-                        newFamilyName = familyNameEditText.getText().toString().trim();
-                        familyName = newFamilyName;
-
-                        // Update UI with new names
-                        String fullName = newFirstName + " " + newFamilyName;
-                        fullNameTextView.setText(fullName);
-                        changeName = true;
-
-                        // Update Firestore with the new details
-                        Map<String, Object> updateName = new HashMap<>();
-                        updateName.put("first name", firstName);
-                        updateName.put("family name", familyName);
-                        updateDB(updateName);
-                        // Dismiss dialog
-                        dialog.dismiss();
-                    }
-                })
+                .setPositiveButton("OK", null)
                 .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
@@ -549,8 +578,40 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
                     }
                 });
 
-        AlertDialog dialog = builder.create();
+        android.app.AlertDialog dialog = builder.create();
+        dialog.setCancelable(false);
         dialog.show();
+
+        // Set the onClickListener for the positive button after showing the dialog
+        dialog.getButton(android.app.AlertDialog.BUTTON_POSITIVE).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                newFirstName = firstNameEditText.getText().toString().trim();
+                if (newFirstName.isEmpty()) {
+                    firstNameError.setVisibility(View.VISIBLE);
+                    firstNameLayout.setBackgroundResource(R.drawable.red_border);
+                    return;
+                }
+                firstName = newFirstName;
+                newFamilyName = familyNameEditText.getText().toString().trim();
+                if (newFamilyName.isEmpty()) {
+                    newFamilyName = "";
+                }
+                familyName = newFamilyName;
+
+                // Update UI with new names
+                String fullName = newFirstName + " " + newFamilyName;
+                fullNameTextView.setText(fullName);
+
+                // Update Firestore with the new details
+                Map<String, Object> updateName = new HashMap<>();
+                updateName.put("first name", firstName);
+                updateName.put("family name", familyName);
+                updateDB(updateName);
+                // Dismiss dialog
+                dialog.dismiss();
+            }
+        });
     }
 
     public void getUserInformation() {
@@ -652,6 +713,10 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
     }
 
     private void updateDB(Map<String, Object> userDetails){
+        ProgressDialog progressDialog = new ProgressDialog(this);
+        progressDialog.setMessage("Loading...");
+        progressDialog.setCancelable(false);
+        progressDialog.show();
         // Update Firestore with the new details
         db.collection("users").document(email)
                 .update(userDetails)
@@ -661,7 +726,7 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
                         Toast.makeText(UpdateUserDetailsActivity.this, "User details updated successfully", Toast.LENGTH_SHORT).show();
                         Log.d("EditUserDetails", "User details updated.");
                         // Navigate to another activity or perform further actions upon success
-
+                            progressDialog.dismiss();
                     }
                 })
                 .addOnFailureListener(new OnFailureListener() {
@@ -669,6 +734,7 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
                     public void onFailure(@NonNull Exception e) {
                         Toast.makeText(UpdateUserDetailsActivity.this, "Failed to update user details", Toast.LENGTH_SHORT).show();
                         Log.e("EditUserDetails", "Error updating user details", e);
+                        progressDialog.dismiss();
                     }
                 });
 
