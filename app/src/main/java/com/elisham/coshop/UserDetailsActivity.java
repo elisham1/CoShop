@@ -577,30 +577,7 @@ public class UserDetailsActivity extends AppCompatActivity {
         });
 
         builder.setView(dialogView)
-                .setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        newFirstName = firstNameEditText.getText().toString().trim();
-                        if (newFirstName.isEmpty()) {
-                            firstNameError.setVisibility(View.VISIBLE);
-                            firstNameLayout.setBackgroundResource(R.drawable.red_border);
-                            return;
-                        }
-                        firstName = newFirstName;
-                        newFamilyName = familyNameEditText.getText().toString().trim();
-                        if (newFamilyName.isEmpty()) {
-                            newFamilyName = "";
-                        }
-                        familyName = newFamilyName;
-
-                        // Update UI with new names
-                        String fullName = newFirstName + " " + newFamilyName;
-                        fullNameTextView.setText(fullName);
-
-                        // Dismiss dialog
-                        dialog.dismiss();
-                    }
-                })
+                .setPositiveButton("OK", null)
                 .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
@@ -611,6 +588,32 @@ public class UserDetailsActivity extends AppCompatActivity {
         android.app.AlertDialog dialog = builder.create();
         dialog.setCancelable(false);
         dialog.show();
+
+        // Set the onClickListener for the positive button after showing the dialog
+        dialog.getButton(android.app.AlertDialog.BUTTON_POSITIVE).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                newFirstName = firstNameEditText.getText().toString().trim();
+                if (newFirstName.isEmpty()) {
+                    firstNameError.setVisibility(View.VISIBLE);
+                    firstNameLayout.setBackgroundResource(R.drawable.red_border);
+                    return;
+                }
+                firstName = newFirstName;
+                newFamilyName = familyNameEditText.getText().toString().trim();
+                if (newFamilyName.isEmpty()) {
+                    newFamilyName = "";
+                }
+                familyName = newFamilyName;
+
+                // Update UI with new names
+                String fullName = newFirstName + " " + newFamilyName;
+                fullNameTextView.setText(fullName);
+
+                // Dismiss dialog
+                dialog.dismiss();
+            }
+        });
     }
 
     private void showImageSourceDialog(String profileImageUrl) {
