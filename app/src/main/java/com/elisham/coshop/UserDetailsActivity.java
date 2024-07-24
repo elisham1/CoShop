@@ -49,6 +49,7 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.GeoPoint;
+import com.google.firebase.messaging.FirebaseMessaging;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
@@ -450,39 +451,53 @@ public class UserDetailsActivity extends AppCompatActivity {
             return;
         }
 
-        if (isGoogleSignUp && !changePic) {
-            // If Google Sign Up, download the Google profile picture and upload it to Firebase
-            downloadAndUploadGoogleProfilePic(googleProfilePicUrl, new OnSuccessListener<String>() {
-                @Override
-                public void onSuccess(String picUrl) {
-                    userDetails.put("profileImageUrl", picUrl);
+        // שמירת FCM token לפני שמירת שאר הפרטים
+        FirebaseMessaging.getInstance().getToken().addOnCompleteListener(task -> {
+            if (!task.isSuccessful()) {
+                Log.w("FCM", "Fetching FCM registration token failed", task.getException());
+                return;
+            }
+
+            // Get new FCM registration token
+            String token = task.getResult();
+            Log.d("FCM", "FCM registration token: " + token);
+            userDetails.put("fcmToken", token); // הוספת ה-token למידע המשתמש
+
+            // שמירת הפרטים בפיירסטור
+            if (isGoogleSignUp && !changePic) {
+                // If Google Sign Up, download the Google profile picture and upload it to Firebase
+                downloadAndUploadGoogleProfilePic(googleProfilePicUrl, new OnSuccessListener<String>() {
+                    @Override
+                    public void onSuccess(String picUrl) {
+                        userDetails.put("profileImageUrl", picUrl);
+                        saveUserDetailsToFirestore(userDetails);
+                    }
+                }, e -> {
+                    Toast.makeText(UserDetailsActivity.this, "2: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                });
+            } else {
+                // If not Google Sign Up, upload the selected image
+                if (imageUri != null) {
+                    StorageReference fileReference = storageReference.child("profile_images/" + System.currentTimeMillis() + ".jpg");
+                    fileReference.putFile(imageUri)
+                            .addOnSuccessListener(taskSnapshot -> fileReference.getDownloadUrl()
+                                    .addOnSuccessListener(uri -> {
+                                        String picUrl = uri.toString();
+                                        userDetails.put("profileImageUrl", picUrl);
+                                        saveUserDetailsToFirestore(userDetails);
+                                    })
+                                    .addOnFailureListener(e -> {
+                                        Log.e("Firestore", "Error getting download URL: " + e.getMessage());
+                                    }))
+                            .addOnFailureListener(e -> {
+                                Log.e("Firestore", "Error uploading image: " + e.getMessage());
+                            });
+                } else {
+                    Toast.makeText(UserDetailsActivity.this, "No file selected", Toast.LENGTH_SHORT).show();
                     saveUserDetailsToFirestore(userDetails);
                 }
-            }, e -> {
-                Toast.makeText(UserDetailsActivity.this, "2: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-            });
-        } else {
-            // If not Google Sign Up, upload the selected image
-            if (imageUri != null) {
-                StorageReference fileReference = storageReference.child("profile_images/" + System.currentTimeMillis() + ".jpg");
-                fileReference.putFile(imageUri)
-                        .addOnSuccessListener(taskSnapshot -> fileReference.getDownloadUrl()
-                                .addOnSuccessListener(uri -> {
-                                    String picUrl = uri.toString();
-                                    userDetails.put("profileImageUrl", picUrl);
-                                    saveUserDetailsToFirestore(userDetails);
-                                })
-                                .addOnFailureListener(e -> {
-                                    Log.e("Firestore", "Error getting download URL: " + e.getMessage());
-                                }))
-                        .addOnFailureListener(e -> {
-                            Log.e("Firestore", "Error uploading image: " + e.getMessage());
-                        });
-            } else {
-                Toast.makeText(UserDetailsActivity.this, "5 No file selected", Toast.LENGTH_SHORT).show();
-                saveUserDetailsToFirestore(userDetails);
             }
-        }
+        });
     }
 
     private void saveUserDetailsToFirestore(Map<String, Object> userDetails) {
