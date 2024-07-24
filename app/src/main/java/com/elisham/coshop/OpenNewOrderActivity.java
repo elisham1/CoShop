@@ -627,9 +627,19 @@ public class OpenNewOrderActivity extends AppCompatActivity {
         CollectionReference usersRef = db.collection("users");
         GeoPoint orderLocation = new GeoPoint(latitude, longitude);
 
+        String finalUserEmail = getUserEmail; // שמירת האימייל של המשתמש הפותח ההזמנה
+
         usersRef.get().addOnCompleteListener(task -> {
             if (task.isSuccessful()) {
                 for (QueryDocumentSnapshot userDocument : task.getResult()) {
+                    String userEmail = userDocument.getString("email");
+                    String userType = userDocument.getString("type of user");
+
+                    // בדיקה אם המשתמש הוא זה שפתח את ההזמנה או אם הוא ספק
+                    if (userEmail.equals(finalUserEmail) || "Supplier".equalsIgnoreCase(userType)) {
+                        continue; // דלג על המשתמש
+                    }
+
                     List<String> favoriteCategories = (List<String>) userDocument.get("favorite categories");
                     Log.d("OpenNewOrderActivity", "User favorite categories: " + favoriteCategories);
 
@@ -639,7 +649,6 @@ public class OpenNewOrderActivity extends AppCompatActivity {
                         double maxDistance = 10.0;
 
                         if (favoriteCategories.contains(category) && isWithinDistance(orderLocation, userLocation, maxDistance)) {
-                            String userEmail = userDocument.getString("email");
                             String notificationMessage = "There is a new order in the field that interests you!";
                             Log.d("OpenNewOrderActivity", "Sending notification to: " + userEmail);
 
