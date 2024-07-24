@@ -263,6 +263,8 @@ public class OpenNewOrderActivity extends AppCompatActivity {
         builder.setView(dialogView);
 
         AlertDialog alertDialog = builder.create();
+        // Make the dialog non-cancelable
+        alertDialog.setCancelable(false);
 
         String[] imageCaptions = {
                 "Open the PayBox app.",
@@ -295,7 +297,7 @@ public class OpenNewOrderActivity extends AppCompatActivity {
             int dialogHeight = getResources().getDisplayMetrics().heightPixels;
 
             // Set the dialog to 2/3 the screen size
-            alertDialog.getWindow().setLayout((int)(dialogWidth * 0.66), (int)(dialogHeight * 0.66));
+            alertDialog.getWindow().setLayout((int)(dialogWidth), (int)(dialogHeight * 0.66));
         });
 
         alertDialog.show();
@@ -313,7 +315,12 @@ public class OpenNewOrderActivity extends AppCompatActivity {
             dotsLayout.addView(dots[i]);
         }
         if (dots.length > 0) {
-            dots[currentPosition].setTextColor(getResources().getColor(R.color.active_dot));
+            if (globalUserType.equals("Supplier")) {
+                dots[currentPosition].setTextColor(getResources().getColor(R.color.supplierPrimary));
+            }
+            if (globalUserType.equals("Consumer")) {
+                dots[currentPosition].setTextColor(getResources().getColor(R.color.consumerPrimary));
+            }
         }
     }
     private void requestNotificationPermission() {
@@ -824,6 +831,8 @@ public class OpenNewOrderActivity extends AppCompatActivity {
                 },
                 calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH)
         );
+        // Make the dialog non-cancelable
+        datePickerDialog.setCancelable(false);
         datePickerDialog.setOnDismissListener(dialog -> isDatePickerDialogOpen = false); // עדכון למצב סגור אם הדיאלוג נסגר
         datePickerDialog.show();
     }
@@ -867,6 +876,7 @@ public class OpenNewOrderActivity extends AppCompatActivity {
                 },
                 calendar.get(Calendar.HOUR_OF_DAY), calendar.get(Calendar.MINUTE), true
         );
+        timePickerDialog.setCancelable(false);
         timePickerDialog.setOnDismissListener(dialog -> isTimePickerDialogOpen = false); // עדכון למצב סגור אם הדיאלוג נסגר
         timePickerDialog.show();
     }
