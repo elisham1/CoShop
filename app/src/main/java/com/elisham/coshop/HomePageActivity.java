@@ -209,22 +209,24 @@ public class HomePageActivity extends AppCompatActivity {
         }
 
         // הצגת כפתור הסרת הסינון אם יש סינון פעיל
+        ImageButton filterButton = findViewById(R.id.searchButton);
         ImageButton filterOffButton = findViewById(R.id.filterOffButton);
         if (filterActive) {
+            filterButton.setVisibility(View.GONE);
             filterOffButton.setVisibility(View.VISIBLE);
         } else {
+            filterButton.setVisibility(View.VISIBLE);
             filterOffButton.setVisibility(View.GONE);
         }
 
         // Set up the filter off button
         filterOffButton.setOnClickListener(v -> {
             filterOffButton.setVisibility(View.GONE);
-            // Create a new intent to refresh the activity
-            Intent refreshIntent = new Intent(HomePageActivity.this, HomePageActivity.class);
-            refreshIntent.putExtra("userType", globalUserType);
-            startActivity(refreshIntent);
-            finish();
+            filterButton.setVisibility(View.VISIBLE);
+            // Fetch and display all orders without reloading the activity
+            getUserEmailAndFetchOrders();
         });
+
 
         // Set up the star button toggle
         ImageButton starButton = findViewById(R.id.starButton);
@@ -232,8 +234,8 @@ public class HomePageActivity extends AppCompatActivity {
             if (starButton.getTag().equals("star")) {
                 starButton.setImageResource(R.drawable.star);
                 starButton.setTag("star2");
-                clickOnStar=true;
-                // קבל את המיקום של המשתמש מהפיירבייס
+                clickOnStar = true;
+                // Get the user location from Firebase
                 db.collection("users").document(userEmail)
                         .get()
                         .addOnCompleteListener(task -> {
@@ -241,7 +243,7 @@ public class HomePageActivity extends AppCompatActivity {
                                 GeoPoint userLocation = task.getResult().getGeoPoint("address");
 
                                 if (userLocation != null) {
-                                    // קריאה לפונקציה החדשה עם המיקום של המשתמש
+                                    // Call the new function with the user's location
                                     calculateDisplayedOrdersRecommendationRatings(currentUser, userLocation);
                                 } else {
                                     Toast.makeText(this, "User location not found", Toast.LENGTH_SHORT).show();
@@ -252,14 +254,12 @@ public class HomePageActivity extends AppCompatActivity {
                         });
             } else {
                 starButton.setImageResource(R.drawable.star2);
-                clickOnStar=false;
+                clickOnStar = false;
                 starButton.setTag("star");
-                Intent refreshIntent = new Intent(HomePageActivity.this, HomePageActivity.class);
-                refreshIntent.putExtra("userType", globalUserType);
-                startActivity(refreshIntent);
-                finish();
+                getUserEmailAndFetchOrders();
             }
         });
+
 
 
         TextView filterBarText1 = findViewById(R.id.filterBarText1);
@@ -483,6 +483,7 @@ public class HomePageActivity extends AppCompatActivity {
 
     // פונקציה חדשה שתחשב את הציונים על סמך ההזמנות שהוצגו בדף הבית
     private void calculateDisplayedOrdersRecommendationRatings(FirebaseUser currentUser, GeoPoint userLocation) {
+        ordersContainer.removeAllViews();
         getUserPreferredCategories(currentUser, userPreferredCategories -> {
             db.collection("orders").get().addOnCompleteListener(task -> {
                 if (task.isSuccessful() && task.getResult() != null) {
@@ -651,6 +652,8 @@ public class HomePageActivity extends AppCompatActivity {
             Toast.makeText(this, "User not logged in", Toast.LENGTH_SHORT).show();
             return;
         }
+        // Clear any existing orders
+        ordersContainer.removeAllViews();
 
         db.collection("users").document(userEmail)
                 .get()
