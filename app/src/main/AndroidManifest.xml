@@ -42,6 +42,7 @@
             android:name=".EmailSignupActivity"
             android:exported="false"
             android:theme="@style/Theme.CoShop" />
+        <service android:name=".NotificationService" />
 
         <activity
             android:name=".OrderDetailsActivity"
