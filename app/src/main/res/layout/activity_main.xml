@@ -1,55 +1,90 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:layout_marginTop="16dp"
     tools:context=".MainActivity">
 
-    <Button
-        android:id="@+id/loginButton"
-        android:layout_width="255dp"
-        android:layout_height="56dp"
-        android:layout_marginStart="78dp"
-        android:layout_marginTop="254dp"
-        android:layout_marginEnd="78dp"
-        android:layout_marginBottom="31dp"
-        android:onClick="loginclick"
-        android:text="Log In"
-        app:layout_constraintBottom_toTopOf="@+id/signupButton"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/title" />
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:layout_marginBottom="16dp">
+
+        <ImageView
+            android:id="@+id/titleImage"
+            android:layout_width="250dp"
+            android:layout_height="250dp"
+            android:src="@drawable/coshop2"
+            android:contentDescription=""
+            android:layout_marginBottom="8dp"
+            android:layout_marginEnd="20dp"/>
+    </LinearLayout>
+    <TextView
+        android:id="@+id/helloText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Hello"
+        android:textSize="30sp"
+        android:textStyle="bold"
+        android:textColor="@color/black"
+        android:layout_marginBottom="4dp" />
 
     <TextView
-        android:id="@+id/title"
-        android:layout_width="248dp"
-        android:layout_height="63dp"
-        android:autoSizeTextType="uniform"
-        android:text="CoShop"
-        android:textAlignment="center"
-        android:textAppearance="@style/TextAppearance.AppCompat.Large"
-        android:textSize="60sp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.496"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.101" />
+        android:id="@+id/welcomeText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Welcome To CoShop"
+        android:textColor="@color/black"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="16dp" />
 
-    <Button
-        android:id="@+id/signupButton"
-        android:layout_width="255dp"
-        android:layout_height="56dp"
-        android:layout_marginStart="78dp"
-        android:layout_marginTop="31dp"
-        android:layout_marginEnd="78dp"
-        android:layout_marginBottom="204dp"
-        android:onClick="signupclick"
-        android:text="Sign Up"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/loginButton" />
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:layout_marginBottom="16dp">
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+        <Button
+            android:layout_width="250dp"
+            android:layout_height="55dp"
+            android:layout_marginBottom="16dp"
+            android:onClick="loginclick"
+            android:text="LOG IN"
+            android:textColor="@color/white"
+            android:textStyle="bold"
+            android:background="@drawable/bg_selected_consumer"
+            android:contentDescription="Log In"/>
+
+        <Button
+            android:layout_width="250dp"
+            android:layout_height="55dp"
+            android:layout_marginBottom="16dp"
+            android:onClick="signupclick"
+            android:text="SIGN UP"
+            android:textColor="@color/white"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:background="@drawable/bg_selected_consumer"
+            android:contentDescription="sign up" />
+
+        <ImageButton
+            android:id="@+id/googleButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/resized_google_signin_button"
+            android:background="@android:color/transparent"
+            android:contentDescription="Sign In with Google" />
+
+    </LinearLayout>
+
+</LinearLayout>
