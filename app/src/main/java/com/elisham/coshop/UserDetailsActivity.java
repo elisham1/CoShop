@@ -92,6 +92,18 @@ public class UserDetailsActivity extends AppCompatActivity {
 
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Intent intent = getIntent();
+        if (intent != null) {
+            isGoogleSignUp = intent.getBooleanExtra("google_sign_up", false);
+            email = intent.getStringExtra("email");
+            firstName = intent.getStringExtra("firstName");
+            familyName = intent.getStringExtra("familyName");
+            selectedCategories = intent.getStringArrayListExtra("selectedCategories");
+            userType = intent.getStringExtra("userType");
+        }
+        if (userType == null) {
+            setTheme(R.style.ConsumerTheme);
+        }
         setContentView(R.layout.activity_user_details);
 
         db = FirebaseFirestore.getInstance();
@@ -110,14 +122,8 @@ public class UserDetailsActivity extends AppCompatActivity {
         searchAddressButton = findViewById(R.id.search_address_button);
         editAddressButton = findViewById(R.id.edit_address_button);
 
-        Intent intent = getIntent();
-        if (intent != null) {
-            isGoogleSignUp = intent.getBooleanExtra("google_sign_up", false);
-            email = intent.getStringExtra("email");
-            firstName = intent.getStringExtra("firstName");
-            familyName = intent.getStringExtra("familyName");
-            selectedCategories = intent.getStringArrayListExtra("selectedCategories");
-        }
+
+
 
         String fullName = firstName + " " + familyName;
         emailEditText.setText(email);
@@ -519,12 +525,21 @@ public class UserDetailsActivity extends AppCompatActivity {
         View dialogView = getLayoutInflater().inflate(R.layout.dialog_edit_name, null);
         EditText firstNameEditText = dialogView.findViewById(R.id.firstNameEditText);
         EditText familyNameEditText = dialogView.findViewById(R.id.familyNameEditText);
-        ImageView clearFirstNameIcon = dialogView.findViewById(R.id.clearFirstNameIcon); // Icon view
-        ImageView clearFamilyNameIcon = dialogView.findViewById(R.id.clearFamilyNameIcon); // Icon view
+        ImageView clearFirstNameIcon = dialogView.findViewById(R.id.clearFirstNameIcon);
+        ImageView clearFamilyNameIcon = dialogView.findViewById(R.id.clearFamilyNameIcon);
+        LinearLayout firstNameLayout = dialogView.findViewById(R.id.firstNameLayout);
+        TextView firstNameError = dialogView.findViewById(R.id.firstNameError);
 
         // Set current values
-        firstNameEditText.setText(firstName);
-        familyNameEditText.setText(familyName);
+        if (firstName != null) {
+            firstNameError.setVisibility(View.GONE);
+            firstNameEditText.setText(firstName);
+            clearFirstNameIcon.setVisibility(View.VISIBLE);
+        }
+        if (familyName != null && !familyName.isEmpty()) {
+            familyNameEditText.setText(familyName);
+            clearFamilyNameIcon.setVisibility(View.VISIBLE);
+        }
 
         // Set onClickListener for the  first name clear icon
         clearFirstNameIcon.setOnClickListener(new View.OnClickListener() {
@@ -542,23 +557,48 @@ public class UserDetailsActivity extends AppCompatActivity {
             }
         });
 
+        firstNameEditText.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                if (s.length() > 0) {
+                    firstNameError.setVisibility(View.GONE);
+                    firstNameLayout.setBackgroundResource(R.drawable.border);
+                    clearFirstNameIcon.setVisibility(View.VISIBLE);
+                } else {
+                    firstNameLayout.setBackgroundResource(R.drawable.red_border);
+                    firstNameError.setVisibility(View.VISIBLE);
+                    clearFirstNameIcon.setVisibility(View.INVISIBLE);
+                }
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+            }
+        });
+
+        familyNameEditText.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                if (s.length() > 0) {
+                    clearFamilyNameIcon.setVisibility(View.VISIBLE);
+                } else {
+                    clearFamilyNameIcon.setVisibility(View.INVISIBLE);
+                }
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+            }
+        });
+
         builder.setView(dialogView)
-                .setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        newFirstName = firstNameEditText.getText().toString().trim();
-                        firstName = newFirstName;
-                        newFamilyName = familyNameEditText.getText().toString().trim();
-                        familyName = newFamilyName;
-
-                        // Update UI with new names
-                        String fullName = newFirstName + " " + newFamilyName;
-                        fullNameTextView.setText(fullName);
-
-                        // Dismiss dialog
-                        dialog.dismiss();
-                    }
-                })
+                .setPositiveButton("OK", null)
                 .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
@@ -567,7 +607,34 @@ public class UserDetailsActivity extends AppCompatActivity {
                 });
 
         android.app.AlertDialog dialog = builder.create();
+        dialog.setCancelable(false);
         dialog.show();
+
+        // Set the onClickListener for the positive button after showing the dialog
+        dialog.getButton(android.app.AlertDialog.BUTTON_POSITIVE).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                newFirstName = firstNameEditText.getText().toString().trim();
+                if (newFirstName.isEmpty()) {
+                    firstNameError.setVisibility(View.VISIBLE);
+                    firstNameLayout.setBackgroundResource(R.drawable.red_border);
+                    return;
+                }
+                firstName = newFirstName;
+                newFamilyName = familyNameEditText.getText().toString().trim();
+                if (newFamilyName.isEmpty()) {
+                    newFamilyName = "";
+                }
+                familyName = newFamilyName;
+
+                // Update UI with new names
+                String fullName = newFirstName + " " + newFamilyName;
+                fullNameTextView.setText(fullName);
+
+                // Dismiss dialog
+                dialog.dismiss();
+            }
+        });
     }
 
     private void showImageSourceDialog(String profileImageUrl) {
@@ -663,6 +730,7 @@ public class UserDetailsActivity extends AppCompatActivity {
         // Clear the activity stack and start as a new task
         homeIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
         homeIntent.putExtra("userType", userType);
+        homeIntent.putExtra("source", "user_details");
         startActivity(homeIntent);
 
         // Finish UserDetailsActivity

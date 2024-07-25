@@ -6,6 +6,7 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.Manifest;
+import android.app.ProgressDialog;
 import android.app.DatePickerDialog;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -107,7 +108,7 @@ public class OpenNewOrderActivity extends AppCompatActivity {
     private String globalUserType;
 
     private int[] imageResources = {
-            R.drawable.one, 
+            R.drawable.one,
             R.drawable.two,
             R.drawable.three,
             R.drawable.four,
@@ -262,6 +263,8 @@ public class OpenNewOrderActivity extends AppCompatActivity {
         builder.setView(dialogView);
 
         AlertDialog alertDialog = builder.create();
+        // Make the dialog non-cancelable
+        alertDialog.setCancelable(false);
 
         String[] imageCaptions = {
                 "Open the PayBox app.",
@@ -294,7 +297,7 @@ public class OpenNewOrderActivity extends AppCompatActivity {
             int dialogHeight = getResources().getDisplayMetrics().heightPixels;
 
             // Set the dialog to 2/3 the screen size
-            alertDialog.getWindow().setLayout((int)(dialogWidth * 0.66), (int)(dialogHeight * 0.66));
+            alertDialog.getWindow().setLayout((int)(dialogWidth), (int)(dialogHeight * 0.66));
         });
 
         alertDialog.show();
@@ -312,7 +315,12 @@ public class OpenNewOrderActivity extends AppCompatActivity {
             dotsLayout.addView(dots[i]);
         }
         if (dots.length > 0) {
-            dots[currentPosition].setTextColor(getResources().getColor(R.color.active_dot));
+            if (globalUserType.equals("Supplier")) {
+                dots[currentPosition].setTextColor(getResources().getColor(R.color.supplierPrimary));
+            }
+            if (globalUserType.equals("Consumer")) {
+                dots[currentPosition].setTextColor(getResources().getColor(R.color.consumerPrimary));
+            }
         }
     }
     private void requestNotificationPermission() {
@@ -433,7 +441,10 @@ public class OpenNewOrderActivity extends AppCompatActivity {
 
         // ננעל את הכפתור ונציג הודעת טעינה
         isSubmitting = true;
-        Toast.makeText(this, "Loading", Toast.LENGTH_SHORT).show();
+        ProgressDialog progressDialog = new ProgressDialog(this);
+        progressDialog.setMessage("Loading...");
+        progressDialog.setCancelable(false);
+        progressDialog.show();
 
         String url = urlEditText.getText().toString().trim();
         String description = descriptionEditText.getText().toString().trim();
@@ -445,58 +456,68 @@ public class OpenNewOrderActivity extends AppCompatActivity {
         } else if (!url.contains("://")) {
             Toast.makeText(this, "Invalid URL. Please enter a valid URL", Toast.LENGTH_SHORT).show();
             isSubmitting = false; // שחרור הכפתור אם יש שגיאה
+            progressDialog.dismiss();
             return;
         }
 
         if (title.isEmpty()) {
             Toast.makeText(this, "Title is required", Toast.LENGTH_SHORT).show();
             isSubmitting = false; // שחרור הכפתור אם יש שגיאה
+            progressDialog.dismiss();
             return;
         }
 
         if (saveNewCategorieName.isEmpty() || saveNewCategorieName.equals("Choose Categorie")) {
             Toast.makeText(this, "Category is required", Toast.LENGTH_SHORT).show();
             isSubmitting = false; // שחרור הכפתור אם יש שגיאה
+            progressDialog.dismiss();
             return;
         }
 
         if (lastLatitude == 0.0 && lastLongitude == 0.0) {
             Toast.makeText(this, "Location is required", Toast.LENGTH_SHORT).show();
             isSubmitting = false; // שחרור הכפתור אם יש שגיאה
+            progressDialog.dismiss();
             return;
         }
 
         if (description.isEmpty()) {
             Toast.makeText(this, "Description is required", Toast.LENGTH_SHORT).show();
             isSubmitting = false; // שחרור הכפתור אם יש שגיאה
+            progressDialog.dismiss();
             return;
         }
 
         if (selectedDate == null) {
             Toast.makeText(this, "Date is required", Toast.LENGTH_SHORT).show();
             isSubmitting = false; // שחרור הכפתור אם יש שגיאה
+            progressDialog.dismiss();
             return;
         }
 
         if (selectedTime == null) {
             Toast.makeText(this, "Time is required", Toast.LENGTH_SHORT).show();
             isSubmitting = false; // שחרור הכפתור אם יש שגיאה
+            progressDialog.dismiss();
             return;
         }
 
         if (maxPeople == 0) {
             Toast.makeText(this, "Maximum people is required it's can't be zero", Toast.LENGTH_SHORT).show();
             isSubmitting = false; // שחרור הכפתור אם יש שגיאה
+            progressDialog.dismiss();
             return;
         }
         if (maxPeople == 1) {
             Toast.makeText(this, "Choose minimum two participants", Toast.LENGTH_SHORT).show();
             isSubmitting = false; // שחרור הכפתור אם יש שגיאה
+            progressDialog.dismiss();
             return;
         }
         if (maxPeople < 0) {
             Toast.makeText(this, "You cannot choose a negative number", Toast.LENGTH_SHORT).show();
             isSubmitting = false; // שחרור הכפתור אם יש שגיאה
+            progressDialog.dismiss();
             return;
         }
         addCategorieToDataBase();
@@ -509,6 +530,7 @@ public class OpenNewOrderActivity extends AppCompatActivity {
                             if (notificationTask.isSuccessful()) {
                                 sendNotification("New Order", "There is a new order in the field that interests you!", orderId).addOnCompleteListener(notificationSendTask -> {
                                     if (notificationSendTask.isSuccessful()) {
+                                        progressDialog.dismiss();
                                         Intent intent = new Intent(OpenNewOrderActivity.this, MyOrdersActivity.class);
                                         intent.putExtra("userType", globalUserType);
                                         startActivity(intent);
@@ -516,16 +538,19 @@ public class OpenNewOrderActivity extends AppCompatActivity {
                                     } else {
                                         Toast.makeText(this, "Error in notification process", Toast.LENGTH_SHORT).show();
                                         isSubmitting = false; // שחרור הכפתור אם יש שגיאה
+                                        progressDialog.dismiss();
                                     }
                                 });
                             } else {
                                 Toast.makeText(this, "Error in notification process", Toast.LENGTH_SHORT).show();
                                 isSubmitting = false; // שחרור הכפתור אם יש שגיאה
+                                progressDialog.dismiss();
                             }
                         });
             } else {
                 Toast.makeText(this, "Failed to save order", Toast.LENGTH_SHORT).show();
                 isSubmitting = false; // שחרור הכפתור אם יש שגיאה
+                progressDialog.dismiss();
             }
         });
     }
@@ -815,6 +840,8 @@ public class OpenNewOrderActivity extends AppCompatActivity {
                 },
                 calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH)
         );
+        // Make the dialog non-cancelable
+        datePickerDialog.setCancelable(false);
         datePickerDialog.setOnDismissListener(dialog -> isDatePickerDialogOpen = false); // עדכון למצב סגור אם הדיאלוג נסגר
         datePickerDialog.show();
     }
@@ -858,6 +885,7 @@ public class OpenNewOrderActivity extends AppCompatActivity {
                 },
                 calendar.get(Calendar.HOUR_OF_DAY), calendar.get(Calendar.MINUTE), true
         );
+        timePickerDialog.setCancelable(false);
         timePickerDialog.setOnDismissListener(dialog -> isTimePickerDialogOpen = false); // עדכון למצב סגור אם הדיאלוג נסגר
         timePickerDialog.show();
     }

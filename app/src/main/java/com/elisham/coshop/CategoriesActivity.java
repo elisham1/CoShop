@@ -6,6 +6,7 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Intent;
+import android.graphics.Typeface;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Gravity;
@@ -51,10 +52,13 @@ public class CategoriesActivity extends AppCompatActivity {
         Intent intent = getIntent();
         globalUserType = intent.getStringExtra("userType");
 
-        if (globalUserType != null && globalUserType.equals("Consumer")) {
+        if (globalUserType == null) {
+            globalUserType = "Consumer";
+        }
+        if (globalUserType.equals("Consumer")) {
             setTheme(R.style.ConsumerTheme);
         }
-        if (globalUserType != null && globalUserType.equals("Supplier")) {
+        if (globalUserType.equals("Supplier")) {
             setTheme(R.style.SupplierTheme);
         }
         setContentView(R.layout.activity_categories);
@@ -174,13 +178,11 @@ public class CategoriesActivity extends AppCompatActivity {
                                     imageView.setBackgroundResource(R.drawable.image_background);
                                     Glide.with(this).load(categoryImage).into(imageView);
                                     imageView.setTag(categoryName);
-                                    imageView.setOnClickListener(this::onCategoryImageClick);
 
                                     // Set content description for accessibility
                                     imageView.setContentDescription("Category image for " + categoryName);
 
                                     if (selectedCategories != null && selectedCategories.contains(categoryName)) {
-                                        imageView.setAlpha(0.5f);
                                         imageView.setBackgroundResource(R.drawable.image_background);
                                     }
 
@@ -191,16 +193,20 @@ public class CategoriesActivity extends AppCompatActivity {
                                     textView.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
                                     textView.setPadding(4, 4, 4, 4);
                                     textView.setText(categoryName);
+                                    textView.setTextColor(getResources().getColor(R.color.black));
+                                    textView.setTypeface(textView.getTypeface(), Typeface.BOLD);
                                     // Set content description for the text view
                                     textView.setContentDescription("Category: " + categoryName);
 
                                     LinearLayout categoryLayout = new LinearLayout(this);
                                     categoryLayout.setOrientation(LinearLayout.VERTICAL);
+                                    categoryLayout.setBackgroundResource(R.drawable.border);
                                     categoryLayout.setGravity(Gravity.CENTER);
+                                    categoryLayout.setTag(categoryName);
                                     categoryLayout.setLayoutParams(new GridLayout.LayoutParams());
                                     categoryLayout.addView(imageView);
                                     categoryLayout.addView(textView);
-
+                                    categoryLayout.setOnClickListener(view -> onCategoryImageClick(categoryLayout, textView));
                                     categoryGrid.addView(categoryLayout);
                                 }
 
@@ -216,20 +222,21 @@ public class CategoriesActivity extends AppCompatActivity {
                 });
     }
 
-    public void onCategoryImageClick(View view) {
-        ImageView imageView = (ImageView) view;
-        String category = (String) imageView.getTag();
+    public void onCategoryImageClick(LinearLayout categoryLayout, TextView textView) {
+        String category = (String) categoryLayout.getTag();
         if (selectedCategories.contains(category)) {
             selectedCategories.remove(category);
-            imageView.setAlpha(1.0f);  // Unselected state
-            imageView.setBackgroundResource(R.drawable.image_background);  // Set default background
+            textView.setTextColor(getResources().getColor(R.color.black));
+            categoryLayout.setBackgroundResource(R.drawable.border);  // Set default background
         } else {
             selectedCategories.add(category);
-            imageView.setAlpha(0.5f);  // Selected state
-            imageView.setBackgroundResource(R.drawable.image_background);  // Set selected background
+            textView.setTextColor(getResources().getColor(R.color.white));
+            if (globalUserType.equals("Supplier"))
+                categoryLayout.setBackgroundResource(R.drawable.bg_category_supplier);
+            else
+                categoryLayout.setBackgroundResource(R.drawable.bg_category_consumer);  // Set selected background
         }
     }
-
 
     public void doneCategory(View v) {
         if (selectedCategories.isEmpty()) {
@@ -276,6 +283,7 @@ public class CategoriesActivity extends AppCompatActivity {
             toy.putExtra("firstName", firstName);
             toy.putExtra("familyName", familyName);
             toy.putStringArrayListExtra("selectedCategories", new ArrayList<>(selectedCategories));
+            toy.putExtra("userType", globalUserType);
             startActivity(toy);
             finish();
         }

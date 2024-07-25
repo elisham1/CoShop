@@ -4,6 +4,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.view.ViewCompat;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.location.Address;
@@ -20,8 +21,10 @@ import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -68,6 +71,10 @@ public class MyOrdersActivity extends AppCompatActivity {
     private static final String CONSUMER_ORDERS = "Customer Orders";
     private static final String WAIT_LIST = "Wait List";
     private List<String> selectedOptions = new ArrayList<>();
+    private static final String PREFS_NAME = "AppPrefs";
+    private static final String KEY_FIRST_TIME = "firstTime";
+    private RelativeLayout explanationLayout;
+    private int currentStep = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -237,6 +244,83 @@ public class MyOrdersActivity extends AppCompatActivity {
                 startActivity(intent);
             }
         });
+
+        if (globalUserType.equals("Supplier")) {
+            showExplanationsIfNeeded();
+        }
+    }
+
+    private void showExplanationsIfNeeded() {
+        SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+        boolean firstTime = prefs.getBoolean(KEY_FIRST_TIME, true);
+        firstTime = true;
+
+        if (firstTime) {
+            explanationLayout = (RelativeLayout) getLayoutInflater().inflate(R.layout.explanation_layout, null);
+            addContentView(explanationLayout, new RelativeLayout.LayoutParams(
+                    RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.MATCH_PARENT));
+
+            explanationLayout.setOnTouchListener((v, event) -> {
+                if (event.getAction() == MotionEvent.ACTION_DOWN) {
+                    showNextExplanationStep();
+                    return true;
+                }
+                return false;
+            });
+
+            Button btnDismiss = explanationLayout.findViewById(R.id.btnDismiss);
+            btnDismiss.setOnClickListener(v -> {
+                // Dismiss the explanations
+                explanationLayout.setVisibility(View.GONE);
+
+                // Update the shared preferences to mark that the user has seen the explanations
+                SharedPreferences.Editor editor = prefs.edit();
+                editor.putBoolean(KEY_FIRST_TIME, false);
+                editor.apply();
+            });
+
+            // Show the first explanation step
+            showNextExplanationStep();
+        }
+    }
+
+    private void showNextExplanationStep() {
+        ImageView arrowToPlus = explanationLayout.findViewById(R.id.arrow_to_plus);
+        TextView textPlus = explanationLayout.findViewById(R.id.text_plus);
+        ImageView arrowToMenu = explanationLayout.findViewById(R.id.arrow_to_menu);
+        TextView textMenu = explanationLayout.findViewById(R.id.text_menu);
+        ImageView arrowToFilter = explanationLayout.findViewById(R.id.arrow_to_filter);
+        TextView textFilter = explanationLayout.findViewById(R.id.text_filter);
+        Button btnDismiss = explanationLayout.findViewById(R.id.btnDismiss);
+        TextView textEnjoy = explanationLayout.findViewById(R.id.text_enjoy);
+
+        // Hide all elements initially
+        arrowToPlus.setVisibility(View.GONE);
+        textPlus.setVisibility(View.GONE);
+        arrowToMenu.setVisibility(View.GONE);
+        textMenu.setVisibility(View.GONE);
+        arrowToFilter.setVisibility(View.GONE);
+        textFilter.setVisibility(View.GONE);
+        btnDismiss.setVisibility(View.GONE);
+        textEnjoy.setVisibility(View.GONE);
+
+        // Show elements based on the current step
+        switch (currentStep) {
+            case 0:
+                currentStep++;
+                arrowToPlus.setVisibility(View.VISIBLE);
+                textPlus.setVisibility(View.VISIBLE);
+                break;
+            case 1:
+                currentStep++;
+                arrowToMenu.setVisibility(View.VISIBLE);
+                textMenu.setVisibility(View.VISIBLE);
+                break;
+            case 2:
+                textEnjoy.setVisibility(View.VISIBLE);
+                btnDismiss.setVisibility(View.VISIBLE);
+                break;
+        }
     }
 
     private void readUserOrders(List<String> options) {
@@ -487,19 +571,15 @@ public class MyOrdersActivity extends AppCompatActivity {
         return totalRating / userRatings.size();
     }
 
-    private void addOrderToLayout(String orderId, String titleOfOrder,
-                                  String location, long numberOfPeopleInOrder,
-                                  long maxPeople, String categorie, double distance,
-                                  Timestamp timestamp, double averageRating) {
-        Log.d("MyOrdersActivity", "Adding order to layout: " + orderId);
-        // Create a new RelativeLayout for the order
-        RelativeLayout orderLayout = new RelativeLayout(this);
-        RelativeLayout.LayoutParams orderLayoutParams = new RelativeLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        orderLayoutParams.setMargins(0, 0, 0, dpToPx(8)); // Add margin between orders
-        orderLayout.setLayoutParams(orderLayoutParams);
-        orderLayout.setPadding(dpToPx(8), dpToPx(8), dpToPx(8), dpToPx(8));
-        orderLayout.setBackgroundColor(Color.WHITE); // Set the background color to white
+    private void addOrderToLayout(String orderId, String titleOfOrder, String location,
+                                  long numberOfPeopleInOrder, long maxPeople, String categorie,
+                                  double distance, Timestamp timestamp, double averageRating) {
+        View orderLayout = getLayoutInflater().inflate(R.layout.order_item, ordersLayout, false);
+        if (globalUserType.equals("Supplier")) {
+            orderLayout.setBackgroundResource(R.drawable.border_blue);
+        } else {
+            orderLayout.setBackgroundResource(R.drawable.border_green);
+        }
 
         // Set onClickListener to open order details
         orderLayout.setOnClickListener(v -> {
@@ -510,146 +590,40 @@ public class MyOrdersActivity extends AppCompatActivity {
             startActivity(intent);
         });
 
-        TextView titleTextView = new TextView(this);
+        TextView titleTextView = orderLayout.findViewById(R.id.titleTextView);
+        TextView distanceTextView = orderLayout.findViewById(R.id.distanceTextView);
+        TextView peopleTextView = orderLayout.findViewById(R.id.peopleTextView);
+        ImageView leftSquare = orderLayout.findViewById(R.id.leftSquare);
+        TextView categoryTextView = orderLayout.findViewById(R.id.categoryTextView);
+        TextView locationTextView = orderLayout.findViewById(R.id.locationTextView);
+        TextView typeTextView = orderLayout.findViewById(R.id.typeTextView);
+        LinearLayout ratingLayout = orderLayout.findViewById(R.id.ratingLayout);
+        TextView statusTextView = orderLayout.findViewById(R.id.statusTextView);
+
+        // Find the timer layout inside the inflated order layout
+        View timerView = orderLayout.findViewById(R.id.timerView);
+
+        // Set values to the views
         titleTextView.setText(titleOfOrder);
-        titleTextView.setId(View.generateViewId());
-        titleTextView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
-        RelativeLayout.LayoutParams titleTextParams = new RelativeLayout.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        titleTextParams.addRule(RelativeLayout.ALIGN_PARENT_END);
-        titleTextParams.addRule(RelativeLayout.ALIGN_PARENT_TOP);
-        titleTextParams.setMargins(dpToPx(20), dpToPx(10), dpToPx(10), dpToPx(5)); // Add margin from the edge
-        titleTextView.setLayoutParams(titleTextParams);
-        titleTextView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14); // Increase text size
-        titleTextView.setTypeface(null, Typeface.BOLD); // Bold text
-        titleTextView.setTextColor(Color.BLACK); // Set text color to black
-        orderLayout.addView(titleTextView);
-
-        TextView distanceTextView = new TextView(this);
         distanceTextView.setText(String.format("%.2f km", distance));
-        distanceTextView.setId(View.generateViewId());
-        distanceTextView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
-        RelativeLayout.LayoutParams distanceTextParams = new RelativeLayout.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        distanceTextParams.addRule(RelativeLayout.ALIGN_PARENT_START);
-        distanceTextParams.addRule(RelativeLayout.ALIGN_PARENT_TOP);
-        distanceTextParams.setMargins(dpToPx(10), dpToPx(10), dpToPx(20), dpToPx(5)); // Add margin from the edge
-        distanceTextView.setLayoutParams(distanceTextParams);
-        distanceTextView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14); // Increase text size
-        distanceTextView.setTypeface(null, Typeface.BOLD); // Bold text
-        distanceTextView.setTextColor(Color.BLACK); // Set text color to black
-        orderLayout.addView(distanceTextView);
-
-        // Create and add the people count
-        TextView peopleTextView = new TextView(this);
         if (maxPeople == 0) {
-            peopleTextView.setText("∞/" + numberOfPeopleInOrder);
-            //peopleText = "People: " + numberOfPeopleInOrder + "/∞";
-
+            peopleTextView.setText(numberOfPeopleInOrder + "/∞");
         } else {
             peopleTextView.setText(numberOfPeopleInOrder + "/" + maxPeople);
         }
-        peopleTextView.setId(View.generateViewId());
-        RelativeLayout.LayoutParams peopleTextParams = new RelativeLayout.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        peopleTextParams.addRule(RelativeLayout.CENTER_IN_PARENT); // Center horizontally and vertically
-        peopleTextView.setLayoutParams(peopleTextParams);
-        peopleTextParams.setMargins(0, dpToPx(10), 0, dpToPx(10)); // Add margin between title and people count
-        peopleTextView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 18); // Increase text size
-        peopleTextView.setTypeface(null, Typeface.BOLD); // Bold text
-        peopleTextView.setTextColor(Color.BLACK); // Set text color to black
-        orderLayout.addView(peopleTextView);
-
-        // Create and add the left square with category
-        LinearLayout leftSquareLayout = new LinearLayout(this);
-        leftSquareLayout.setOrientation(LinearLayout.VERTICAL);
-        RelativeLayout.LayoutParams leftSquareLayoutParams = new RelativeLayout.LayoutParams(
-                dpToPx(80), ViewGroup.LayoutParams.WRAP_CONTENT); // Size of the left square
-        leftSquareLayoutParams.addRule(RelativeLayout.ALIGN_PARENT_START);
-        leftSquareLayoutParams.addRule(RelativeLayout.BELOW, peopleTextView.getId());
-        leftSquareLayoutParams.setMargins(dpToPx(15), dpToPx(10), dpToPx(20), dpToPx(15)); // Add margin from the left edge
-        leftSquareLayout.setLayoutParams(leftSquareLayoutParams);
-
-        ImageView leftSquare = new ImageView(this);
-        leftSquare.setBackgroundColor(Color.WHITE); // Set the background color to white
-        leftSquare.setId(View.generateViewId());
-        LinearLayout.LayoutParams leftSquareParams = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, dpToPx(80));
-        leftSquare.setLayoutParams(leftSquareParams);
-
-        leftSquareLayout.addView(leftSquare);
+        categoryTextView.setText(categorie);
+        locationTextView.setText(location);
 
         // Load the icon from URL
         String iconUrl = "https://firebasestorage.googleapis.com/v0/b/coshop-6fecd.appspot.com/o/icons%2F" + categorie + ".png?alt=media";
         Glide.with(this)
                 .load(iconUrl)
                 .diskCacheStrategy(DiskCacheStrategy.ALL) // Enable caching
-                .placeholder(R.drawable.star) // Optional: Add a placeholder image
-                .error(R.drawable.star2) // Optional: Add an error image
+                .placeholder(R.drawable.other) // Optional: Add a placeholder image
+                .error(R.drawable.other) // Optional: Add an error image
                 .into(leftSquare);
 
-        TextView categoryTextView = new TextView(this);
-        categoryTextView.setText(categorie);
-        categoryTextView.setId(View.generateViewId());
-        categoryTextView.setGravity(Gravity.CENTER_HORIZONTAL);
-        categoryTextView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14); // Increase text size
-        categoryTextView.setTypeface(null, Typeface.BOLD); // Bold text
-        categoryTextView.setTextColor(Color.BLACK); // Set text color to black
-        leftSquareLayout.addView(categoryTextView);
-
-        orderLayout.addView(leftSquareLayout);
-
-        // Create and add the right square with timer
-        LinearLayout rightSquareContainer = new LinearLayout(this);
-        rightSquareContainer.setOrientation(LinearLayout.VERTICAL);
-        rightSquareContainer.setGravity(Gravity.CENTER_HORIZONTAL); // Center the container horizontally
-        RelativeLayout.LayoutParams rightSquareContainerParams = new RelativeLayout.LayoutParams(
-                dpToPx(80), ViewGroup.LayoutParams.WRAP_CONTENT); // Size of the right square container
-        rightSquareContainerParams.addRule(RelativeLayout.ALIGN_PARENT_END);
-        rightSquareContainerParams.addRule(RelativeLayout.BELOW, peopleTextView.getId());
-        rightSquareContainerParams.setMargins(dpToPx(20), dpToPx(10), dpToPx(15), dpToPx(20)); // Add margin from the right edge
-        rightSquareContainer.setLayoutParams(rightSquareContainerParams);
-
-        RelativeLayout rightSquareLayout = new RelativeLayout(this);
-        LinearLayout.LayoutParams rightSquareLayoutParams = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, dpToPx(80)); // Size of the right square
-        rightSquareLayout.setLayoutParams(rightSquareLayoutParams);
-
-        rightSquareContainer.addView(rightSquareLayout);
-
-        ImageView rightSquare = new ImageView(this);
-        rightSquare.setBackgroundColor(Color.WHITE); // Set the background color to white
-        rightSquare.setId(View.generateViewId());
-        RelativeLayout.LayoutParams rightSquareParams = new RelativeLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
-        rightSquare.setLayoutParams(rightSquareParams);
-
-        rightSquareLayout.addView(rightSquare);
-
-        // Inflate custom timer layout
-        View timerView = getLayoutInflater().inflate(R.layout.timer_layout, null);
-        RelativeLayout.LayoutParams timerViewParams = new RelativeLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
-        timerView.setLayoutParams(timerViewParams);
-
-        // Ensure the timer layout is left-to-right
-        ViewCompat.setLayoutDirection(timerView, ViewCompat.LAYOUT_DIRECTION_LTR);
-
-        rightSquareLayout.addView(timerView);
-
-        // Get references to timer text views
-        LinearLayout daysContainer = timerView.findViewById(R.id.daysContainer);
-        TextView daysTextView = timerView.findViewById(R.id.daysTextView);
-        TextView colon1 = timerView.findViewById(R.id.colon1);
-        LinearLayout hoursContainer = timerView.findViewById(R.id.hoursContainer);
-        TextView hoursTextView = timerView.findViewById(R.id.hoursTextView);
-        TextView colon2 = timerView.findViewById(R.id.colon2);
-        LinearLayout minutesContainer = timerView.findViewById(R.id.minutesContainer);
-        TextView minutesTextView = timerView.findViewById(R.id.minutesTextView);
-        TextView colon3 = timerView.findViewById(R.id.colon3);
-        LinearLayout secondsContainer = timerView.findViewById(R.id.secondsContainer);
-        TextView secondsTextView = timerView.findViewById(R.id.secondsTextView);
-
+        // Calculate and set the timer
         long currentTime = System.currentTimeMillis();
         Date date = timestamp.toDate();
         long timeRemaining = date.getTime() - currentTime;
@@ -658,128 +632,44 @@ public class MyOrdersActivity extends AppCompatActivity {
             new CountDownTimer(timeRemaining, 1000) {
 
                 public void onTick(long millisUntilFinished) {
-                    updateTimerTextViews(daysContainer, daysTextView, colon1, hoursContainer, hoursTextView, colon2, minutesContainer, minutesTextView, colon3, secondsContainer, secondsTextView, millisUntilFinished);
+                    updateTimerTextViews(timerView, millisUntilFinished);
                 }
 
                 public void onFinish() {
-                    daysTextView.setText("00");
-                    hoursTextView.setText("00");
-                    minutesTextView.setText("00");
-                    secondsTextView.setText("00");
+                    updateTimerTextViews(timerView, 0);
                 }
             }.start();
         } else {
-            daysTextView.setText("00");
-            hoursTextView.setText("00");
-            minutesTextView.setText("00");
-            secondsTextView.setText("00");
+            updateTimerTextViews(timerView, 0);
         }
 
-        orderLayout.addView(rightSquareContainer);
+        // Check if the order is open or closed using existing variables
+        boolean isOrderOpen = timestamp.toDate().getTime() > currentTime;
+        statusTextView.setText(isOrderOpen ? "Open" : "Closed");
+        statusTextView.setTextColor(isOrderOpen ? Color.GREEN : Color.RED);
 
-// Create and add the location
-        TextView locationTextView = new TextView(this);
-        locationTextView.setId(View.generateViewId());
-        locationTextView.setSingleLine(true);
-        locationTextView.setEllipsize(TextUtils.TruncateAt.END);
-        locationTextView.setText(location);
-        RelativeLayout.LayoutParams locationParams = new RelativeLayout.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        locationParams.addRule(RelativeLayout.BELOW, rightSquareContainer.getId()); // או כל אלמנט אחר מעל המיקום
-        locationParams.addRule(RelativeLayout.BELOW, leftSquareLayout.getId());
-        locationParams.addRule(RelativeLayout.CENTER_HORIZONTAL);
-        locationParams.setMargins(0, dpToPx(170), 0, dpToPx(10)); // הוספת מרווח קטן למעלה
-        locationTextView.setLayoutParams(locationParams);
-        locationTextView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14); // Increase text size
-        locationTextView.setTypeface(null, Typeface.BOLD); // Bold text
-        locationTextView.setTextColor(Color.BLACK); // Set text color to black
-        orderLayout.addView(locationTextView);
+        // Set the star rating
+        addStarsToLayout(ratingLayout, averageRating);
 
-
-        // Fetch the type of order from Firestore and add it below the location
+        // Get type from db
         db.collection("orders").document(orderId).get().addOnSuccessListener(documentSnapshot -> {
             String typeOfOrder = documentSnapshot.getString("type_of_order");
             if (typeOfOrder != null) {
-                TextView orderTypeTextView = new TextView(this);
-                orderTypeTextView.setText(typeOfOrder);
-                orderTypeTextView.setId(View.generateViewId());
-                orderTypeTextView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
-                orderTypeTextView.setTypeface(null, Typeface.BOLD); // Bold text
-                orderTypeTextView.setGravity(Gravity.CENTER_HORIZONTAL);
-                orderTypeTextView.setTextColor(typeOfOrder.equals("Consumer") ?
-                        Color.parseColor("#1679AB") :
-                        Color.parseColor("#E98654"));
-                RelativeLayout.LayoutParams orderTypeParams = new RelativeLayout.LayoutParams(
-                        ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-                orderTypeParams.addRule(RelativeLayout.BELOW, locationTextView.getId());
-                orderTypeParams.addRule(RelativeLayout.ALIGN_PARENT_END);
-                orderTypeParams.setMargins(dpToPx(20), dpToPx(5), dpToPx(10), dpToPx(0));
-
-                orderTypeTextView.setLayoutParams(orderTypeParams);
-                orderLayout.addView(orderTypeTextView);
-
                 if (typeOfOrder.equals("Consumer")) {
-                    orderLayout.setBackgroundResource(R.drawable.border_green); // Use a drawable with green border
+                    orderLayout.setBackgroundResource(R.drawable.border_green);
+                    typeTextView.setTextColor(getResources().getColor(R.color.consumerPrimary));
                 } else if (typeOfOrder.equals("Supplier")) {
-                    orderLayout.setBackgroundResource(R.drawable.border_blue); // Use a drawable with blue border
+                    orderLayout.setBackgroundResource(R.drawable.border_blue);
+                    typeTextView.setTextColor(getResources().getColor(R.color.supplierPrimary));
                 }
+                typeTextView.setText(typeOfOrder);
             }
-
-            // Check if the order is open or closed using existing variables
-            boolean isOrderOpen = timestamp.toDate().getTime() > currentTime;
-
-            // Create and add the open/close text view
-            TextView openCloseTextView = new TextView(this);
-
-            // Create a SpannableString to apply different styles and colors
-            SpannableString spannableString;
-            if (isOrderOpen) {
-                spannableString = new SpannableString("Open");
-                spannableString.setSpan(new ForegroundColorSpan(Color.GREEN), 0, spannableString.length(), 0); // Set color to green
-                spannableString.setSpan(new StyleSpan(Typeface.BOLD), 0, spannableString.length(), 0); // Set style to bold
-            } else {
-                spannableString = new SpannableString("Close");
-                spannableString.setSpan(new ForegroundColorSpan(Color.RED), 0, spannableString.length(), 0); // Set color to red
-                spannableString.setSpan(new StyleSpan(Typeface.BOLD), 0, spannableString.length(), 0); // Set style to bold
-            }
-
-            openCloseTextView.setText(spannableString);
-            openCloseTextView.setId(View.generateViewId());
-            openCloseTextView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
-            openCloseTextView.setGravity(Gravity.CENTER_HORIZONTAL);
-
-            RelativeLayout.LayoutParams openCloseTextParams = new RelativeLayout.LayoutParams(
-                    ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-            openCloseTextParams.addRule(RelativeLayout.BELOW, locationTextView.getId());
-            openCloseTextParams.addRule(RelativeLayout.ALIGN_PARENT_START);
-            openCloseTextParams.setMargins(dpToPx(20), dpToPx(5), dpToPx(20), dpToPx(0));
-
-            openCloseTextView.setLayoutParams(openCloseTextParams);
-            orderLayout.addView(openCloseTextView);
-
         });
-
-        // Create and add the star rating
-        LinearLayout ratingLayout = new LinearLayout(this);
-        ratingLayout.setOrientation(LinearLayout.HORIZONTAL);
-        ratingLayout.setId(View.generateViewId());
-        RelativeLayout.LayoutParams ratingLayoutParams = new RelativeLayout.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        ratingLayoutParams.addRule(RelativeLayout.BELOW, locationTextView.getId());
-        ratingLayoutParams.addRule(RelativeLayout.CENTER_HORIZONTAL);
-        ratingLayoutParams.setMargins(0, dpToPx(5), 0, 0); // Add margin from the edge
-        ratingLayout.setLayoutParams(ratingLayoutParams);
-        orderLayout.addView(ratingLayout);
-
-        // Ensure the star rating layout is left-to-right
-        ViewCompat.setLayoutDirection(ratingLayout, ViewCompat.LAYOUT_DIRECTION_LTR);
-
-        // Add star images to the rating layout
-        addStarsToLayout(ratingLayout, averageRating);
 
         // Add the order layout to the container
         ordersLayout.addView(orderLayout);
     }
+
 
     private void addStarsToLayout(LinearLayout layout, double rating) {
         Log.d("MyOrdersActivityRating", "Rating: " + rating);
@@ -842,7 +732,16 @@ public class MyOrdersActivity extends AppCompatActivity {
         return Math.abs(results[0] / 1000); // המרחק בקילומטרים
     }
 
-    private void updateTimerTextViews(LinearLayout daysContainer, TextView daysTextView, TextView colon1, LinearLayout hoursContainer, TextView hoursTextView, TextView colon2, LinearLayout minutesContainer, TextView minutesTextView, TextView colon3, LinearLayout secondsContainer, TextView secondsTextView, long millisUntilFinished) {
+    private void updateTimerTextViews(View timerView, long millisUntilFinished) {
+        TextView daysTextView = timerView.findViewById(R.id.daysTextView);
+        TextView hoursTextView = timerView.findViewById(R.id.hoursTextView);
+        TextView minutesTextView = timerView.findViewById(R.id.minutesTextView);
+        TextView secondsTextView = timerView.findViewById(R.id.secondsTextView);
+        LinearLayout daysContainer = timerView.findViewById(R.id.daysContainer);
+        TextView colon1 = timerView.findViewById(R.id.colon1);
+        LinearLayout secondsContainer = timerView.findViewById(R.id.secondsContainer);
+        TextView colon3 = timerView.findViewById(R.id.colon3);
+
         long seconds = millisUntilFinished / 1000;
         long minutes = seconds / 60;
         long hours = minutes / 60;
