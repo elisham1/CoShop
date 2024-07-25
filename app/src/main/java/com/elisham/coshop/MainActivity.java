@@ -27,7 +27,8 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
+        Intent serviceIntent = new Intent(this, NotificationService.class);
+        startService(serviceIntent);
         // Initialize Firebase
         FirebaseApp.initializeApp(this);
         // Initialize Firebase Auth

@@ -38,11 +38,11 @@
         android:id="@+id/peopleTextView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textSize="18sp"
-        android:textColor="@android:color/black"
-        android:textStyle="bold"
         android:layout_centerInParent="true"
-        android:text="50/467"/>
+        android:text="50/467"
+        android:textColor="@android:color/black"
+        android:textSize="18sp"
+        android:textStyle="bold" />
 
     <LinearLayout
         android:id="@+id/leftSquareLayout"
