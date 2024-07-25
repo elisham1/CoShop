@@ -5,7 +5,8 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".HomePageActivity"
-    android:background="@android:color/transparent">
+    android:background="@android:color/transparent"
+    android:layoutDirection="ltr">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/searchBar"

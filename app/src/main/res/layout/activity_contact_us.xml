@@ -6,7 +6,8 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:padding="16dp"
-    tools:context=".ContactUsActivity">
+    tools:context=".ContactUsActivity"
+    android:layoutDirection="ltr">
 
     <TextView
         android:id="@+id/title"
@@ -23,7 +24,8 @@
         android:layout_height="50dp"
         android:layout_marginTop="8dp"
         android:padding="4dp"
-        android:background="@drawable/bg_spinner"/>
+        android:background="@drawable/bg_spinner"
+        android:layoutDirection="ltr"/>
 
     <EditText
         android:id="@+id/inputFeedback"

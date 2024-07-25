@@ -48,7 +48,6 @@
             android:padding="16dp">
 
             <!-- ImageViews and TextViews for categories will be dynamically added here -->
-
         </GridLayout>
 
     </ScrollView>
