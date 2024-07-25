@@ -359,6 +359,11 @@ public class OpenNewOrderActivity extends AppCompatActivity {
     private Task<Void> sendNotification(String title, String message, String orderId) {
         TaskCompletionSource<Void> taskCompletionSource = new TaskCompletionSource<>();
 
+        // שמור את האימייל של המשתמש הנוכחי
+        FirebaseAuth mAuth = FirebaseAuth.getInstance();
+        FirebaseUser currentUser = mAuth.getCurrentUser();
+        String currentUserEmail = (currentUser != null) ? currentUser.getEmail() : "";
+
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) {
             createDynamicLink(orderId, globalUserType, shortLink -> {
                 if (shortLink != null) {
@@ -374,12 +379,24 @@ public class OpenNewOrderActivity extends AppCompatActivity {
                             .setAutoCancel(true);
 
                     NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this);
-                    int notificationId = getUniqueNotificationId();
-                    notificationManager.notify(notificationId, builder.build());
+
+                    // שליחת ההתראה רק אם המכשיר הנוכחי אינו המשתמש הנוכחי שיצר את ההזמנה
+                    db.collection("orders").document(orderId).get().addOnSuccessListener(documentSnapshot -> {
+                        if (documentSnapshot.exists()) {
+                            String orderUserEmail = documentSnapshot.getString("user_email");
+                            if (!orderUserEmail.equals(currentUserEmail)) {
+                                int notificationId = getUniqueNotificationId();
+                                notificationManager.notify(notificationId, builder.build());
+                            }
+                        }
+                        taskCompletionSource.setResult(null);
+                    }).addOnFailureListener(e -> {
+                        Toast.makeText(this, "Failed to get order details", Toast.LENGTH_SHORT).show();
+                        taskCompletionSource.setException(e);
+                    });
 
                     // שמירת הקישור במסמך ההודעה בפיירבייס
                     saveNotificationToFirestore(orderId, shortLink, title, message);
-                    taskCompletionSource.setResult(null);
                 } else {
                     Toast.makeText(this, "Failed to create notification link", Toast.LENGTH_SHORT).show();
                     Log.d("Notification", "Failed to create notification link");
@@ -627,19 +644,9 @@ public class OpenNewOrderActivity extends AppCompatActivity {
         CollectionReference usersRef = db.collection("users");
         GeoPoint orderLocation = new GeoPoint(latitude, longitude);
 
-        String finalUserEmail = getUserEmail; // שמירת האימייל של המשתמש הפותח ההזמנה
-
         usersRef.get().addOnCompleteListener(task -> {
             if (task.isSuccessful()) {
                 for (QueryDocumentSnapshot userDocument : task.getResult()) {
-                    String userEmail = userDocument.getString("email");
-                    String userType = userDocument.getString("type of user");
-
-                    // בדיקה אם המשתמש הוא זה שפתח את ההזמנה או אם הוא ספק
-                    if (userEmail.equals(finalUserEmail) || "Supplier".equalsIgnoreCase(userType)) {
-                        continue; // דלג על המשתמש
-                    }
-
                     List<String> favoriteCategories = (List<String>) userDocument.get("favorite categories");
                     Log.d("OpenNewOrderActivity", "User favorite categories: " + favoriteCategories);
 
@@ -649,6 +656,18 @@ public class OpenNewOrderActivity extends AppCompatActivity {
                         double maxDistance = 10.0;
 
                         if (favoriteCategories.contains(category) && isWithinDistance(orderLocation, userLocation, maxDistance)) {
+                            String userEmail = userDocument.getString("email");
+                            String userType = userDocument.getString("type of user");
+
+                            // בדיקה אם המשתמש הוא מסוג "Supplier"
+                            if ("Supplier".equalsIgnoreCase(userType)) {
+                                continue;
+                            }
+
+                            if (userEmail.equals(getUserEmail)) {
+                                // אם זה המשתמש שיצר את ההזמנה, לא שולחים לו התראה
+                                continue;
+                            }
                             String notificationMessage = "There is a new order in the field that interests you!";
                             Log.d("OpenNewOrderActivity", "Sending notification to: " + userEmail);
 

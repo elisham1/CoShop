@@ -82,7 +82,7 @@
                     android:background="@android:color/transparent"
                     android:textSize="15sp"
                     android:inputType="textUri"
-                    android:hint="Insert a secure payment link."
+                    android:hint="Insert a secure payment link Or site url."
                     android:layoutDirection="ltr" />
 
                 <ImageButton

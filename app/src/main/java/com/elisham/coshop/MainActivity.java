@@ -40,6 +40,8 @@ public class MainActivity extends AppCompatActivity {
         int defaultWebClientId = res.getIdentifier("default_web_client_id", "string", getPackageName());
         webClientId = res.getString(defaultWebClientId);
 
+        Intent serviceIntent = new Intent(this, NotificationService.class);
+        startService(serviceIntent);
         // Initialize Firebase
         FirebaseApp.initializeApp(this);
         mAuth = FirebaseAuth.getInstance();
