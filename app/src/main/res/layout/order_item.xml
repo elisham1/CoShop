@@ -8,85 +8,103 @@
     android:layout_marginBottom="8dp"
     android:layoutDirection="ltr">
 
-    <TextView
-        android:id="@+id/titleTextView"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textSize="16sp"
-        android:textColor="@android:color/black"
-        android:textStyle="bold"
-        android:text="check the title"
-        android:padding="10dp"
-        android:layout_alignParentEnd="true"
-        android:layout_marginTop="10dp"
-        android:layout_marginEnd="5dp" />
-
-    <TextView
-        android:id="@+id/distanceTextView"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textSize="16sp"
-        android:textColor="@android:color/black"
-        android:textStyle="bold"
-        android:padding="10dp"
-        android:text="check the distance"
-        android:layout_alignParentStart="true"
-        android:layout_marginTop="10dp"
-        android:layout_marginStart="5dp" />
-
-    <TextView
-        android:id="@+id/peopleTextView"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textSize="18sp"
-        android:textColor="@android:color/black"
-        android:textStyle="bold"
-        android:layout_centerInParent="true"
-        android:text="50/467"/>
-
     <LinearLayout
-        android:id="@+id/leftSquareLayout"
-        android:layout_width="80dp"
+        android:id="@+id/titleAndDistance"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:layout_below="@id/peopleTextView"
-        android:layout_alignParentStart="true"
-        android:layout_centerVertical="true"
-        android:layout_marginStart="15dp"
-        android:layout_marginEnd="20dp"
+        android:orientation="horizontal"
+        android:padding="10dp"
         android:layoutDirection="ltr">
 
-        <ImageView
-            android:id="@+id/leftSquare"
-            android:layout_width="match_parent"
-            android:layout_height="80dp"
-            android:background="@android:color/white" />
-
         <TextView
-            android:id="@+id/categoryTextView"
-            android:layout_width="match_parent"
+            android:id="@+id/distanceTextView"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_weight="1"
             android:textSize="14sp"
             android:textColor="@android:color/black"
             android:textStyle="bold"
-            android:text="category"
-            android:gravity="center_horizontal"
-            android:layout_marginTop="5dp" />
+            android:gravity="start"
+            android:text="check the distance"
+            android:layout_marginStart="5dp" />
+
+        <TextView
+            android:id="@+id/titleTextView"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:textSize="14sp"
+            android:textColor="@android:color/black"
+            android:textStyle="bold"
+            android:textAlignment="viewEnd"
+            android:gravity="end"
+            android:layout_gravity="end"
+            android:text="check the title"
+            android:layout_marginEnd="5dp"
+            android:layoutDirection="ltr"/>
     </LinearLayout>
 
     <LinearLayout
-        android:id="@+id/rightSquareContainer"
-        android:layout_width="80dp"
+        android:id="@+id/centerLayout"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginTop="10dp"
+        android:layout_below="@id/titleAndDistance"
+        android:layoutDirection="ltr">
+
+        <LinearLayout
+            android:id="@+id/leftSquareLayout"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:layout_marginStart="15dp"
+            android:layout_marginEnd="20dp"
+            android:layoutDirection="ltr">
+
+            <ImageView
+                android:id="@+id/leftSquare"
+                android:layout_width="80dp"
+                android:layout_height="80dp"
+                android:background="@android:color/white" />
+
+            <TextView
+                android:id="@+id/categoryTextView"
+                android:layout_width="80dp"
+                android:layout_height="wrap_content"
+                android:textSize="12sp"
+                android:textColor="@android:color/black"
+                android:textStyle="bold"
+                android:text="category"
+                android:gravity="center_horizontal"
+                android:layout_marginTop="5dp" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/peopleTextView"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:textSize="18sp"
+            android:layout_gravity="center"
+            android:gravity="center"
+            android:textColor="@android:color/black"
+            android:textStyle="bold"
+            android:text="50/467"/>
+
+        <LinearLayout
+        android:id="@+id/rightSquareContainer"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
         android:orientation="vertical"
-        android:layout_below="@id/peopleTextView"
-        android:layout_alignParentEnd="true"
-        android:layout_centerVertical="true"
         android:layout_marginEnd="15dp"
         android:gravity="center_horizontal"
         android:layoutDirection="ltr">
+
         <TextView
-            android:layout_width="match_parent"
+            android:layout_width="80dp"
             android:layout_height="wrap_content"
             android:textSize="14sp"
             android:textColor="@android:color/black"
@@ -95,8 +113,8 @@
             android:gravity="center_horizontal"
             android:layout_marginTop="5dp" />
 
-        <RelativeLayout
-            android:layout_width="match_parent"
+            <RelativeLayout
+            android:layout_width="80dp"
             android:layout_height="80dp"
             android:layoutDirection="ltr">
 
@@ -111,7 +129,7 @@
                 android:id="@+id/timerView"
                 layout="@layout/timer_layout" />
         </RelativeLayout>
-
+        </LinearLayout>
     </LinearLayout>
 
     <TextView
@@ -123,12 +141,11 @@
         android:textStyle="bold"
         android:singleLine="true"
         android:ellipsize="end"
-        android:padding="10dp"
         android:text="checking the address"
-        android:layout_below="@id/rightSquareContainer"
+        android:layout_below="@id/centerLayout"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="100dp"
-        android:layout_marginBottom="10dp" />
+        android:layout_marginTop="5dp"
+        android:layout_marginBottom="5dp" />
 
     <LinearLayout
         android:id="@+id/typeRatingStatusLayout"
@@ -146,9 +163,10 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="type"
-            android:gravity="center"
+            android:gravity="start"
             android:textStyle="bold"
-            android:textSize="16sp"/>
+            android:textSize="14sp"
+            android:layout_marginStart="5dp"/>
 
         <LinearLayout
             android:id="@+id/ratingLayout"
@@ -168,9 +186,10 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="status"
-            android:gravity="center"
+            android:gravity="end"
             android:textStyle="bold"
-            android:textSize="16sp"/>
+            android:textSize="14sp"
+            android:layout_marginEnd="5dp"/>
     </LinearLayout>
 
     <!-- Placeholder for dynamic scores -->
@@ -184,4 +203,4 @@
         android:visibility="gone" /> <!-- Initially hidden -->
 </RelativeLayout>
 
-<!--    View orderLayout = getLayoutInflater().inflate(R.layout.order_item, ordersContainer, false);-->
+    <!--    View orderLayout = getLayoutInflater().inflate(R.layout.order_item, ordersContainer, false);-->
