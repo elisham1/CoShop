@@ -1,0 +1,80 @@
+<!-- res/layout/scores_layout.xml -->
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="40dp"
+    android:padding="10dp"
+    android:layout_marginBottom="5dp"
+    android:layoutDirection="ltr">
+
+    <TextView
+        android:id="@+id/totalScoreTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        android:textColor="@android:color/black"
+        android:layout_alignParentStart="true"
+        android:layout_centerVertical="true"
+        android:text="Matches 0%" />
+
+    <LinearLayout
+        android:id="@+id/iconsLayout"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_alignParentEnd="true"
+        android:layout_centerVertical="true">
+
+        <ImageView
+            android:id="@+id/categoryIcon"
+            android:layout_width="16dp"
+            android:layout_height="16dp"
+            android:src="@drawable/category"
+            android:layout_marginStart="5dp"
+            android:layout_marginEnd="5dp" />
+
+        <TextView
+            android:id="@+id/categoryScoreTextView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:textColor="@android:color/black"
+            android:text="0%" />
+
+        <ImageView
+            android:id="@+id/locationIcon"
+            android:layout_width="16dp"
+            android:layout_height="16dp"
+            android:src="@drawable/location"
+            android:layout_marginStart="5dp"
+            android:layout_marginEnd="5dp" />
+
+        <TextView
+            android:id="@+id/distanceScoreTextView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:textColor="@android:color/black"
+            android:text="0%" />
+
+        <ImageView
+            android:id="@+id/ratingIcon"
+            android:layout_width="16dp"
+            android:layout_height="16dp"
+            android:src="@drawable/ic_black_star"
+            android:layout_marginStart="5dp"
+            android:layout_marginEnd="5dp" />
+
+        <TextView
+            android:id="@+id/ratingScoreTextView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:textColor="@android:color/black"
+            android:text="0%" />
+    </LinearLayout>
+</RelativeLayout>

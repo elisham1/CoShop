@@ -1,0 +1,187 @@
+<!-- res/layout/order_item.xml -->
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@android:color/white"
+    android:padding="8dp"
+    android:layout_marginBottom="8dp"
+    android:layoutDirection="ltr">
+
+    <TextView
+        android:id="@+id/titleTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="16sp"
+        android:textColor="@android:color/black"
+        android:textStyle="bold"
+        android:text="check the title"
+        android:padding="10dp"
+        android:layout_alignParentEnd="true"
+        android:layout_marginTop="10dp"
+        android:layout_marginEnd="5dp" />
+
+    <TextView
+        android:id="@+id/distanceTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="16sp"
+        android:textColor="@android:color/black"
+        android:textStyle="bold"
+        android:padding="10dp"
+        android:text="check the distance"
+        android:layout_alignParentStart="true"
+        android:layout_marginTop="10dp"
+        android:layout_marginStart="5dp" />
+
+    <TextView
+        android:id="@+id/peopleTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="18sp"
+        android:textColor="@android:color/black"
+        android:textStyle="bold"
+        android:layout_centerInParent="true"
+        android:text="50/467"/>
+
+    <LinearLayout
+        android:id="@+id/leftSquareLayout"
+        android:layout_width="80dp"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_below="@id/peopleTextView"
+        android:layout_alignParentStart="true"
+        android:layout_centerVertical="true"
+        android:layout_marginStart="15dp"
+        android:layout_marginEnd="20dp"
+        android:layoutDirection="ltr">
+
+        <ImageView
+            android:id="@+id/leftSquare"
+            android:layout_width="match_parent"
+            android:layout_height="80dp"
+            android:background="@android:color/white" />
+
+        <TextView
+            android:id="@+id/categoryTextView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="14sp"
+            android:textColor="@android:color/black"
+            android:textStyle="bold"
+            android:text="category"
+            android:gravity="center_horizontal"
+            android:layout_marginTop="5dp" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/rightSquareContainer"
+        android:layout_width="80dp"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_below="@id/peopleTextView"
+        android:layout_alignParentEnd="true"
+        android:layout_centerVertical="true"
+        android:layout_marginEnd="15dp"
+        android:gravity="center_horizontal"
+        android:layoutDirection="ltr">
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="14sp"
+            android:textColor="@android:color/black"
+            android:textStyle="bold"
+            android:text="Time Left:"
+            android:gravity="center_horizontal"
+            android:layout_marginTop="5dp" />
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="80dp"
+            android:layoutDirection="ltr">
+
+            <ImageView
+                android:id="@+id/rightSquare"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@android:color/white" />
+
+            <!-- Include the timer layout here -->
+            <include
+                android:id="@+id/timerView"
+                layout="@layout/timer_layout" />
+        </RelativeLayout>
+
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/locationTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="14sp"
+        android:textColor="@android:color/black"
+        android:textStyle="bold"
+        android:singleLine="true"
+        android:ellipsize="end"
+        android:padding="10dp"
+        android:text="checking the address"
+        android:layout_below="@id/rightSquareContainer"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="100dp"
+        android:layout_marginBottom="10dp" />
+
+    <LinearLayout
+        android:id="@+id/typeRatingStatusLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_below="@id/locationTextView"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="5dp"
+        android:layoutDirection="ltr">
+
+        <TextView
+            android:id="@+id/typeTextView"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="type"
+            android:gravity="center"
+            android:textStyle="bold"
+            android:textSize="16sp"/>
+
+        <LinearLayout
+            android:id="@+id/ratingLayout"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="horizontal"
+            android:layout_below="@id/locationTextView"
+            android:gravity="center"
+            android:layout_marginTop="5dp"
+            android:layoutDirection="ltr">
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/statusTextView"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="status"
+            android:gravity="center"
+            android:textStyle="bold"
+            android:textSize="16sp"/>
+    </LinearLayout>
+
+    <!-- Placeholder for dynamic scores -->
+    <include
+        android:id="@+id/scoresLayout"
+        layout="@layout/scores_layout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/typeRatingStatusLayout"
+        android:layout_marginTop="5dp"
+        android:visibility="gone" /> <!-- Initially hidden -->
+</RelativeLayout>
+
+<!--    View orderLayout = getLayoutInflater().inflate(R.layout.order_item, ordersContainer, false);-->
