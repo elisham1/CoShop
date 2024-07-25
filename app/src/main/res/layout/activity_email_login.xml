@@ -4,7 +4,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".EmailLoginActivity">
+    tools:context=".EmailLoginActivity"
+    android:layoutDirection="ltr">
 
     <RelativeLayout
         android:layout_width="0dp"
@@ -13,7 +14,8 @@
         android:layout_marginEnd="16dp"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layoutDirection="ltr">
 
         <TextView
             android:id="@+id/logInTextView"
@@ -27,6 +29,7 @@
             android:id="@+id/emailEditText"
             android:layout_width="match_parent"
             android:layout_height="50dp"
+            android:background="@drawable/border"
             android:hint="Email"
             android:inputType="textEmailAddress"
             android:layout_below="@id/logInTextView" />
@@ -36,13 +39,16 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_below="@id/emailEditText"
-            android:layout_marginTop="16dp">
+            android:background="@drawable/border"
+            android:layout_marginTop="16dp"
+            android:layoutDirection="ltr">
 
             <EditText
                 android:id="@+id/passwordEditText"
                 android:layout_width="match_parent"
                 android:layout_height="50dp"
                 android:hint="Password"
+                android:background="@android:color/transparent"
                 android:inputType="textPassword"
                 android:paddingEnd="48dp" />
 

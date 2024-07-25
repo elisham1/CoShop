@@ -101,6 +101,7 @@ public class CategoriesActivity extends AppCompatActivity {
                 displayCategories();
             }
             else if (isCategoriesUpdate) {
+                Log.d("CategoriesActivity","category update");
                 Toast.makeText(CategoriesActivity.this, "update categories", Toast.LENGTH_SHORT).show();
                 email = currentUser.getEmail();
                 db.collection("users").document(email).get()
@@ -168,6 +169,7 @@ public class CategoriesActivity extends AppCompatActivity {
                                     // Dynamically create ImageView and TextView for each category
                                     ImageView imageView = new ImageView(this);
                                     TextView textView = new TextView(this);
+                                    LinearLayout categoryLayout = new LinearLayout(this);
 
                                     GridLayout.LayoutParams params = new GridLayout.LayoutParams();
                                     params.width = getResources().getDimensionPixelSize(R.dimen.image_size);
@@ -182,9 +184,7 @@ public class CategoriesActivity extends AppCompatActivity {
                                     // Set content description for accessibility
                                     imageView.setContentDescription("Category image for " + categoryName);
 
-                                    if (selectedCategories != null && selectedCategories.contains(categoryName)) {
-                                        imageView.setBackgroundResource(R.drawable.image_background);
-                                    }
+
 
                                     textView.setLayoutParams(new LinearLayout.LayoutParams(
                                             LinearLayout.LayoutParams.MATCH_PARENT,
@@ -198,7 +198,7 @@ public class CategoriesActivity extends AppCompatActivity {
                                     // Set content description for the text view
                                     textView.setContentDescription("Category: " + categoryName);
 
-                                    LinearLayout categoryLayout = new LinearLayout(this);
+
                                     categoryLayout.setOrientation(LinearLayout.VERTICAL);
                                     categoryLayout.setBackgroundResource(R.drawable.border);
                                     categoryLayout.setGravity(Gravity.CENTER);
@@ -207,6 +207,16 @@ public class CategoriesActivity extends AppCompatActivity {
                                     categoryLayout.addView(imageView);
                                     categoryLayout.addView(textView);
                                     categoryLayout.setOnClickListener(view -> onCategoryImageClick(categoryLayout, textView));
+                                    if (selectedCategories != null && selectedCategories.contains(categoryName)) {
+                                        Log.d("CategoriesActivity", "selected categiries");
+                                        textView.setTextColor(getResources().getColor(R.color.white));
+                                        if (globalUserType.equals("Supplier"))
+                                            categoryLayout.setBackgroundResource(R.drawable.bg_category_supplier);
+                                        else {
+                                            Log.d("CategoriesActivity", "selected");
+                                            categoryLayout.setBackgroundResource(R.drawable.bg_category_consumer);  // Set selected background
+                                        }
+                                    }
                                     categoryGrid.addView(categoryLayout);
                                 }
 
