@@ -25,6 +25,7 @@ import com.google.firebase.firestore.FirebaseFirestoreException;
 import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
+import com.google.firebase.firestore.Transaction;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -80,8 +81,15 @@ public class NotificationService extends Service {
 
                                     Log.d("NotificationService", "Notification received: " + title + ", " + message);
 
-                                    // שליחת ההודעה למשתמש
-                                    sendNotification(title, message, link, notificationId);
+                                    // בדיקה ועדכון המצב בתוך טרנזקציה
+                                    updateNotificationAsSent(notificationId, success -> {
+                                        if (success) {
+                                            // שליחת ההודעה למשתמש
+                                            sendNotification(title, message, link, notificationId);
+                                        } else {
+                                            Log.w("NotificationService", "Failed to mark notification as sent");
+                                        }
+                                    });
                                 }
                             }
                         } else {
@@ -98,7 +106,8 @@ public class NotificationService extends Service {
             notificationListener.remove();
         }
     }
-    private void updateNotificationAsSent(String notificationId) {
+
+    private void updateNotificationAsSent(String notificationId, UpdateCallback callback) {
         String userEmail = getUserEmail();
         if (userEmail != null) {
             DocumentReference notificationRef = db.collection("users")
@@ -106,9 +115,24 @@ public class NotificationService extends Service {
                     .collection("notifications")
                     .document(notificationId);
 
-            notificationRef.update("isSend", true)
-                    .addOnSuccessListener(aVoid -> Log.d("NotificationService", "Notification marked as sent"))
-                    .addOnFailureListener(e -> Log.w("NotificationService", "Error updating notification", e));
+            db.runTransaction((Transaction.Function<Void>) transaction -> {
+                DocumentSnapshot snapshot = transaction.get(notificationRef);
+                if (snapshot.exists() && !snapshot.contains("isSend")) {
+                    transaction.update(notificationRef, "isSend", true);
+                    return null;
+                } else {
+                    throw new FirebaseFirestoreException("Notification already marked as sent or does not exist",
+                            FirebaseFirestoreException.Code.ABORTED);
+                }
+            }).addOnSuccessListener(aVoid -> {
+                Log.d("NotificationService", "Notification marked as sent");
+                callback.onComplete(true);
+            }).addOnFailureListener(e -> {
+                Log.w("NotificationService", "Error updating notification", e);
+                callback.onComplete(false);
+            });
+        } else {
+            callback.onComplete(false);
         }
     }
 
@@ -130,25 +154,8 @@ public class NotificationService extends Service {
             notificationManager.notify(notificationIdInt, builder.build());
 
             Log.d("NotificationService", "Notification sent: " + title + ", " + message);
-
-            // עדכון ההודעה בפיירבייס
-            updateNotificationAsSent(notificationId);
         } else {
             Log.d("NotificationService", "Notification permission is not granted");
-        }
-    }
-
-    private void updateNotificationAsSent(String notificationId, String link) {
-        String userEmail = getUserEmail();
-        if (userEmail != null) {
-            DocumentReference notificationRef = db.collection("users")
-                    .document(userEmail)
-                    .collection("notifications")
-                    .document(notificationId);
-
-            notificationRef.update("isSend", true, "link", link)
-                    .addOnSuccessListener(aVoid -> Log.d("NotificationService", "Notification marked as sent"))
-                    .addOnFailureListener(e -> Log.w("NotificationService", "Error updating notification", e));
         }
     }
 
@@ -181,6 +188,10 @@ public class NotificationService extends Service {
 
     interface DynamicLinkCallback {
         void onLinkCreated(String shortLink);
+    }
+
+    interface UpdateCallback {
+        void onComplete(boolean success);
     }
 
     private String getUserEmail() {
