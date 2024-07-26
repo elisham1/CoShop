@@ -1,0 +1,29 @@
+<!-- res/layout/category_item.xml -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="0dp"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:layout_weight="1"
+    android:background="@drawable/border"
+    android:contentDescription="Category item">
+
+    <ImageView
+        android:id="@+id/categoryImage"
+        android:layout_width="@dimen/image_size"
+        android:layout_height="@dimen/image_size"
+        android:scaleType="centerCrop"
+        android:background="@drawable/image_background"
+        android:contentDescription="Category image"
+        android:layout_marginTop="8dp"/>
+
+    <TextView
+        android:id="@+id/categoryName"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:padding="4dp"
+        android:textColor="@color/black"
+        android:textStyle="bold"
+        android:contentDescription="Category name" />
+</LinearLayout>
