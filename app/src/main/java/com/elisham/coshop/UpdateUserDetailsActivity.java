@@ -122,6 +122,7 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
     private MenuUtils menuUtils;
     private ArrayList<String> currentCategories;
     private String globalUserType, webClientId;
+    ProgressDialog progressDialog;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -155,6 +156,10 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
         searchAddressButton = findViewById(R.id.search_address_button);
         editAddressButton = findViewById(R.id.edit_address_button);
         currentCategories = new ArrayList<String>();
+
+        progressDialog = new ProgressDialog(this);
+        progressDialog.setMessage("Loading...");
+        progressDialog.setCancelable(false);
 
         getUserInformation();
 
@@ -713,9 +718,6 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
     }
 
     private void updateDB(Map<String, Object> userDetails){
-        ProgressDialog progressDialog = new ProgressDialog(this);
-        progressDialog.setMessage("Loading...");
-        progressDialog.setCancelable(false);
         progressDialog.show();
         // Update Firestore with the new details
         db.collection("users").document(email)
@@ -785,6 +787,7 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
                 .setPositiveButton("OK", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
                         if (currentUser != null) {
+                            //todo progress
                             Log.d("UpdateUserDetailsActivity", "User is signed in, proceeding to reauthenticateAndDeleteUser.");
                             reauthenticateAndDeleteUser();
                         } else {
@@ -892,6 +895,7 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
     private void performDeleteTasks() {
         Log.d("UpdateUserDetailsActivity", "performDeleteTasks called.");
 
+        progressDialog.show();
         Task<Void> deleteProfileImageTask = Tasks.forResult(null);
         if (picUrl != null && !picUrl.isEmpty()) {
             Log.d("UpdateUserDetailsActivity", "Adding deleteUserProfileImage task.");
@@ -905,6 +909,7 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
                         return deleteUserFromAllOrders(db, email);
                     } else {
                         Log.e("UpdateUserDetailsActivity", "Failed to delete UserProfileImage.", task.getException());
+                        progressDialog.dismiss();
                         throw task.getException();
                     }
                 })
@@ -914,6 +919,7 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
                         return deleteUserNotifications(db, email);
                     } else {
                         Log.e("UpdateUserDetailsActivity", "Failed to remove user from all orders.", task.getException());
+                        progressDialog.dismiss();
                         throw task.getException();
                     }
                 })
@@ -923,6 +929,7 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
                         return deleteUserDetails(db, email);
                     } else {
                         Log.e("UpdateUserDetailsActivity", "Failed to delete user notifications.", task.getException());
+                        progressDialog.dismiss();
                         throw task.getException();
                     }
                 })
@@ -932,12 +939,15 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
                         return deleteUser(currentUser);
                     } else {
                         Log.e("UpdateUserDetailsActivity", "Failed to delete user details.", task.getException());
+                        progressDialog.dismiss();
                         throw task.getException();
                     }
                 })
                 .addOnCompleteListener(task -> {
                     if (task.isSuccessful()) {
+
                         Log.d("UpdateUserDetailsActivity", "All deletion tasks completed successfully.");
+                        progressDialog.dismiss();
                         menuUtils.logOut();
                         Toast.makeText(UpdateUserDetailsActivity.this,
                                 "Account and associated data deleted successfully.", Toast.LENGTH_SHORT).show();
@@ -964,6 +974,7 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
                 Toast.makeText(UpdateUserDetailsActivity.this,
                         "Failed to delete profile image", Toast.LENGTH_SHORT).show();
                 Log.e("UpdateUserDetailsActivity", "Error deleting profile image", exception);
+                progressDialog.dismiss();
             }
         });
     }
@@ -1025,6 +1036,7 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
                 return Tasks.whenAll(updateTasks);
             } else {
                 Log.e("UpdateUserDetailsActivity", "Error getting orders collection.", task.getException());
+                progressDialog.dismiss();
                 throw task.getException();
             }
         });
@@ -1043,6 +1055,7 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
                 return Tasks.whenAll(deleteTasks);
             } else {
                 Log.e("UpdateUserDetailsActivity", "Error getting chat collection.", task.getException());
+                progressDialog.dismiss();
                 throw task.getException();
             }
         });
@@ -1061,6 +1074,7 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
                 return Tasks.whenAll(deleteTasks);
             } else {
                 Log.e("UpdateUserDetailsActivity", "Error getting notifications collection.", task.getException());
+                progressDialog.dismiss();
                 throw task.getException();
             }
         });
@@ -1081,6 +1095,7 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
                         Toast.makeText(UpdateUserDetailsActivity.this,
                                 "Failed to remove user details", Toast.LENGTH_SHORT).show();
                         Log.w("UpdateUserDetailsActivity", "Error deleting user document.", e);
+                        progressDialog.dismiss();
                     }
                 });
     }
@@ -1091,11 +1106,13 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
             @Override
             public void onSuccess(Void aVoid) {
                 Log.d("UpdateUserDetailsActivity", "User account deleted.");
+                progressDialog.dismiss();
             }
         }).addOnFailureListener(new OnFailureListener() {
             @Override
             public void onFailure(@NonNull Exception e) {
                 Log.e("UpdateUserDetailsActivity", "Error deleting user account.", e);
+                progressDialog.dismiss();
             }
         });
     }

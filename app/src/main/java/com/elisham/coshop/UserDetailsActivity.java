@@ -1,6 +1,7 @@
 package com.elisham.coshop;
 
 import android.Manifest;
+import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -69,6 +70,7 @@ public class UserDetailsActivity extends AppCompatActivity {
     private TextView searchAddressText;
     private ImageButton searchAddressButton;
     private ImageButton editAddressButton;
+    private LinearLayout searchRow;
     private String lastAddress;
     private double lastLatitude;
     private double lastLongitude;
@@ -89,6 +91,11 @@ public class UserDetailsActivity extends AppCompatActivity {
     private StorageReference storageReference;
     private boolean isGoogleSignUp, changePic = false;
     private String userType;
+    ProgressDialog progressDialog;
+
+
+    // Error views
+    private TextView fullNameError, emailError, addressError, userTypeError;
 
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -113,26 +120,28 @@ public class UserDetailsActivity extends AppCompatActivity {
         storageReference = storage.getReference();
 
         profileImageView = findViewById(R.id.profileImageView);
-
         TextView emailEditText = findViewById(R.id.emailText);
         fullNameTextView = findViewById(R.id.fullName);
         choiceRadioGroup = findViewById(R.id.choiceLinearLayout);
-
         searchAddressText = findViewById(R.id.search_address_text);
         searchAddressButton = findViewById(R.id.search_address_button);
         editAddressButton = findViewById(R.id.edit_address_button);
 
-
-
+        // Initialize error views
+        fullNameError = findViewById(R.id.fullNameError);
+        emailError = findViewById(R.id.emailError);
+        addressError = findViewById(R.id.addressError);
+        userTypeError = findViewById(R.id.userTypeError);
 
         String fullName = firstName + " " + familyName;
         emailEditText.setText(email);
         fullNameTextView.setText(fullName);
 
-        if (isGoogleSignUp)
-        {
-            Toast.makeText(UserDetailsActivity.this, "google signup", Toast.LENGTH_SHORT).show();
-            // Inside onCreate method
+        progressDialog = new ProgressDialog(this);
+        progressDialog.setMessage("Loading...");
+        progressDialog.setCancelable(false);
+
+        if (isGoogleSignUp) {
             GoogleSignInAccount account = GoogleSignIn.getLastSignedInAccount(this);
             if (account != null) {
                 googleProfilePicUrl = account.getPhotoUrl().toString();
@@ -140,12 +149,9 @@ public class UserDetailsActivity extends AppCompatActivity {
                         .load(googleProfilePicUrl)
                         .into(profileImageView);
             }
-        }
-        else
-        {
+        } else {
             profileImageView.setImageResource(R.drawable.ic_profile);
         }
-
 
         fullNameTextView.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -179,6 +185,7 @@ public class UserDetailsActivity extends AppCompatActivity {
             }
         });
 
+        addTextWatchers();
     }
 
     private void showLocationWindow() {
@@ -201,7 +208,7 @@ public class UserDetailsActivity extends AppCompatActivity {
                 }
         );
 
-        LinearLayout searchRow = findViewById(R.id.search_row);
+        searchRow = findViewById(R.id.search_row);
         searchRow.setOnClickListener(v -> {
             Intent intent = new Intent(UserDetailsActivity.this, LocationWindow.class);
             intent.putExtra("hideDistanceLayout", true); // העברת פרמטר להסתרת ה-KM
@@ -260,11 +267,48 @@ public class UserDetailsActivity extends AppCompatActivity {
         }
     }
 
+    private void addTextWatchers() {
+        fullNameTextView.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                if (s.length() > 0) {
+                    fullNameError.setVisibility(View.GONE);
+                } else {
+                    fullNameError.setVisibility(View.VISIBLE);
+                }
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {}
+        });
+
+        searchAddressText.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                if (s.length() > 0) {
+                    addressError.setVisibility(View.GONE);
+                    searchRow.setBackgroundResource(R.drawable.border);
+                } else {
+                    addressError.setVisibility(View.VISIBLE);
+                    searchRow.setBackgroundResource(R.drawable.red_border);
+                }
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {}
+        });
+    }
+
     private void checkCameraPermissionAndTakePhoto() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA}, TAKE_PHOTO_REQUEST);
-        }
-        else {
+        } else {
             takePhoto();
         }
     }
@@ -366,7 +410,6 @@ public class UserDetailsActivity extends AppCompatActivity {
     }
 
     private void downloadAndUploadGoogleProfilePic(String url, OnSuccessListener<String> onSuccessListener, OnFailureListener onFailureListener) {
-        // Use Glide to download the image
         Glide.with(this)
                 .asBitmap()
                 .load(url)
@@ -378,7 +421,6 @@ public class UserDetailsActivity extends AppCompatActivity {
 
                     @Override
                     public void onLoadCleared(@Nullable Drawable placeholder) {
-                        // Handle cleanup if necessary
                     }
                 });
     }
@@ -425,9 +467,12 @@ public class UserDetailsActivity extends AppCompatActivity {
 
         int selectedId = choiceRadioGroup.getCheckedRadioButtonId();
         if (selectedId == -1) {
-            // No radio button is selected, show a toast message and return
-            showAlertDialog("Please select a user type");
+            userTypeError.setVisibility(View.VISIBLE);
+            choiceRadioGroup.setBackgroundResource(R.drawable.red_border);
             return;
+        } else {
+            userTypeError.setVisibility(View.GONE);
+            choiceRadioGroup.setBackgroundResource(R.drawable.border);
         }
 
         RadioButton selectedRadioButton = findViewById(selectedId);
@@ -437,41 +482,42 @@ public class UserDetailsActivity extends AppCompatActivity {
         userDetails.put("favorite categories", selectedCategories);
         userDetails.put("first name", firstName);
         userDetails.put("family name", familyName);
-        // Create a GeoPoint object from the latitude and longitude
+
         if (lastLatitude != 0 && lastLongitude != 0) {
             address = new GeoPoint(lastLatitude, lastLongitude);
             userDetails.put("address", address);
         }
 
         if (address == null) {
-            showAlertDialog("Please enter your address");
+            addressError.setVisibility(View.VISIBLE);
+            searchRow.setBackgroundResource(R.drawable.red_border);
             return;
+        } else {
+            addressError.setVisibility(View.GONE);
+            searchRow.setBackgroundResource(R.drawable.border);
         }
 
         if (selectedRadioButton != null) {
             userType = selectedRadioButton.getText().toString();
             userDetails.put("type of user", userType);
         } else {
-            showAlertDialog("No choice selected");
-            Toast.makeText(UserDetailsActivity.this, "No choice selected", Toast.LENGTH_SHORT).show();
+            userTypeError.setVisibility(View.VISIBLE);
+            choiceRadioGroup.setBackgroundResource(R.drawable.red_border);
             return;
         }
 
-        // שמירת FCM token לפני שמירת שאר הפרטים
         FirebaseMessaging.getInstance().getToken().addOnCompleteListener(task -> {
             if (!task.isSuccessful()) {
                 Log.w("FCM", "Fetching FCM registration token failed", task.getException());
                 return;
             }
 
-            // Get new FCM registration token
             String token = task.getResult();
             Log.d("FCM", "FCM registration token: " + token);
-            userDetails.put("fcmToken", token); // הוספת ה-token למידע המשתמש
+            userDetails.put("fcmToken", token);
 
-            // שמירת הפרטים בפיירסטור
             if (isGoogleSignUp && !changePic) {
-                // If Google Sign Up, download the Google profile picture and upload it to Firebase
+                progressDialog.show();
                 downloadAndUploadGoogleProfilePic(googleProfilePicUrl, new OnSuccessListener<String>() {
                     @Override
                     public void onSuccess(String picUrl) {
@@ -482,8 +528,8 @@ public class UserDetailsActivity extends AppCompatActivity {
                     Toast.makeText(UserDetailsActivity.this, "2: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                 });
             } else {
-                // If not Google Sign Up, upload the selected image
                 if (imageUri != null) {
+                    progressDialog.show();
                     StorageReference fileReference = storageReference.child("profile_images/" + System.currentTimeMillis() + ".jpg");
                     fileReference.putFile(imageUri)
                             .addOnSuccessListener(taskSnapshot -> fileReference.getDownloadUrl()
@@ -499,17 +545,18 @@ public class UserDetailsActivity extends AppCompatActivity {
                                 Log.e("Firestore", "Error uploading image: " + e.getMessage());
                             });
                 } else {
-                    Toast.makeText(UserDetailsActivity.this, "No file selected", Toast.LENGTH_SHORT).show();
+                    progressDialog.show();
                     saveUserDetailsToFirestore(userDetails);
                 }
             }
         });
     }
 
-    private void saveUserDetailsToFirestore(Map<String, Object> userDetails) {
+    private void saveUserDetailsToFirestore(Map<String, Object> userDetails) {;
         db.collection("users").document(email)
                 .set(userDetails)
                 .addOnSuccessListener(documentReference -> {
+                    progressDialog.dismiss();
                     Toast.makeText(UserDetailsActivity.this, "User details updated successfully", Toast.LENGTH_SHORT).show();
                     home();
                     finish();
@@ -517,11 +564,12 @@ public class UserDetailsActivity extends AppCompatActivity {
                 .addOnFailureListener(e -> {
                     Log.e("Firestore", "Error adding user details: " + e.getMessage());
                     showAlertDialog("Error adding user details: " + e.getMessage());
+                    progressDialog.dismiss();
                 });
     }
 
     private void showNameEditDialog() {
-        android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(this);
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
         View dialogView = getLayoutInflater().inflate(R.layout.dialog_edit_name, null);
         EditText firstNameEditText = dialogView.findViewById(R.id.firstNameEditText);
         EditText familyNameEditText = dialogView.findViewById(R.id.familyNameEditText);
@@ -530,7 +578,6 @@ public class UserDetailsActivity extends AppCompatActivity {
         LinearLayout firstNameLayout = dialogView.findViewById(R.id.firstNameLayout);
         TextView firstNameError = dialogView.findViewById(R.id.firstNameError);
 
-        // Set current values
         if (firstName != null) {
             firstNameError.setVisibility(View.GONE);
             firstNameEditText.setText(firstName);
@@ -541,7 +588,6 @@ public class UserDetailsActivity extends AppCompatActivity {
             clearFamilyNameIcon.setVisibility(View.VISIBLE);
         }
 
-        // Set onClickListener for the  first name clear icon
         clearFirstNameIcon.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -549,7 +595,6 @@ public class UserDetailsActivity extends AppCompatActivity {
             }
         });
 
-        // Set onClickListener for the family name clear icon
         clearFamilyNameIcon.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -575,8 +620,7 @@ public class UserDetailsActivity extends AppCompatActivity {
             }
 
             @Override
-            public void afterTextChanged(Editable s) {
-            }
+            public void afterTextChanged(Editable s) {}
         });
 
         familyNameEditText.addTextChangedListener(new TextWatcher() {
@@ -593,8 +637,7 @@ public class UserDetailsActivity extends AppCompatActivity {
             }
 
             @Override
-            public void afterTextChanged(Editable s) {
-            }
+            public void afterTextChanged(Editable s) {}
         });
 
         builder.setView(dialogView)
@@ -606,12 +649,11 @@ public class UserDetailsActivity extends AppCompatActivity {
                     }
                 });
 
-        android.app.AlertDialog dialog = builder.create();
+        AlertDialog dialog = builder.create();
         dialog.setCancelable(false);
         dialog.show();
 
-        // Set the onClickListener for the positive button after showing the dialog
-        dialog.getButton(android.app.AlertDialog.BUTTON_POSITIVE).setOnClickListener(new View.OnClickListener() {
+        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 newFirstName = firstNameEditText.getText().toString().trim();
@@ -627,11 +669,9 @@ public class UserDetailsActivity extends AppCompatActivity {
                 }
                 familyName = newFamilyName;
 
-                // Update UI with new names
                 String fullName = newFirstName + " " + newFamilyName;
                 fullNameTextView.setText(fullName);
 
-                // Dismiss dialog
                 dialog.dismiss();
             }
         });
@@ -640,7 +680,6 @@ public class UserDetailsActivity extends AppCompatActivity {
     private void showImageSourceDialog(String profileImageUrl) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("Change Profile Picture");
-        // Create a list of options
         List<CharSequence> options = new ArrayList<>();
         options.add("Take Photo");
         options.add("Choose from Gallery");
@@ -666,13 +705,11 @@ public class UserDetailsActivity extends AppCompatActivity {
                                 break;
                             case 2:
                                 if (profileImageUrl != null) {
-                                    // Handle viewing the photo
                                     viewPhoto(profileImageUrl);
                                 }
                                 break;
                             case 3:
                                 if (profileImageUrl != null) {
-                                    // Handle deleting the photo
                                     googleProfilePicUrl = null;
                                     changePic = true;
                                     profileImageView.setImageResource(R.drawable.ic_profile);
@@ -685,8 +722,6 @@ public class UserDetailsActivity extends AppCompatActivity {
     }
 
     private void viewPhoto(String url) {
-        // Implement the logic to view the photo
-        // For example, you can start an activity that shows the image
         ImageDialogFragment dialogFragment = ImageDialogFragment.newInstance(url);
         dialogFragment.show(getSupportFragmentManager(), "image_dialog");
     }
@@ -713,28 +748,20 @@ public class UserDetailsActivity extends AppCompatActivity {
     }
 
     public void home() {
-        // Set the result to OK to indicate success
         setResult(RESULT_OK);
 
         Intent homeIntent;
-        if (userType.equals("Supplier"))
-        {
-            // Create an intent to go to MyOrdersActivity
+        if (userType.equals("Supplier")) {
             homeIntent = new Intent(UserDetailsActivity.this, MyOrdersActivity.class);
-        }
-        else {
-            // Create an intent to go to HomePageActivity
+        } else {
             homeIntent = new Intent(UserDetailsActivity.this, HomePageActivity.class);
         }
 
-        // Clear the activity stack and start as a new task
         homeIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
         homeIntent.putExtra("userType", userType);
         homeIntent.putExtra("source", "user_details");
         startActivity(homeIntent);
 
-        // Finish UserDetailsActivity
         finish();
     }
-
 }
