@@ -21,6 +21,7 @@ import android.text.Editable;
 import android.text.Html;
 import android.text.TextWatcher;
 import android.util.Log;
+import android.util.Patterns;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -237,6 +238,26 @@ public class OpenNewOrderActivity extends AppCompatActivity {
             locationWindowLauncher.launch(intentLocation);
         });
 
+        urlEditText.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {}
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                String url = s.toString().trim();
+                if (url.isEmpty() || isValidUrl(url)) {
+                    urlEditText.setError(null); // אין שגיאה
+                    findViewById(R.id.submit_button).setEnabled(true); // לאפשר לחיצה על כפתור השליחה
+                } else {
+                    urlEditText.setError("Invalid URL"); // הצגת שגיאה
+                    findViewById(R.id.submit_button).setEnabled(false); // לא לאפשר לחיצה על כפתור השליחה
+                }
+            }
+        });
+
         ImageButton submit = findViewById(R.id.submit_button);
         if (globalUserType.equals("Supplier")) {
             submit.setImageResource(R.drawable.ic_plus_supplier);
@@ -252,6 +273,10 @@ public class OpenNewOrderActivity extends AppCompatActivity {
 
         addressAdapter = new ArrayAdapter<>(this, android.R.layout.simple_dropdown_item_1line);
     }
+    private boolean isValidUrl(String url) {
+        return Patterns.WEB_URL.matcher(url).matches() && url.contains("://");
+    }
+
     private void showImageAlertDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
 
