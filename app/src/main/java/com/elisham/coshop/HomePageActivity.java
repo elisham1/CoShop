@@ -868,7 +868,8 @@ public class HomePageActivity extends AppCompatActivity {
                 menuUtils.logOut();
                 return true;
             case R.id.home:
-                menuUtils.home();
+                initializeUI();
+//                menuUtils.home();
                 return true;
             case R.id.chat_icon:
                 menuUtils.allChats();

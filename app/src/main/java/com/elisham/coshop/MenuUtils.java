@@ -95,7 +95,7 @@ public class MenuUtils {
     }
 
     private void finishActivity() {
-        if (context instanceof AppCompatActivity) {
+        if (context instanceof AppCompatActivity && !(context instanceof HomePageActivity)) {
             ((AppCompatActivity) context).finish();
         }
     }
