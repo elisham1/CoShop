@@ -190,7 +190,7 @@ public class CategoriesActivity extends AppCompatActivity {
                                             LinearLayout.LayoutParams.MATCH_PARENT,
                                             LinearLayout.LayoutParams.WRAP_CONTENT
                                     ));
-                                    textView.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
+                                    textView.setGravity(Gravity.CENTER);
                                     textView.setPadding(4, 4, 4, 4);
                                     textView.setText(categoryName);
                                     textView.setTextColor(getResources().getColor(R.color.black));

@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:padding="16dp"
-    tools:context=".UpdateUserDetailsActivity"
+    tools:context=".UserDetailsActivity"
     android:layoutDirection="ltr">
 
     <LinearLayout
@@ -77,35 +77,51 @@
             android:layoutDirection="ltr" />
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="50dp"
-            android:layoutDirection="ltr"
-            android:layout_marginTop="1dp"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:background="@drawable/border">
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center_horizontal"
+            android:layoutDirection="ltr">
 
-            <!-- User's Name -->
+            <LinearLayout
+                android:id="@+id/fullNameLayout"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:background="@drawable/border">
+
+                <!-- User's Name -->
+                <TextView
+                    android:id="@+id/fullName"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:textColor="@color/black"
+                    android:textStyle="bold"
+                    android:textSize="18sp"
+                    android:padding="12dp"/>
+
+                <!-- Edit Icon -->
+                <ImageButton
+                    android:id="@+id/edit_name_button"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="?android:attr/selectableItemBackground"
+                    android:contentDescription="Edit Name"
+                    android:src="@drawable/edit"
+                    android:padding="8dp"
+                    android:layout_gravity="center_vertical"
+                    android:layoutDirection="rtl"/>
+            </LinearLayout>
+
             <TextView
-                android:id="@+id/fullName"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:textColor="@color/black"
-                android:textStyle="bold"
-                android:textSize="18sp"
-                android:padding="12dp"/>
-
-            <!-- Edit Icon -->
-            <ImageButton
-                android:id="@+id/edit_name_button"
-                android:layout_width="wrap_content"
+                android:id="@+id/fullNameError"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:background="?android:attr/selectableItemBackground"
-                android:contentDescription="Edit Name"
-                android:src="@drawable/edit"
-                android:padding="8dp"
-                android:layout_gravity="center_vertical"
-                android:layoutDirection="rtl"/>
+                android:text="Full name is required"
+                android:textColor="@android:color/holo_red_dark"
+                android:textSize="12sp"
+                android:visibility="gone"/>
         </LinearLayout>
 
         <!-- Email Section -->
@@ -117,16 +133,33 @@
             android:textSize="14sp"
             android:textStyle="bold"
             android:layoutDirection="ltr" />
-        <TextView
-            android:id="@+id/emailText"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="1dp"
-            android:padding="12dp"
-            android:textSize="18sp"
-            android:background="@drawable/border"
-            android:gravity="center_vertical|start"
-            android:layoutDirection="ltr" />
+            android:orientation="vertical"
+            android:gravity="center_horizontal"
+            android:layoutDirection="ltr">
+
+            <TextView
+                android:id="@+id/emailText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="1dp"
+                android:padding="12dp"
+                android:textSize="18sp"
+                android:background="@drawable/border"
+                android:gravity="center_vertical|start"
+                android:layoutDirection="ltr"/>
+
+            <TextView
+                android:id="@+id/emailError"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Email is required"
+                android:textColor="@android:color/holo_red_dark"
+                android:textSize="12sp"
+                android:visibility="gone"/>
+        </LinearLayout>
 
         <!-- Address Section -->
         <TextView
@@ -138,51 +171,68 @@
             android:textStyle="bold"
             android:layoutDirection="ltr" />
         <LinearLayout
-            android:id="@+id/search_row"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:clickable="true"
-            android:focusable="true"
-            android:background="@drawable/border"
-            android:padding="8dp"
-            android:layout_marginTop="1dp"
+            android:orientation="vertical"
+            android:gravity="center_horizontal"
             android:layoutDirection="ltr">
 
-            <ImageButton
-                android:id="@+id/search_address_button"
-                android:layout_width="48dp"
-                android:layout_height="match_parent"
-                android:background="?android:attr/selectableItemBackground"
-                android:contentDescription="Search address"
-                android:src="@drawable/baseline_search_24"
+            <LinearLayout
+                android:id="@+id/search_row"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:clickable="true"
+                android:focusable="true"
+                android:background="@drawable/border"
                 android:padding="8dp"
-                android:scaleType="fitCenter"
-                android:layoutDirection="ltr" />
+                android:layout_marginTop="1dp"
+                android:layoutDirection="ltr">
+
+                <ImageButton
+                    android:id="@+id/search_address_button"
+                    android:layout_width="48dp"
+                    android:layout_height="match_parent"
+                    android:background="?android:attr/selectableItemBackground"
+                    android:contentDescription="Search address"
+                    android:src="@drawable/baseline_search_24"
+                    android:padding="8dp"
+                    android:scaleType="fitCenter"
+                    android:layoutDirection="ltr" />
+
+                <TextView
+                    android:id="@+id/search_address_text"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:gravity="center_vertical|start"
+                    android:hint="Search address"
+                    android:paddingStart="8dp"
+                    android:textSize="16sp"
+                    android:textColor="@color/black"
+                    android:textStyle="bold"
+                    android:layoutDirection="ltr"/>
+
+                <ImageButton
+                    android:id="@+id/edit_address_button"
+                    android:layout_width="48dp"
+                    android:layout_height="match_parent"
+                    android:background="?android:attr/selectableItemBackground"
+                    android:contentDescription="Edit address"
+                    android:src="@drawable/edit"
+                    android:padding="10dp"
+                    android:visibility="gone"
+                    android:layoutDirection="rtl" />
+            </LinearLayout>
 
             <TextView
-                android:id="@+id/search_address_text"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:gravity="center_vertical|start"
-                android:hint="Search address"
-                android:paddingStart="8dp"
-                android:textSize="16sp"
-                android:textColor="@color/black"
-                android:textStyle="bold"
-                android:layoutDirection="ltr"/>
-
-            <ImageButton
-                android:id="@+id/edit_address_button"
-                android:layout_width="48dp"
-                android:layout_height="match_parent"
-                android:background="?android:attr/selectableItemBackground"
-                android:contentDescription="Edit address"
-                android:src="@drawable/edit"
-                android:padding="10dp"
-                android:visibility="gone"
-                android:layoutDirection="rtl" />
+                android:id="@+id/addressError"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Address is required"
+                android:textColor="@android:color/holo_red_dark"
+                android:textSize="12sp"
+                android:visibility="gone"/>
         </LinearLayout>
 
         <!-- User Type Section -->
@@ -194,27 +244,45 @@
             android:textSize="14sp"
             android:textStyle="bold"
             android:layoutDirection="ltr" />
-        <RadioGroup
-            android:id="@+id/choiceLinearLayout"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="1dp"
-            android:orientation="horizontal">
+            android:orientation="vertical"
+            android:gravity="center_horizontal"
+            android:layoutDirection="ltr">
 
-            <RadioButton
-                android:id="@+id/supplierRadioButton"
-                android:layout_width="0dp"
+            <RadioGroup
+                android:id="@+id/choiceLinearLayout"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Supplier" />
+                android:layout_marginTop="1dp"
+                android:orientation="horizontal"
+                android:background="@drawable/border">
 
-            <RadioButton
-                android:id="@+id/consumerRadioButton"
-                android:layout_width="0dp"
+                <RadioButton
+                    android:id="@+id/supplierRadioButton"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Supplier" />
+
+                <RadioButton
+                    android:id="@+id/consumerRadioButton"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Consumer" />
+            </RadioGroup>
+
+            <TextView
+                android:id="@+id/userTypeError"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Consumer" />
-        </RadioGroup>
+                android:text="User type is required"
+                android:textColor="@android:color/holo_red_dark"
+                android:textSize="12sp"
+                android:visibility="gone"/>
+        </LinearLayout>
 
         <!-- Done Button -->
         <Button
