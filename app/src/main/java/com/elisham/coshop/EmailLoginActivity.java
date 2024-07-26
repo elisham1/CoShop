@@ -9,12 +9,12 @@ import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.text.method.HideReturnsTransformationMethod;
 import android.text.method.PasswordTransformationMethod;
-import android.view.MenuItem;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -34,15 +34,13 @@ import com.google.firebase.Timestamp;
 public class EmailLoginActivity extends AppCompatActivity {
 
     private EditText emailEditText, passwordEditText;
-    private String email;
-    private Button loginButton;
     private boolean isPasswordVisible = false;
-    ImageButton togglePasswordVisibility;
-    private TextView forgotPasswordTextView;
-    boolean firstEntry = false;
-
+    private ImageView togglePasswordVisibility, clearEmailIcon;
+    private TextView emailError, passwordError, forgotPasswordTextView;
+    private LinearLayout emailLayout, passwordLayout;
     private FirebaseAuth mAuth;
     private FirebaseFirestore db;
+    private boolean firstEntry = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -52,32 +50,97 @@ public class EmailLoginActivity extends AppCompatActivity {
         mAuth = FirebaseAuth.getInstance();
         db = FirebaseFirestore.getInstance();
 
+        emailLayout = findViewById(R.id.emailLayout);
+        passwordLayout = findViewById(R.id.passwordLayout);
         emailEditText = findViewById(R.id.emailEditText);
         passwordEditText = findViewById(R.id.passwordEditText);
-        loginButton = findViewById(R.id.loginButton);
         togglePasswordVisibility = findViewById(R.id.togglePasswordVisibility);
+        clearEmailIcon = findViewById(R.id.clearEmailIcon);
+        emailError = findViewById(R.id.emailError);
+        passwordError = findViewById(R.id.passwordError);
         forgotPasswordTextView = findViewById(R.id.forgotPasswordTextView);
 
         togglePassword();
+        addTextWatchers();
         setupForgotPassword();
 
         Intent intent = getIntent();
         if (intent != null) {
-            String source = getIntent().getStringExtra("source");
-            if (source != null) {
-                if (source.equals("EmailSignupActivity")) {
-                    email = getIntent().getStringExtra("email");
-                    emailEditText.setText(email);
-                    firstEntry = getIntent().getBooleanExtra("isFirstEntry", false);
-                }
+            String source = intent.getStringExtra("source");
+            if (source != null && source.equals("EmailSignupActivity")) {
+                emailEditText.setText(intent.getStringExtra("email"));
+                firstEntry = intent.getBooleanExtra("isFirstEntry", false);
             }
         }
 
+        Button loginButton = findViewById(R.id.loginButton);
         loginButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 loginUser();
             }
+        });
+
+        clearEmailIcon.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                emailEditText.setText("");
+                emailError.setVisibility(View.VISIBLE);
+                emailError.setText("Email is required");
+                emailLayout.setBackgroundResource(R.drawable.red_border);
+                clearEmailIcon.setVisibility(View.INVISIBLE);
+            }
+        });
+    }
+
+    private void addTextWatchers() {
+        emailEditText.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                if (s.length() > 0) {
+                    if (!android.util.Patterns.EMAIL_ADDRESS.matcher(s).matches()) {
+                        emailLayout.setBackgroundResource(R.drawable.red_border);
+                        emailError.setVisibility(View.VISIBLE);
+                        emailError.setText("Invalid email format");
+                        clearEmailIcon.setVisibility(View.VISIBLE);
+                    } else {
+                        emailError.setVisibility(View.GONE);
+                        emailLayout.setBackgroundResource(R.drawable.border);
+                        clearEmailIcon.setVisibility(View.VISIBLE);
+                    }
+                } else {
+                    clearEmailIcon.setVisibility(View.INVISIBLE);
+                    emailLayout.setBackgroundResource(R.drawable.red_border);
+                    emailError.setVisibility(View.VISIBLE);
+                    emailError.setText("Email is required");
+                }
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {}
+        });
+
+        passwordEditText.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                if (s.length() >= 6) {
+                    passwordError.setVisibility(View.GONE);
+                    passwordLayout.setBackgroundResource(R.drawable.border);
+                } else {
+                    passwordError.setVisibility(View.VISIBLE);
+                    passwordError.setText("Password must be at least 6 characters");
+                    passwordLayout.setBackgroundResource(R.drawable.red_border);
+                }
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {}
         });
     }
 
@@ -93,7 +156,6 @@ public class EmailLoginActivity extends AppCompatActivity {
                     togglePasswordVisibility.setImageResource(R.drawable.baseline_visibility_off_24);
                 }
                 isPasswordVisible = !isPasswordVisible;
-                // Move cursor to end of text
                 passwordEditText.setSelection(passwordEditText.getText().length());
             }
         });
@@ -115,43 +177,38 @@ public class EmailLoginActivity extends AppCompatActivity {
         ImageView clearEmailIcon = dialogView.findViewById(R.id.clearEmailIcon);
         TextView errorTextView = dialogView.findViewById(R.id.errorTextView);
 
-        // Pre-fill the email field if the email is not empty
-        if (email != null && !email.isEmpty()) {
-            emailForgotPasswordEditText.setText(email);
+        if (emailEditText.getText().toString().length() > 0) {
+            emailForgotPasswordEditText.setText(emailEditText.getText().toString());
         }
 
-        // Set TextWatcher to handle the visibility of the clear icon
         emailForgotPasswordEditText.addTextChangedListener(new TextWatcher() {
             @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-            }
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
                 if (s.length() > 0) {
                     clearEmailIcon.setVisibility(View.VISIBLE);
                 } else {
-                    clearEmailIcon.setVisibility(View.GONE);
+                    clearEmailIcon.setVisibility(View.INVISIBLE);
                 }
-                emailForgotPasswordEditText.setBackgroundResource(android.R.color.transparent); // Reset to default
+                emailForgotPasswordEditText.setBackgroundResource(android.R.color.transparent);
                 errorTextView.setVisibility(View.GONE);
             }
 
             @Override
-            public void afterTextChanged(Editable s) {
-            }
+            public void afterTextChanged(Editable s) {}
         });
 
-        // Set onClickListener for the clear email icon
         clearEmailIcon.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                emailForgotPasswordEditText.setText(""); // Clear the text in EditText
+                emailForgotPasswordEditText.setText("");
             }
         });
 
         builder.setView(dialogView)
-                .setPositiveButton("Send Reset Email", null) // Set null listener to override later
+                .setPositiveButton("Send Reset Email", null)
                 .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
@@ -162,7 +219,6 @@ public class EmailLoginActivity extends AppCompatActivity {
         final AlertDialog dialog = builder.create();
         dialog.show();
 
-        // Override the positive button to perform validation
         dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -172,12 +228,12 @@ public class EmailLoginActivity extends AppCompatActivity {
                     emailForgotPasswordEditText.setBackgroundResource(R.drawable.red_border);
                     errorTextView.setText("Please enter your email address");
                     errorTextView.setVisibility(View.VISIBLE);
-                } else if (!isValidEmail(emailForgotPassword)) {
+                } else if (!android.util.Patterns.EMAIL_ADDRESS.matcher(emailForgotPassword).matches()) {
                     emailForgotPasswordEditText.setBackgroundResource(R.drawable.red_border);
                     errorTextView.setText("Please enter a valid email address");
                     errorTextView.setVisibility(View.VISIBLE);
                 } else {
-                    emailForgotPasswordEditText.setBackgroundResource(android.R.color.transparent); // Reset to default
+                    emailForgotPasswordEditText.setBackgroundResource(android.R.color.transparent);
                     errorTextView.setVisibility(View.GONE);
 
                     mAuth.sendPasswordResetEmail(emailForgotPassword)
@@ -197,15 +253,30 @@ public class EmailLoginActivity extends AppCompatActivity {
         });
     }
 
-    // Utility method to validate email
-    private boolean isValidEmail(CharSequence target) {
-        return !TextUtils.isEmpty(target) && android.util.Patterns.EMAIL_ADDRESS.matcher(target).matches();
-    }
-
     private void loginUser() {
-        email = emailEditText.getText().toString().trim();
+        String email = emailEditText.getText().toString().trim();
         String password = passwordEditText.getText().toString().trim();
 
+        if (email.isEmpty()) {
+            emailError.setVisibility(View.VISIBLE);
+            emailError.setText("Email is required");
+            emailLayout.setBackgroundResource(R.drawable.red_border);
+            return;
+        }
+
+        if (password.isEmpty()) {
+            passwordError.setVisibility(View.VISIBLE);
+            passwordError.setText("Password is required");
+            passwordLayout.setBackgroundResource(R.drawable.red_border);
+            return;
+        }
+
+        if (password.length() < 6) {
+            passwordError.setVisibility(View.VISIBLE);
+            passwordError.setText("Password must be at least 6 characters");
+            passwordLayout.setBackgroundResource(R.drawable.red_border);
+            return;
+        }
 
         mAuth.signInWithEmailAndPassword(email, password)
                 .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
@@ -214,26 +285,18 @@ public class EmailLoginActivity extends AppCompatActivity {
                         if (task.isSuccessful()) {
                             FirebaseUser user = mAuth.getCurrentUser();
                             if (user != null) {
-                                if (!user.isEmailVerified())
-                                {
+                                if (!user.isEmailVerified()) {
                                     showAlertDialog("Please verify your email before logging in");
-//                                    mAuth.signOut();
-//                                    return;
-                                }
-                                else {
-                                    if (firstEntry)
-                                    {
+                                } else {
+                                    if (firstEntry) {
                                         firstEntry();
-                                    }
-                                    else {
+                                    } else {
                                         checkIfBlocked();
                                     }
                                 }
-                            } else {
-                                Toast.makeText(EmailLoginActivity.this, "Please verify your email before logging in", Toast.LENGTH_SHORT).show();
                             }
                         } else {
-                            showAlertDialog("Login failed: " + task.getException());
+                            showAlertDialog("Login failed: " + task.getException().getMessage());
                         }
                     }
                 });
@@ -241,21 +304,16 @@ public class EmailLoginActivity extends AppCompatActivity {
 
     private void firstEntry() {
         Intent intent = new Intent(EmailLoginActivity.this, CategoriesActivity.class);
-        intent.putExtra("email", email);
-        intent.putExtra("firstName", getIntent().getStringExtra("firstName"));
-        intent.putExtra("familyName", getIntent().getStringExtra("familyName"));
-        intent.putExtra("source", "EmailSignupActivity");
-        intent.putExtra("email_sign_up", true);
-        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+        intent.putExtra("email", emailEditText.getText().toString().trim());
         startActivity(intent);
         finish();
     }
 
     private void checkIfBlocked() {
         FirebaseUser user = mAuth.getCurrentUser();
-        if(user != null) {
+        if (user != null) {
             String userEmail = user.getEmail();
-            if(userEmail != null) {
+            if (userEmail != null) {
                 DocumentReference userRef = db.collection("users").document(userEmail);
                 userRef.get().addOnSuccessListener(documentSnapshot -> {
                     if (documentSnapshot.exists()) {
@@ -264,7 +322,7 @@ public class EmailLoginActivity extends AppCompatActivity {
                         Timestamp blockedTimestamp = documentSnapshot.getTimestamp("blockedTimestamp");
 
                         if (isBlocked != null && isBlocked) {
-                            long blockDuration = 48 * 60 * 60 * 1000; // 48 hours in milliseconds
+                            long blockDuration = 48 * 60 * 60 * 1000;
                             long currentTime = System.currentTimeMillis();
                             long blockedTime = blockedTimestamp != null ? blockedTimestamp.toDate().getTime() : 0;
 
@@ -282,15 +340,13 @@ public class EmailLoginActivity extends AppCompatActivity {
                                 finish();
                             }
                         } else {
-                            // User is not blocked, proceed to HomePageActivity
                             Intent intent = new Intent(EmailLoginActivity.this, HomePageActivity.class);
                             intent.putExtra("userType", userType);
                             intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
                             startActivity(intent);
                             finish();
-                            }
                         }
-                    else {
+                    } else {
                         firstEntry();
                     }
                 }).addOnFailureListener(e -> {
@@ -302,11 +358,11 @@ public class EmailLoginActivity extends AppCompatActivity {
 
     private void showAlertDialog(String message) {
         new AlertDialog.Builder(this)
-            .setMessage(message)
-            .setPositiveButton(android.R.string.ok, (dialog, which) -> {
-                mAuth.signOut();
-            })
-            .setIcon(android.R.drawable.ic_dialog_alert)
-            .show();
+                .setMessage(message)
+                .setPositiveButton(android.R.string.ok, (dialog, which) -> {
+                    mAuth.signOut();
+                })
+                .setIcon(android.R.drawable.ic_dialog_alert)
+                .show();
     }
 }
