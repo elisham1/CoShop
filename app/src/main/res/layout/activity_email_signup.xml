@@ -1,93 +1,245 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:layout_gravity="center"
-    android:padding="16dp"
-    android:layoutDirection="ltr">
+    android:orientation="vertical"
+    android:padding="16dp">
 
-    <EditText
-        android:id="@+id/nameEditText"
+    <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Name"
-        android:inputType="text" />
+        android:text="Sign Up"
+        android:textAlignment="center"
+        android:textSize="48sp"
+        android:textStyle="bold"
+        android:textColor="@color/black"
+        android:layout_marginBottom="16dp"/>
 
-    <EditText
-        android:id="@+id/familyNameEditText"
+    <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/nameEditText"
-        android:layout_marginTop="16dp"
-        android:hint="Family Name"
-        android:inputType="text" />
+        android:layout_height="0dp"
+        android:layout_weight="1">
 
-    <EditText
-        android:id="@+id/emailEditText"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/familyNameEditText"
-        android:layout_marginTop="16dp"
-        android:hint="Email"
-        android:inputType="textEmailAddress" />
-
-    <RelativeLayout
-        android:id="@+id/password_layot"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/emailEditText"
-        android:layout_marginTop="16dp"
-        android:layoutDirection="ltr">
-
-        <EditText
-            android:id="@+id/passwordEditText"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Password"
-            android:inputType="textPassword" />
+            android:orientation="vertical">
 
-        <ImageView
-            android:id="@+id/togglePasswordVisibility"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignParentEnd="true"
-            android:layout_centerVertical="true"
-            android:padding="8dp"
-            android:src="@drawable/baseline_visibility_24" />
-    </RelativeLayout>
+            <!-- First Name -->
+            <LinearLayout
+                android:id="@+id/firstNameLayout"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:background="@drawable/border">
 
-    <RelativeLayout
-        android:id="@+id/confirm_password_layout"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/password_layot"
-        android:layout_marginTop="16dp"
-        android:layoutDirection="ltr">
+                <EditText
+                    android:id="@+id/firstNameEditText"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:background="@android:color/transparent"
+                    android:hint="First Name"
+                    android:inputType="text"
+                    android:maxLines="1"
+                    android:textSize="18sp"
+                    android:layout_marginStart="8dp"/>
 
-        <EditText
-            android:id="@+id/confirmPasswordEditText"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="Confirm Password"
-            android:inputType="textPassword" />
+                <ImageView
+                    android:id="@+id/clearFirstNameIcon"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:src="@drawable/ic_clear"
+                    android:contentDescription="Clear Icon"
+                    android:visibility="invisible"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:layout_margin="8dp"/>
+            </LinearLayout>
 
-        <ImageView
-            android:id="@+id/toggleConfirmPasswordVisibility"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignParentEnd="true"
-            android:layout_centerVertical="true"
-            android:padding="8dp"
-            android:src="@drawable/baseline_visibility_24" />
-    </RelativeLayout>
+            <TextView
+                android:id="@+id/firstNameError"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="First Name is required"
+                android:textColor="@android:color/holo_red_dark"
+                android:textSize="12sp"
+                android:visibility="gone"/>
+
+            <!-- Family Name -->
+            <LinearLayout
+                android:id="@+id/familyNameLayout"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginTop="16dp"
+                android:background="@drawable/border">
+
+                <EditText
+                    android:id="@+id/familyNameEditText"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:background="@android:color/transparent"
+                    android:hint="Family Name (Optional)"
+                    android:inputType="text"
+                    android:maxLines="1"
+                    android:textSize="18sp"
+                    android:layout_marginStart="8dp"/>
+
+                <ImageView
+                    android:id="@+id/clearFamilyNameIcon"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:src="@drawable/ic_clear"
+                    android:contentDescription="Clear Icon"
+                    android:visibility="invisible"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:layout_margin="8dp"/>
+            </LinearLayout>
+
+            <!-- Email -->
+            <LinearLayout
+                android:id="@+id/emailLayout"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginTop="16dp"
+                android:background="@drawable/border">
+
+                <EditText
+                    android:id="@+id/emailEditText"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:background="@android:color/transparent"
+                    android:hint="Email"
+                    android:inputType="textEmailAddress"
+                    android:maxLines="1"
+                    android:layout_marginStart="8dp"
+                    android:textSize="18sp"/>
+
+                <ImageView
+                    android:id="@+id/clearEmailIcon"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:src="@drawable/ic_clear"
+                    android:contentDescription="Clear Icon"
+                    android:visibility="invisible"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:layout_margin="8dp"/>
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/emailError"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Email is required"
+                android:textColor="@android:color/holo_red_dark"
+                android:textSize="12sp"
+                android:visibility="gone"/>
+
+            <!-- Password -->
+            <LinearLayout
+                android:id="@+id/passwordLayout"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginTop="16dp"
+                android:background="@drawable/border">
+
+                <EditText
+                    android:id="@+id/passwordEditText"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:background="@android:color/transparent"
+                    android:hint="Password"
+                    android:inputType="textPassword"
+                    android:maxLines="1"
+                    android:textSize="18sp"
+                    android:layout_marginStart="8dp"/>
+
+                <ImageView
+                    android:id="@+id/togglePasswordVisibility"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:src="@drawable/baseline_visibility_24"
+                    android:contentDescription="Toggle Password Visibility"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:layout_marginEnd="8dp"
+                    android:layout_marginStart="8dp"/>
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/passwordError"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Password is required"
+                android:textColor="@android:color/holo_red_dark"
+                android:textSize="12sp"
+                android:visibility="gone"/>
+
+            <!-- Confirm Password -->
+            <LinearLayout
+                android:id="@+id/confirmPasswordLayout"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginTop="16dp"
+                android:background="@drawable/border">
+
+                <EditText
+                    android:id="@+id/confirmPasswordEditText"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:background="@android:color/transparent"
+                    android:hint="Confirm Password"
+                    android:inputType="textPassword"
+                    android:maxLines="1"
+                    android:textSize="18sp"
+                    android:layout_marginStart="8dp"/>
+
+                <ImageView
+                    android:id="@+id/toggleConfirmPasswordVisibility"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:src="@drawable/baseline_visibility_24"
+                    android:contentDescription="Toggle Confirm Password Visibility"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:layout_margin="8dp"/>
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/confirmPasswordError"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Confirm Password is required"
+                android:textColor="@android:color/holo_red_dark"
+                android:textSize="12sp"
+                android:visibility="gone"/>
+        </LinearLayout>
+    </ScrollView>
 
     <Button
         android:id="@+id/signUpButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@id/confirm_password_layout"
         android:layout_marginTop="16dp"
+        android:layout_marginBottom="1dp"
+        android:background="@drawable/bg_selected_consumer"
         android:text="Sign Up"
-        android:layout_centerHorizontal="true"/>
+        android:textColor="@color/white"
+        android:layout_gravity="center"/>
 
-</RelativeLayout>
+</LinearLayout>

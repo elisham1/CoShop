@@ -4,42 +4,38 @@ import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.text.method.HideReturnsTransformationMethod;
 import android.text.method.PasswordTransformationMethod;
 import android.util.Log;
-import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
-import com.google.firebase.FirebaseApp;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseAuthException;
-import com.google.firebase.auth.FirebaseAuthUserCollisionException;
-import com.google.firebase.auth.FirebaseAuthWeakPasswordException;
-import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException;
 import com.google.firebase.auth.FirebaseUser;
-
-
 
 public class EmailSignupActivity extends AppCompatActivity {
 
-    private EditText emailEditText, passwordEditText,firstNameEditText, familyNameEditText, confirmPasswordEditText;
+    private EditText emailEditText, passwordEditText, firstNameEditText, familyNameEditText, confirmPasswordEditText;
     private boolean isPasswordVisible = false;
     private boolean isConfirmPasswordVisible = false;
-    private ImageView togglePasswordVisibility;
-    private ImageView toggleConfirmPasswordVisibility;
+    private ImageView togglePasswordVisibility, toggleConfirmPasswordVisibility;
+    private ImageView clearFirstNameIcon, clearFamilyNameIcon, clearEmailIcon;
+    private TextView firstNameError, emailError, passwordError, confirmPasswordError;
+    private LinearLayout passwordLayout, confirmPasswordLayout, emailLayout, firstNameLayout, familyNameLayout;
     private FirebaseAuth mAuth;
-    private FirebaseUser user;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,23 +44,175 @@ public class EmailSignupActivity extends AppCompatActivity {
 
         mAuth = FirebaseAuth.getInstance();
 
+        passwordLayout = findViewById(R.id.passwordLayout);
+        confirmPasswordLayout = findViewById(R.id.confirmPasswordLayout);
+        emailLayout = findViewById(R.id.emailLayout);
+        firstNameLayout = findViewById(R.id.firstNameLayout);
+        familyNameLayout = findViewById(R.id.familyNameLayout);
         emailEditText = findViewById(R.id.emailEditText);
-        firstNameEditText = findViewById(R.id.nameEditText);
+        firstNameEditText = findViewById(R.id.firstNameEditText);
         familyNameEditText = findViewById(R.id.familyNameEditText);
         passwordEditText = findViewById(R.id.passwordEditText);
         confirmPasswordEditText = findViewById(R.id.confirmPasswordEditText);
         togglePasswordVisibility = findViewById(R.id.togglePasswordVisibility);
         toggleConfirmPasswordVisibility = findViewById(R.id.toggleConfirmPasswordVisibility);
+        clearFirstNameIcon = findViewById(R.id.clearFirstNameIcon);
+        clearFamilyNameIcon = findViewById(R.id.clearFamilyNameIcon);
+        clearEmailIcon = findViewById(R.id.clearEmailIcon);
+        firstNameError = findViewById(R.id.firstNameError);
+        emailError = findViewById(R.id.emailError);
+        passwordError = findViewById(R.id.passwordError);
+        confirmPasswordError = findViewById(R.id.confirmPasswordError);
 
         togglePassword();
+        addTextWatchers();
         Button signUpButton = findViewById(R.id.signUpButton);
 
         signUpButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 signUpUser();
-//                sendVerificationEmail();
             }
+        });
+
+        clearFirstNameIcon.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                firstNameEditText.setText("");
+                firstNameError.setVisibility(View.VISIBLE);
+                firstNameError.setText("First Name is required");
+                firstNameLayout.setBackgroundResource(R.drawable.red_border);
+                clearFirstNameIcon.setVisibility(View.INVISIBLE);
+            }
+        });
+
+        clearFamilyNameIcon.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                familyNameEditText.setText("");
+                clearFamilyNameIcon.setVisibility(View.INVISIBLE);
+            }
+        });
+
+        clearEmailIcon.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                emailEditText.setText("");
+                emailError.setVisibility(View.VISIBLE);
+                emailError.setText("Email is required");
+                emailLayout.setBackgroundResource(R.drawable.red_border);
+                clearEmailIcon.setVisibility(View.INVISIBLE);
+            }
+        });
+    }
+
+    private void addTextWatchers() {
+        firstNameEditText.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                if (s.length() > 0) {
+                    firstNameError.setVisibility(View.GONE);
+                    firstNameLayout.setBackgroundResource(R.drawable.border);
+                    clearFirstNameIcon.setVisibility(View.VISIBLE);
+                } else {
+                    clearFirstNameIcon.setVisibility(View.INVISIBLE);
+                    firstNameError.setVisibility(View.VISIBLE);
+                    firstNameError.setText("First Name is required");
+                    firstNameLayout.setBackgroundResource(R.drawable.red_border);
+                }
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {}
+        });
+
+        familyNameEditText.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                if (s.length() > 0) {
+                    clearFamilyNameIcon.setVisibility(View.VISIBLE);
+                } else {
+                    clearFamilyNameIcon.setVisibility(View.INVISIBLE);
+                }
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {}
+        });
+
+        emailEditText.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                if (s.length() > 0) {
+                    if (!android.util.Patterns.EMAIL_ADDRESS.matcher(s).matches()) {
+                        emailLayout.setBackgroundResource(R.drawable.red_border);
+                        emailError.setVisibility(View.VISIBLE);
+                        emailError.setText("Invalid email format");
+                        clearEmailIcon.setVisibility(View.VISIBLE);
+                    } else {
+                        emailError.setVisibility(View.GONE);
+                        emailLayout.setBackgroundResource(R.drawable.border);
+                        clearEmailIcon.setVisibility(View.VISIBLE);
+                    }
+                } else {
+                    clearEmailIcon.setVisibility(View.INVISIBLE);
+                    emailLayout.setBackgroundResource(R.drawable.red_border);
+                    emailError.setVisibility(View.VISIBLE);
+                    emailError.setText("Email is required");
+                }
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {}
+        });
+
+        passwordEditText.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                if (s.length() >= 6) {
+                    passwordError.setVisibility(View.GONE);
+                    passwordLayout.setBackgroundResource(R.drawable.border);
+                } else {
+                    passwordError.setVisibility(View.VISIBLE);
+                    passwordError.setText("Password must be at least 6 characters");
+                    passwordLayout.setBackgroundResource(R.drawable.red_border);
+                }
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {}
+        });
+
+        confirmPasswordEditText.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                if (s.length() > 0) {
+                    confirmPasswordError.setVisibility(View.GONE);
+                    confirmPasswordLayout.setBackgroundResource(R.drawable.border);
+                } else {
+                    confirmPasswordError.setVisibility(View.VISIBLE);
+                    confirmPasswordError.setText("Confirm Password");
+                    confirmPasswordLayout.setBackgroundResource(R.drawable.red_border);
+                }
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {}
         });
     }
 
@@ -80,7 +228,6 @@ public class EmailSignupActivity extends AppCompatActivity {
                     togglePasswordVisibility.setImageResource(R.drawable.baseline_visibility_off_24);
                 }
                 isPasswordVisible = !isPasswordVisible;
-                // Move cursor to end of text
                 passwordEditText.setSelection(passwordEditText.getText().length());
             }
         });
@@ -96,7 +243,6 @@ public class EmailSignupActivity extends AppCompatActivity {
                     toggleConfirmPasswordVisibility.setImageResource(R.drawable.baseline_visibility_off_24);
                 }
                 isConfirmPasswordVisible = !isConfirmPasswordVisible;
-                // Move cursor to end of text
                 confirmPasswordEditText.setSelection(confirmPasswordEditText.getText().length());
             }
         });
@@ -109,18 +255,50 @@ public class EmailSignupActivity extends AppCompatActivity {
         String familyName = familyNameEditText.getText().toString().trim();
         String confirmPassword = confirmPasswordEditText.getText().toString().trim();
 
-        if (email.equals("") || password.equals("") || firstName.equals("") || familyName.equals("")) {
-            showAlertDialog("Please enter all details");
+        if (firstName.isEmpty()) {
+            firstNameError.setVisibility(View.VISIBLE);
+            firstNameError.setText("First Name is required");
+            firstNameEditText.setBackgroundResource(R.drawable.red_border);
+            return;
+        }
+
+        if (email.isEmpty()) {
+            emailError.setVisibility(View.VISIBLE);
+            emailEditText.setBackgroundResource(R.drawable.red_border);
+            return;
+        }
+        else if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+            emailError.setVisibility(View.VISIBLE);
+            emailError.setText("Invalid email format");
+            emailEditText.setBackgroundResource(R.drawable.red_border);
+            return;
+        }
+
+        if (password.isEmpty()) {
+            passwordError.setVisibility(View.VISIBLE);
+            passwordError.setText("Password is required");
+            passwordEditText.setBackgroundResource(R.drawable.red_border);
+            return;
+        }
+
+        if (confirmPassword.isEmpty()) {
+            confirmPasswordError.setVisibility(View.VISIBLE);
+            confirmPasswordError.setText("Confirm Password");
+            confirmPasswordEditText.setBackgroundResource(R.drawable.red_border);
             return;
         }
 
         if (password.length() < 6) {
-            showAlertDialog("Password must be at least 6 characters");
+            passwordError.setVisibility(View.VISIBLE);
+            passwordError.setText("Password must be at least 6 characters");
+            passwordEditText.setBackgroundResource(R.drawable.red_border);
             return;
         }
 
         if (!password.equals(confirmPassword)) {
-            showAlertDialog("Signup failed: Passwords are not equal");
+            confirmPasswordError.setVisibility(View.VISIBLE);
+            confirmPasswordError.setText("Passwords do not match");
+            confirmPasswordEditText.setBackgroundResource(R.drawable.red_border);
             return;
         }
 
@@ -129,57 +307,10 @@ public class EmailSignupActivity extends AppCompatActivity {
                     @Override
                     public void onComplete(@NonNull Task<AuthResult> task) {
                         if (task.isSuccessful()) {
-                            // Sign in success, send verification email
                             sendVerificationEmail();
-
-                            // Show a dialog asking the user to verify their email
-                            AlertDialog.Builder builder = new AlertDialog.Builder(EmailSignupActivity.this);
-                            builder.setMessage("A verification email has been sent to " + email + ". Please verify your email before logging in.")
-                                    .setCancelable(false)
-                                    .setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                                        public void onClick(DialogInterface dialog, int id) {
-                                            dialog.dismiss();
-                                            Intent intent = new Intent(EmailSignupActivity.this, EmailLoginActivity.class);
-                                            intent.putExtra("source", "EmailSignupActivity");
-                                            intent.putExtra("isFirstEntry", true);
-                                            intent.putExtra("email", email);
-                                            intent.putExtra("firstName", firstName);
-                                            intent.putExtra("familyName", familyName);
-                                            startActivity(intent);
-                                            finish();
-                                        }
-                                    });
-                            AlertDialog alert = builder.create();
-                            alert.show();
+                            showVerificationDialog(email, firstName, familyName);
                         } else {
-                            if (task.getException().getMessage().contains("already in use by another account")) {
-                                // Show a dialog asking the user to verify their email
-                                AlertDialog.Builder builder = new AlertDialog.Builder(EmailSignupActivity.this);
-                                builder.setMessage("Already in use by another account, go to login.")
-                                        .setCancelable(false)
-                                        .setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                                            public void onClick(DialogInterface dialog, int id) {
-                                                dialog.dismiss();
-                                                Intent intent = new Intent(EmailSignupActivity.this, EmailLoginActivity.class);
-                                                intent.putExtra("source", "EmailSignupActivity");
-                                                intent.putExtra("isFirstEntry", false);
-                                                intent.putExtra("email", email);
-                                                startActivity(intent);
-                                                finish();
-                                            }
-                                        });
-                                AlertDialog alert = builder.create();
-                                alert.show();
-
-                            } else {
-                                // If sign in fails, display a message to the user.
-                                Log.w("FirebaseAuth", "createUserWithEmail:failure", task.getException());
-                                showAlertDialog("Signup failed: " + task.getException().getMessage());
-                                Toast.makeText(EmailSignupActivity.this, "Authentication Failed: " + task.getException().getMessage(), Toast.LENGTH_LONG).show();
-                                Intent intent = new Intent(EmailSignupActivity.this, MainActivity.class);
-                                startActivity(intent);
-                                finish();
-                            }
+                            handleSignUpFailure(task);
                         }
                     }
                 });
@@ -193,15 +324,44 @@ public class EmailSignupActivity extends AppCompatActivity {
                         @Override
                         public void onComplete(@NonNull Task<Void> task) {
                             if (task.isSuccessful()) {
-                                Toast.makeText(EmailSignupActivity.this, "Verification email sent to " + user.getEmail(), Toast.LENGTH_SHORT).show();
+                                Log.d("FirebaseAuth", "Verification email sent to " + user.getEmail());
                             } else {
-                                Toast.makeText(EmailSignupActivity.this, "Failed to send verification email.", Toast.LENGTH_SHORT).show();
+                                Log.w("FirebaseAuth", "Failed to send verification email", task.getException());
                             }
                         }
                     });
         }
     }
 
+    private void showVerificationDialog(String email, String firstName, String familyName) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(EmailSignupActivity.this);
+        builder.setMessage("A verification email has been sent to " + email + ". Please verify your email before logging in.")
+                .setCancelable(false)
+                .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        dialog.dismiss();
+                        navigateToLogin(email, firstName, familyName);
+                    }
+                });
+        AlertDialog alert = builder.create();
+        alert.show();
+    }
+
+    private void navigateToLogin(String email, String firstName, String familyName) {
+        Intent intent = new Intent(EmailSignupActivity.this, EmailLoginActivity.class);
+        intent.putExtra("source", "EmailSignupActivity");
+        intent.putExtra("isFirstEntry", true);
+        intent.putExtra("email", email);
+        intent.putExtra("firstName", firstName);
+        intent.putExtra("familyName", familyName);
+        startActivity(intent);
+        finish();
+    }
+
+    private void handleSignUpFailure(Task<AuthResult> task) {
+        Log.w("FirebaseAuth", "createUserWithEmail:failure", task.getException());
+        showAlertDialog("Signup failed: " + task.getException().getMessage());
+    }
 
     private void showAlertDialog(String message) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
@@ -215,14 +375,4 @@ public class EmailSignupActivity extends AppCompatActivity {
         AlertDialog alert = builder.create();
         alert.show();
     }
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (resultCode == RESULT_OK) {
-            setResult(RESULT_OK);
-            finish();
-        }
-    }
-
 }

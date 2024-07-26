@@ -37,18 +37,24 @@
         <activity
             android:name=".EmailLoginActivity"
             android:exported="false"
-            android:theme="@style/Theme.CoShop"/>
+            android:theme="@style/Theme.CoShop"
+            android:windowSoftInputMode="adjustResize"/>
         <activity
             android:name=".EmailSignupActivity"
             android:exported="false"
-            android:theme="@style/Theme.CoShop" />
+            android:theme="@style/Theme.CoShop"
+            android:windowSoftInputMode="adjustResize"/>
+
         <service android:name=".NotificationService" />
 
         <activity
             android:name=".OrderDetailsActivity"
             android:exported="true"
             android:theme="@style/Theme.CoShop"/>
-        <activity android:name=".OrderDeletedActivity"></activity>
+
+        <activity
+            android:name=".OrderDeletedActivity"/>
+
         <activity
             android:name=".DeepLinkHandlerActivity"
             android:theme="@style/FullscreenTheme"
@@ -85,7 +91,8 @@
         <activity
             android:name=".UserDetailsActivity"
             android:exported="false"
-            android:theme="@style/Theme.CoShop" />
+            android:theme="@style/Theme.CoShop"
+            android:windowSoftInputMode="adjustResize"/>
         <activity
             android:name=".FilterActivity"
             android:exported="false"
