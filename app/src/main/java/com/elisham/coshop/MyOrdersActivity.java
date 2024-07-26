@@ -253,7 +253,6 @@ public class MyOrdersActivity extends AppCompatActivity {
     private void showExplanationsIfNeeded() {
         SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
         boolean firstTime = prefs.getBoolean(KEY_FIRST_TIME, true);
-        firstTime = true;
 
         if (firstTime) {
             explanationLayout = (RelativeLayout) getLayoutInflater().inflate(R.layout.explanation_layout, null);
