@@ -935,8 +935,8 @@ public class HomePageActivity extends AppCompatActivity {
         distanceInKm = Math.round(distanceInKm * 100) / 100.0f;
         Log.d("RecommendationRating", "Distance: " + distanceInKm);
 
-        if (distanceInKm <= 10) {
-            return (float) ((100.0 / 3.0) - (((100.0 / 3.0) / 10.0) * distanceInKm));
+        if (distanceInKm <= 20) {
+            return (float) ((100.0 / 3.0) - (((100.0 / 3.0) / 20.0) * distanceInKm));
         } else {
             return 0;
         }
