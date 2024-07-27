@@ -91,6 +91,10 @@ public class ChangePasswordActivity extends AppCompatActivity {
         addTextWatchers();
         setupForgotPassword();
 
+        if (globalUserType.equals("Supplier"))
+        {
+            doneButton.setBackgroundResource(R.drawable.bg_selected_supplier);
+        }
         doneButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
