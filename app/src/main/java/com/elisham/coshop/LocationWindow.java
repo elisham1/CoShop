@@ -26,6 +26,7 @@ import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.NumberPicker;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
@@ -51,6 +52,7 @@ public class LocationWindow extends AppCompatActivity {
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 100;
     private AutoCompleteTextView addressEditText;
     private AutoCompleteTextView distanceEditText;
+    private LinearLayout distanceLayout;
     private NumberPicker numberPicker;
     private FusedLocationProviderClient fusedLocationClient;
     private PlacesClient placesClient;
@@ -90,6 +92,7 @@ public class LocationWindow extends AppCompatActivity {
         }
 
         addressEditText = findViewById(R.id.address);
+        distanceLayout = findViewById(R.id.distance_layout);
 
         locationSettingsLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
@@ -243,28 +246,52 @@ public class LocationWindow extends AppCompatActivity {
                 boolean hideDistanceLayout = getIntent().getBooleanExtra("hideDistanceLayout", false);
                 String distanceStr = hideDistanceLayout ? "0" : distanceEditText.getText().toString().replace(" KM", "").trim();
 
-                if (!address.isEmpty() && (hideDistanceLayout || !distanceStr.isEmpty())) {
+                boolean isValid = true;
+
+                if (address.isEmpty()) {
+                    findViewById(R.id.address_layout).setBackgroundResource(R.drawable.red_border);
+                    findViewById(R.id.addressError).setVisibility(View.VISIBLE);
+                    ((TextView) (findViewById(R.id.addressError))).setText("Field is required");
+                    isValid = false;
+                } else {
+                    findViewById(R.id.address_layout).setBackgroundResource(R.drawable.border);
+                    findViewById(R.id.addressError).setVisibility(View.GONE);
+                }
+
+                if (!hideDistanceLayout && distanceStr.isEmpty()) {
+                    findViewById(R.id.distance_layout).setBackgroundResource(R.drawable.red_border);
+                    findViewById(R.id.distanceError).setVisibility(View.VISIBLE);
+                    isValid = false;
+                } else {
+                    findViewById(R.id.distance_layout).setBackgroundResource(R.drawable.border);
+                    findViewById(R.id.distanceError).setVisibility(View.GONE);
+                }
+
+                if (isValid) {
+                    findViewById(R.id.distance_layout).setBackgroundResource(R.drawable.border);
+                    findViewById(R.id.distanceError).setVisibility(View.GONE);
                     if (lastValidAddress == null) {
                         locationFunctions.fetchAddressCoordinates(address, distanceStr);
                     } else {
                         locationFunctions.sendResult(address, distanceStr);
                     }
                 } else {
+                    findViewById(R.id.address_layout).setBackgroundResource(R.drawable.red_border);
+                    findViewById(R.id.addressError).setVisibility(View.VISIBLE);
+                    ((TextView) (findViewById(R.id.addressError))).setText("Please enter a valid address");
                     Toast.makeText(LocationWindow.this, "Please enter a valid address" + (hideDistanceLayout ? "" : " and distance"), Toast.LENGTH_SHORT).show();
                 }
             }
         });
 
-
-//        Intent intent = getIntent();
-//        if (intent != null) {
             boolean hideDistanceLayout = intent.getBooleanExtra("hideDistanceLayout", false);
             String address = intent.getStringExtra("address");
             int distance = intent.getIntExtra("distance", 0);
 
             if (hideDistanceLayout) {
-                distanceEditText.setVisibility(View.GONE);
-                numberPicker.setVisibility(View.GONE);
+                distanceEditText.setVisibility(View.INVISIBLE);
+                numberPicker.setVisibility(View.INVISIBLE);
+                distanceLayout.setVisibility(View.INVISIBLE);
             }
 
             if (address != null && !address.isEmpty()) {
@@ -302,11 +329,31 @@ public class LocationWindow extends AppCompatActivity {
             addressAdapter.notifyDataSetChanged();
 
             if (suggestions.isEmpty()) {
-                Toast.makeText(LocationWindow.this, "Address not found in Google API", Toast.LENGTH_LONG).show();
+                findViewById(R.id.distance_layout).setBackgroundResource(R.drawable.red_border);
+                findViewById(R.id.distanceError).setVisibility(View.VISIBLE);
+                findViewById(R.id.address_layout).setBackgroundResource(R.drawable.red_border);
+                findViewById(R.id.addressError).setVisibility(View.VISIBLE);
+                ((TextView) (findViewById(R.id.addressError))).setText("Address not found");
+            }
+            else {
+                findViewById(R.id.distance_layout).setBackgroundResource(R.drawable.border);
+                findViewById(R.id.distanceError).setVisibility(View.GONE);
+                findViewById(R.id.address_layout).setBackgroundResource(R.drawable.border);
+                findViewById(R.id.addressError).setVisibility(View.GONE);
             }
         }).addOnFailureListener(exception -> {
             Toast.makeText(LocationWindow.this, "Error fetching predictions", Toast.LENGTH_LONG).show();
         });
+    }
+
+    public void setError () {
+        findViewById(R.id.distance_layout).setBackgroundResource(R.drawable.red_border);
+        findViewById(R.id.distanceError).setVisibility(View.VISIBLE);
+    }
+
+    public void setNotError() {
+        findViewById(R.id.distance_layout).setBackgroundResource(R.drawable.border);
+        findViewById(R.id.distanceError).setVisibility(View.GONE);
     }
 
     private void fetchPlace(String placeId) {
@@ -316,12 +363,16 @@ public class LocationWindow extends AppCompatActivity {
         placesClient.fetchPlace(request).addOnSuccessListener((response) -> {
             Place place = response.getPlace();
             if (place.getLatLng() != null) {
+                findViewById(R.id.distance_layout).setBackgroundResource(R.drawable.border);
+                findViewById(R.id.distanceError).setVisibility(View.GONE);
                 double lat = place.getLatLng().latitude;
                 double lon = place.getLatLng().longitude;
                 Toast.makeText(LocationWindow.this, "Latitude: " + lat + ", Longitude: " + lon, Toast.LENGTH_LONG).show();
 
                 lastValidAddress = place.getAddress();
             } else {
+                findViewById(R.id.distance_layout).setBackgroundResource(R.drawable.red_border);
+                findViewById(R.id.distanceError).setVisibility(View.VISIBLE);
                 Toast.makeText(LocationWindow.this, "Address not found in Google API", Toast.LENGTH_LONG).show();
             }
         }).addOnFailureListener((exception) -> {
