@@ -10,7 +10,6 @@
         android:layout_height="wrap_content"
         android:layout_weight="1"
         android:orientation="vertical"
-        android:layout_gravity="end"
         android:background="@drawable/message_background_user">
 
         <TextView
@@ -19,7 +18,8 @@
             android:layout_height="wrap_content"
             android:text="Sender Name"
             android:textSize="12sp"
-            android:gravity="end"
+            android:padding="2dp"
+            android:layout_gravity="left"
             android:layout_marginStart="8dp"
             android:layout_marginEnd="8dp"/>
 
@@ -27,9 +27,9 @@
             android:id="@+id/messageTextView"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:text="bvebivneionmivenbvcnlvbowbw\nvnviewocmsmcoinweiovvenwomceklmweoimomnweviowenvioweviobweoivbeiobviowe"
+            android:text="\nvnviewocmsmcoinweiovvenwomceklmweoimomnweviowenvioweviobweoivbeiobviowe"
             android:textSize="16sp"
-            android:gravity="end"
+            android:padding="2dp"
             android:layout_marginStart="8dp"
             android:layout_marginEnd="8dp"/>
 
@@ -39,6 +39,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Time"
+            android:padding="2dp"
             android:textSize="12sp"
             android:layout_gravity="end"
             android:layout_marginStart="8dp"
@@ -53,5 +54,5 @@
         android:src="@drawable/ic_profile"
         android:scaleType="centerCrop"
         android:background="@drawable/circle_background"
-        android:layout_gravity="center_vertical"/>
+        android:layout_gravity="bottom"/>
 </LinearLayout>

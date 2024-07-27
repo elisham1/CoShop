@@ -1,16 +1,16 @@
 package com.elisham.coshop;
 import com.google.firebase.Timestamp;
 
-public class ChatMessage {
+public class ChatMessage extends ChatItem {
     private String sender;
     private String message;
     private Timestamp timestamp;
 
-    // דרוש לפיירבייס
+    // Required for Firestore
     public ChatMessage() {
     }
 
-    // קונסטרוקטור מלא
+    // Full constructor
     public ChatMessage(String sender, String message, Timestamp timestamp) {
         this.sender = sender;
         this.message = message;
@@ -29,3 +29,4 @@ public class ChatMessage {
         return timestamp;
     }
 }
+

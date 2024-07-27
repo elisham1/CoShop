@@ -9,7 +9,7 @@
         android:id="@+id/profileImageView"
         android:layout_width="40dp"
         android:layout_height="40dp"
-        android:layout_gravity="center_vertical"
+        android:layout_gravity="bottom"
         android:layout_marginEnd="8dp"
         android:background="@drawable/circle_background"
         android:scaleType="centerCrop"
@@ -28,9 +28,10 @@
             android:layout_height="match_parent"
             android:layout_marginStart="8dp"
             android:layout_marginEnd="8dp"
-            android:gravity="start"
+            android:gravity="right"
             android:text="Sender Name"
-            android:textSize="12sp" />
+            android:textSize="12sp"
+            android:padding="2dp"/>
 
         <TextView
             android:id="@+id/messageTextView"
@@ -39,9 +40,8 @@
             android:padding="2dp"
             android:text="Sample message"
             android:textSize="16sp"
-            android:gravity="start"
             android:layout_marginStart="8dp"
-            android:layout_marginEnd="8dp"/>
+            android:layout_marginEnd="8dp" />
 
         <!-- TextView for the time -->
         <TextView
@@ -52,6 +52,7 @@
             android:textSize="12sp"
             android:layout_gravity="end"
             android:layout_marginStart="8dp"
-            android:layout_marginEnd="8dp"/>
+            android:layout_marginEnd="8dp"
+            android:padding="2dp"/>
     </LinearLayout>
 </LinearLayout>
