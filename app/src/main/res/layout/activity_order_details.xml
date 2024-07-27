@@ -23,27 +23,27 @@
             android:background="@drawable/border">
 
             <!-- Left icons (Share and Chat) -->
-                <ImageView
-                    android:id="@+id/shareIcon"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_margin="16dp"
-                    android:src="@drawable/ic_share_consumer"
-                    android:contentDescription="Share Icon"
-                    app:layout_constraintTop_toTopOf="parent"
-                    app:layout_constraintStart_toStartOf="parent"/>
+            <ImageView
+                android:id="@+id/shareIcon"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_margin="16dp"
+                android:src="@drawable/ic_share_consumer"
+                android:contentDescription="Share Icon"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintStart_toStartOf="parent"/>
 
-                <ImageView
-                    android:id="@+id/chatIcon"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_margin="16dp"
-                    android:layout_marginStart="0dp"
-                    android:src="@drawable/ic_chat_consumer"
-                    android:contentDescription="Chat Icon"
-                    android:visibility="gone"
-                    app:layout_constraintTop_toTopOf="parent"
-                    app:layout_constraintStart_toEndOf="@id/shareIcon"/>
+            <ImageView
+                android:id="@+id/chatIcon"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_margin="16dp"
+                android:layout_marginStart="0dp"
+                android:src="@drawable/ic_chat_consumer"
+                android:contentDescription="Chat Icon"
+                android:visibility="gone"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintStart_toEndOf="@id/shareIcon"/>
 
             <!-- עיגול עם תמונת הקטגוריה -->
             <com.elisham.coshop.CircularImageView
@@ -91,6 +91,7 @@
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintStart_toEndOf="@id/categoryImageView"
                 app:layout_constraintEnd_toEndOf="parent" />
+
             <!-- Order title -->
             <TextView
                 android:id="@+id/titleTextView"
@@ -118,9 +119,7 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 android:layoutDirection="ltr"/>
-
         </androidx.constraintlayout.widget.ConstraintLayout>
-
 
         <!-- Layout for order details and time left -->
         <LinearLayout
@@ -337,6 +336,7 @@
             android:textSize="14sp"
             android:textStyle="bold"
             android:layoutDirection="ltr" />
+
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -344,6 +344,7 @@
             android:gravity="center"
             android:background="@drawable/border"
             android:layout_marginTop="1dp">
+
             <TextView
                 android:id="@+id/descriptionTextView"
                 android:layout_width="match_parent"
@@ -354,15 +355,64 @@
                 android:textColor="@color/black"
                 android:textStyle="bold"
                 android:gravity="center" />
+
             <Button
                 android:id="@+id/siteButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:gravity="center"
                 android:text="Click to open Url"
-                android:visibility="visible"
+                android:visibility="gone"
                 android:layout_margin="4dp"/>
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp">
+
+                <ImageView
+                    android:id="@+id/tap_icon"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:background="?android:attr/selectableItemBackground"
+                    android:contentDescription="Tap icon"
+                    android:scaleType="fitCenter"
+                    android:src="@drawable/tap"
+                    android:layoutDirection="ltr"
+                    android:visibility="gone"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"/>
+
+                <EditText
+                    android:id="@+id/url"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:hint="Insert a payment link Or site"
+                    android:inputType="textUri"
+                    android:padding="8dp"
+                    android:background="@drawable/border"
+                    android:visibility="gone"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintStart_toEndOf="@id/tap_icon"
+                    app:layout_constraintEnd_toStartOf="@id/saveUrlButton"/>
+
+                <ImageView
+                    android:id="@+id/saveUrlButton"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:padding="8dp"
+                    android:src="@drawable/tick"
+                    android:contentDescription="Save URL"
+                    android:visibility="gone"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"/>
+            </androidx.constraintlayout.widget.ConstraintLayout>
         </LinearLayout>
+
         <!-- Order address -->
         <TextView
             android:layout_width="match_parent"
@@ -372,6 +422,7 @@
             android:textSize="14sp"
             android:textStyle="bold"
             android:layoutDirection="ltr" />
+
         <TextView
             android:id="@+id/addressTextView"
             android:layout_width="match_parent"
@@ -393,7 +444,6 @@
             android:orientation="vertical"
             android:layout_marginTop="8dp"
             android:padding="8dp"/>
-        <!-- Add views for each user dynamically -->
 
         <!-- TextView שמוסתר -->
         <TextView
@@ -407,5 +457,4 @@
             android:paddingEnd="13dp"
             android:visibility="gone" />
     </LinearLayout>
-
 </ScrollView>
