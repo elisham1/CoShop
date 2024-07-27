@@ -290,14 +290,14 @@ public class EmailSignupActivity extends AppCompatActivity {
 
         if (password.length() < 6) {
             passwordError.setVisibility(View.VISIBLE);
-            passwordError.setText("Password must be at least 6 characters");
+            passwordError.setText(R.string.password_length_error);
             passwordEditText.setBackgroundResource(R.drawable.red_border);
             return;
         }
 
         if (!password.equals(confirmPassword)) {
             confirmPasswordError.setVisibility(View.VISIBLE);
-            confirmPasswordError.setText("Passwords do not match");
+            confirmPasswordError.setText(R.string.passwords_do_not_match);
             confirmPasswordEditText.setBackgroundResource(R.drawable.red_border);
             return;
         }

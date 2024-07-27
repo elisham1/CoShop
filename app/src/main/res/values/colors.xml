@@ -11,7 +11,7 @@
     <color name="background_color">#454242</color>
     <color name="text_color">#F6F0F0</color>
     <color name="selected_color">#80C4E9</color>
-    <color name="default_color">#cccccccc</color>
+    <color name="default_color">#CC919191</color>
     <color name="colorPrimary">#3F51B5</color>
     <color name="colorAccent">#FF4081</color>
     <color name="colorSelected">#009FBD</color>
