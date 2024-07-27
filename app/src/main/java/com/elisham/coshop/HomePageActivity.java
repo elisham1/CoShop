@@ -504,11 +504,12 @@ public class HomePageActivity extends AppCompatActivity {
                         String categorie = documentSnapshot.getString("categorie");
                         GeoPoint orderLocation = documentSnapshot.getGeoPoint("location");
                         Double rating = documentSnapshot.getDouble("ratingOrder");
-                        Log.d("RecommendationRating", "Distance: " + distance);
 
                         double categoryScore = calculateCategoryScore(categorie, userPreferredCategories);
                         double ratingScore = calculateRatingScore(rating);
-                        double distanceScore = calculateDistanceScore(distance, minDistance, maxDistance);
+                        Log.d("RecommendationRating", "Order distance: " + distance);
+
+                        float distanceScore = calculateDistanceScore(distance, minDistance, maxDistance);
 
                         double totalScore = categoryScore + ratingScore + distanceScore;
 
@@ -783,14 +784,17 @@ public class HomePageActivity extends AppCompatActivity {
     }
 
     private String formatScore(double score) {
+        // עיגול המספר לשני מספרים אחרי הנקודה
+        score = Math.round(score * 10) / 10.0;
+
+        // בדיקה אם המספר הוא שלם
         if (score % 1 == 0) {
-            return String.format(Locale.getDefault(), "%.0f%%", score);
-        } else if (score * 10 % 1 == 0) {
-            return String.format(Locale.getDefault(), "%.1f%%", score);
+            return String.format("%d%%", (int) score);
         } else {
-            return String.format(Locale.getDefault(), "%.2f%%", score);
+            return String.format("%.1f%%", score);
         }
     }
+
 
     private void updateTimerTextViews(View timerView, long millisUntilFinished) {
         TextView daysTextView = timerView.findViewById(R.id.daysTextView);
@@ -927,15 +931,17 @@ public class HomePageActivity extends AppCompatActivity {
         return Math.round((rating / 5.0) * (100 / 3) * 2) / 2.0;
     }
 
-    private double calculateDistanceScore(float distanceInKm, double minDistance, double maxDistance) {
-        if (distanceInKm <= minDistance) {
-            return (100 / 3);
-        } else if (distanceInKm >= maxDistance) {
-            return 0;
+    private float calculateDistanceScore(float distanceInKm, double minDistance, double maxDistance) {
+        distanceInKm = Math.round(distanceInKm * 100) / 100.0f;
+        Log.d("RecommendationRating", "Distance: " + distanceInKm);
+
+        if (distanceInKm <= 10) {
+            return (float) ((100.0 / 3.0) - (((100.0 / 3.0) / 10.0) * distanceInKm));
         } else {
-            return (1 - (distanceInKm - minDistance) / (maxDistance - minDistance)) * (100 / 3);
+            return 0;
         }
     }
+
 
     private void addStarsToLayout(LinearLayout layout, double rating) {
         int fullStars = (int) rating;
