@@ -1,12 +1,15 @@
 package com.elisham.coshop;
 
+import android.Manifest;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.text.Spannable;
@@ -27,7 +30,10 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
@@ -54,6 +60,8 @@ import java.util.stream.Collectors;
 public class HomePageActivity extends AppCompatActivity {
 
     private FirebaseUser currentUser;
+    private ActivityResultLauncher<String> requestPermissionLauncher;
+
     private Boolean clickOnStar = false;
     private List<OrderData> orderDataList = new ArrayList<>();
     private List<String> displayedOrderIds;
@@ -75,6 +83,8 @@ public class HomePageActivity extends AppCompatActivity {
         currentUser = mAuth.getCurrentUser();
         db = FirebaseFirestore.getInstance();
         displayedOrderIds = new ArrayList<>();
+        requestNotificationPermission();
+
 
         // Set the theme based on the user type
         Intent intent = getIntent();
@@ -941,7 +951,22 @@ public class HomePageActivity extends AppCompatActivity {
             return 0;
         }
     }
+    private void requestNotificationPermission() {
+        requestPermissionLauncher = registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
+            if (isGranted) {
+                Log.d("Permission", "Notification permission granted");
+            } else {
+                Toast.makeText(this, "Notification permission is required for this app", Toast.LENGTH_SHORT).show();
+            }
+        });
 
+        // Check and request notification permission if needed
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS);
+            }
+        }
+    }
 
     private void addStarsToLayout(LinearLayout layout, double rating) {
         int fullStars = (int) rating;
