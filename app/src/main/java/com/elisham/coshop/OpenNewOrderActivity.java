@@ -674,6 +674,7 @@ public class OpenNewOrderActivity extends AppCompatActivity {
                 for (QueryDocumentSnapshot userDocument : task.getResult()) {
                     List<String> favoriteCategories = (List<String>) userDocument.get("favorite categories");
                     Log.d("OpenNewOrderActivity", "User favorite categories: " + favoriteCategories);
+                    Log.d("OpenNewOrderActivity", "Selected category: " + category);
 
                     if (userDocument.get("address") instanceof GeoPoint) {
                         GeoPoint userLocation = userDocument.getGeoPoint("address");
@@ -730,6 +731,7 @@ public class OpenNewOrderActivity extends AppCompatActivity {
 
         return taskCompletionSource.getTask();
     }
+
 
     private boolean isWithinDistance(GeoPoint point1, GeoPoint point2, double maxDistance) {
         double lat1 = point1.getLatitude();
