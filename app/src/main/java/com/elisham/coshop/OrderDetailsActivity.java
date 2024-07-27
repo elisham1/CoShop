@@ -1318,7 +1318,7 @@ public class OrderDetailsActivity extends AppCompatActivity {
                 }
             }.start();
         } else {
-            timerContainer.setVisibility(View.GONE);
+//            timerContainer.setVisibility(View.GONE);
             closedOrderTextView.setVisibility(View.VISIBLE);
             daysTextView.setText("00");
             hoursTextView.setText("00");
@@ -1377,19 +1377,18 @@ public class OrderDetailsActivity extends AppCompatActivity {
     private void saveUrl() {
         String url = urlEditText.getText().toString().trim();
         if (url.isEmpty()) {
-            Toast.makeText(this, "Please enter a URL", Toast.LENGTH_SHORT).show();
+            Log.e("OrderDetailsActivity", "URL is empty");
             return;
         }
 
         if (!isValidURL(url)) {
-            Toast.makeText(this, "Invalid URL", Toast.LENGTH_SHORT).show();
+            Log.e("OrderDetailsActivity", "Invalid URL");
             return;
         }
 
         DocumentReference orderRef = db.collection("orders").document(orderId);
         orderRef.update("URL", url)
                 .addOnSuccessListener(aVoid -> {
-                    Toast.makeText(this, "URL saved successfully", Toast.LENGTH_SHORT).show();
                     urlEditText.setVisibility(View.GONE);
                     saveUrlButton.setVisibility(View.GONE);
                     fetchOrderDetails(orderId, email);
@@ -1400,7 +1399,8 @@ public class OrderDetailsActivity extends AppCompatActivity {
                     tapIcon.setVisibility(View.GONE);
                     siteButton.setVisibility(View.VISIBLE);
                 })
-                .addOnFailureListener(e -> Toast.makeText(this, "Failed to save URL", Toast.LENGTH_SHORT).show());
+                .addOnFailureListener(e ->
+                        Log.e("OrderDetailsActivity", "Error saving URL", e));
     }    @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_items, menu);
