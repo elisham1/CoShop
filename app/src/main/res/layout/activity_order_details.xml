@@ -461,7 +461,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="Order Description"
-                android:minLines="2"
+                android:minLines="1"
                 android:textSize="16sp"
                 android:textColor="@color/black"
                 android:textStyle="bold"
@@ -474,13 +474,17 @@
                 android:layout_height="wrap_content"
                 android:gravity="center"
                 android:text="Click to open Url"
-                android:visibility="gone"
-                android:layout_margin="4dp"/>
+                android:visibility="visible"
+                android:layout_marginTop="4dp"/>
 
             <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/urlLayout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp">
+                android:layout_margin="8dp"
+                android:padding="4dp"
+                android:visibility="gone"
+                android:background="@drawable/border">
 
                 <ImageView
                     android:id="@+id/tap_icon"
@@ -491,7 +495,7 @@
                     android:scaleType="fitCenter"
                     android:src="@drawable/tap"
                     android:layoutDirection="ltr"
-                    android:visibility="gone"
+                    android:visibility="visible"
                     app:layout_constraintTop_toTopOf="parent"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintStart_toStartOf="parent"/>
@@ -504,8 +508,9 @@
                     android:hint="Insert a payment link Or site"
                     android:inputType="textUri"
                     android:padding="8dp"
-                    android:background="@drawable/border"
-                    android:visibility="gone"
+                    android:visibility="visible"
+                    android:textSize="16sp"
+                    android:background="@android:color/transparent"
                     app:layout_constraintTop_toTopOf="parent"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintStart_toEndOf="@id/tap_icon"
@@ -518,7 +523,7 @@
                     android:padding="8dp"
                     android:src="@drawable/tick"
                     android:contentDescription="Save URL"
-                    android:visibility="gone"
+                    android:visibility="visible"
                     app:layout_constraintTop_toTopOf="parent"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintEnd_toEndOf="parent"/>

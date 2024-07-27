@@ -3,6 +3,7 @@ package com.elisham.coshop;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.content.ContextCompat;
 import androidx.core.view.ViewCompat;
 import androidx.viewpager2.widget.ViewPager2;
@@ -150,6 +151,7 @@ public class OrderDetailsActivity extends AppCompatActivity {
         saveUrlButton = findViewById(R.id.saveUrlButton);
         Button siteButton = findViewById(R.id.siteButton);
         ImageView tapIcon = findViewById(R.id.tap_icon);
+        ConstraintLayout urlLayout = findViewById(R.id.urlLayout);
 
         if (orderId != null) {
             progressDialog.show();
@@ -433,11 +435,13 @@ public class OrderDetailsActivity extends AppCompatActivity {
                 urlEditText = findViewById(R.id.url);
                 saveUrlButton = findViewById(R.id.saveUrlButton);
                 ImageView tapIcon = findViewById(R.id.tap_icon);
+                ConstraintLayout urlLayout = findViewById(R.id.urlLayout);
 
                 // Show/Hide URL fields based on user_email
                 if (userEmail.equals(currentUserEmail)) {
                     if (siteUrl != null && !siteUrl.isEmpty()) {
                         siteButton.setVisibility(View.VISIBLE);
+                        urlLayout.setVisibility(View.GONE);
                         urlEditText.setVisibility(View.GONE);
                         saveUrlButton.setVisibility(View.GONE);
                         siteButton.setOnClickListener(v -> {
@@ -447,13 +451,19 @@ public class OrderDetailsActivity extends AppCompatActivity {
                         tapIcon.setVisibility(View.GONE); // Hide tap icon if site button is visible
                     } else {
                         siteButton.setVisibility(View.GONE);
+                        urlLayout.setVisibility(View.VISIBLE);
                         urlEditText.setVisibility(View.VISIBLE);
                         saveUrlButton.setVisibility(View.VISIBLE);
                         tapIcon.setVisibility(View.VISIBLE); // Show tap icon if site button is not visible
                     }
                 } else {
-                    siteButton.setVisibility(View.GONE);
+                    if (siteUrl != null && !siteUrl.isEmpty()) {
+                        siteButton.setVisibility(View.VISIBLE);
+                    } else {
+                        siteButton.setVisibility(View.GONE);
+                    }
                     urlEditText.setVisibility(View.GONE);
+                    urlLayout.setVisibility(View.GONE);
                     saveUrlButton.setVisibility(View.GONE);
                     tapIcon.setVisibility(View.GONE);
                 }
@@ -555,7 +565,7 @@ public class OrderDetailsActivity extends AppCompatActivity {
                 startActivity(intent);
                 finish();
             }
-            progressDialog.dismiss();
+//            progressDialog.dismiss();
         }).addOnFailureListener(e -> {
             Log.e("OrderDetailsActivity", "Error fetching order details", e);
             progressDialog.dismiss();
@@ -906,6 +916,7 @@ public class OrderDetailsActivity extends AppCompatActivity {
 
             userListLayout.addView(toggleUsersTextView);
         }
+        progressDialog.dismiss();
     }
 
     private static class UserDetail {
@@ -1396,6 +1407,8 @@ public class OrderDetailsActivity extends AppCompatActivity {
                     // Hide tap icon when URL is saved
                     ImageView tapIcon = findViewById(R.id.tap_icon);
                     Button siteButton = findViewById(R.id.siteButton);
+                    ConstraintLayout urlLayout = findViewById(R.id.urlLayout);
+                    urlLayout.setVisibility(View.GONE);
                     tapIcon.setVisibility(View.GONE);
                     siteButton.setVisibility(View.VISIBLE);
                 })
