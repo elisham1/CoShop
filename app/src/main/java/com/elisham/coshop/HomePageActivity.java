@@ -1,12 +1,15 @@
 package com.elisham.coshop;
 
+import android.Manifest;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.text.Spannable;
@@ -27,7 +30,10 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
@@ -54,6 +60,8 @@ import java.util.stream.Collectors;
 public class HomePageActivity extends AppCompatActivity {
 
     private FirebaseUser currentUser;
+    private ActivityResultLauncher<String> requestPermissionLauncher;
+
     private Boolean clickOnStar = false;
     private List<OrderData> orderDataList = new ArrayList<>();
     private List<String> displayedOrderIds;
@@ -75,6 +83,8 @@ public class HomePageActivity extends AppCompatActivity {
         currentUser = mAuth.getCurrentUser();
         db = FirebaseFirestore.getInstance();
         displayedOrderIds = new ArrayList<>();
+        requestNotificationPermission();
+
 
         // Set the theme based on the user type
         Intent intent = getIntent();
@@ -504,11 +514,12 @@ public class HomePageActivity extends AppCompatActivity {
                         String categorie = documentSnapshot.getString("categorie");
                         GeoPoint orderLocation = documentSnapshot.getGeoPoint("location");
                         Double rating = documentSnapshot.getDouble("ratingOrder");
-                        Log.d("RecommendationRating", "Distance: " + distance);
 
                         double categoryScore = calculateCategoryScore(categorie, userPreferredCategories);
                         double ratingScore = calculateRatingScore(rating);
-                        double distanceScore = calculateDistanceScore(distance, minDistance, maxDistance);
+                        Log.d("RecommendationRating", "Order distance: " + distance);
+
+                        float distanceScore = calculateDistanceScore(distance, minDistance, maxDistance);
 
                         double totalScore = categoryScore + ratingScore + distanceScore;
 
@@ -783,14 +794,17 @@ public class HomePageActivity extends AppCompatActivity {
     }
 
     private String formatScore(double score) {
+        // עיגול המספר לשני מספרים אחרי הנקודה
+        score = Math.round(score * 10) / 10.0;
+
+        // בדיקה אם המספר הוא שלם
         if (score % 1 == 0) {
-            return String.format(Locale.getDefault(), "%.0f%%", score);
-        } else if (score * 10 % 1 == 0) {
-            return String.format(Locale.getDefault(), "%.1f%%", score);
+            return String.format("%d%%", (int) score);
         } else {
-            return String.format(Locale.getDefault(), "%.2f%%", score);
+            return String.format("%.1f%%", score);
         }
     }
+
 
     private void updateTimerTextViews(View timerView, long millisUntilFinished) {
         TextView daysTextView = timerView.findViewById(R.id.daysTextView);
@@ -928,13 +942,30 @@ public class HomePageActivity extends AppCompatActivity {
         return Math.round((rating / 5.0) * (100 / 3) * 2) / 2.0;
     }
 
-    private double calculateDistanceScore(float distanceInKm, double minDistance, double maxDistance) {
-        if (distanceInKm <= minDistance) {
-            return (100 / 3);
-        } else if (distanceInKm >= maxDistance) {
-            return 0;
+    private float calculateDistanceScore(float distanceInKm, double minDistance, double maxDistance) {
+        distanceInKm = Math.round(distanceInKm * 100) / 100.0f;
+        Log.d("RecommendationRating", "Distance: " + distanceInKm);
+
+        if (distanceInKm <= 20) {
+            return (float) ((100.0 / 3.0) - (((100.0 / 3.0) / 20.0) * distanceInKm));
         } else {
-            return (1 - (distanceInKm - minDistance) / (maxDistance - minDistance)) * (100 / 3);
+            return 0;
+        }
+    }
+    private void requestNotificationPermission() {
+        requestPermissionLauncher = registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
+            if (isGranted) {
+                Log.d("Permission", "Notification permission granted");
+            } else {
+                Toast.makeText(this, "Notification permission is required for this app", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        // Check and request notification permission if needed
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS);
+            }
         }
     }
 
