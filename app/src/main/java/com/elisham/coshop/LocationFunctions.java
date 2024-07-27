@@ -10,7 +10,9 @@ import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationManager;
 import android.provider.Settings;
+import android.view.View;
 import android.widget.AutoCompleteTextView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
@@ -198,7 +200,9 @@ public class LocationFunctions {
                 double lon = location.getLongitude();
                 lastValidAddress = location.getAddressLine(0); // Use the address in English
                 sendResult(lastValidAddress, distanceStr);
+                hideError();
             } else {
+                showError("Address not found");
                 Toast.makeText(context, "Address not found", Toast.LENGTH_SHORT).show();
             }
         } catch (Exception e) {
@@ -222,12 +226,27 @@ public class LocationFunctions {
                 double lon = location.getLongitude();
                 resultIntent.putExtra("latitude", lat);
                 resultIntent.putExtra("longitude", lon);
+                hideError();
             }
         } catch (Exception e) {
+            showError("no address");
             e.printStackTrace();
         }
 
         ((AppCompatActivity) context).setResult(AppCompatActivity.RESULT_OK, resultIntent);
         ((AppCompatActivity) context).finish();
+    }
+
+    private void showError(String errorMessage) {
+        ((AppCompatActivity) context).findViewById(R.id.address_layout).setBackgroundResource(R.drawable.red_border);
+        ((AppCompatActivity) context).findViewById(R.id.addressError).setVisibility(View.VISIBLE);
+        Toast.makeText(context, errorMessage, Toast.LENGTH_SHORT).show();
+        ((TextView) ((AppCompatActivity) context).findViewById(R.id.addressError)).setText(errorMessage);
+    }
+
+    private void hideError() {
+        ((AppCompatActivity) context).findViewById(R.id.address_layout).setBackgroundResource(R.drawable.border);
+        ((AppCompatActivity) context).findViewById(R.id.addressError).setVisibility(View.GONE);
+
     }
 }

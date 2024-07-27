@@ -17,29 +17,38 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 
+import java.sql.Time;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
-    private List<ChatMessage> chatMessages;
+    private List<ChatItem> chatItems; // Change type to ChatItem to accommodate different item types
     private FirebaseAuth mAuth;
 
     private static final int VIEW_TYPE_CURRENT_USER = 1;
     private static final int VIEW_TYPE_OTHER_USER = 2;
+    private static final int VIEW_TYPE_DATE_HEADER = 3;
 
-    public ChatAdapter(List<ChatMessage> chatMessages) {
-        this.chatMessages = chatMessages;
+    public ChatAdapter(List<ChatItem> chatItems) {
+        this.chatItems = chatItems;
         mAuth = FirebaseAuth.getInstance();
     }
 
     @Override
     public int getItemViewType(int position) {
-        ChatMessage chatMessage = chatMessages.get(position);
-        if (chatMessage.getSender().equals(mAuth.getCurrentUser().getEmail())) {
-            return VIEW_TYPE_CURRENT_USER;
+        ChatItem item = chatItems.get(position);
+        if (item instanceof ChatMessage) {
+            ChatMessage chatMessage = (ChatMessage) item;
+            if (chatMessage.getSender().equals(mAuth.getCurrentUser().getEmail())) {
+                return VIEW_TYPE_CURRENT_USER;
+            } else {
+                return VIEW_TYPE_OTHER_USER;
+            }
         } else {
-            return VIEW_TYPE_OTHER_USER;
+            return VIEW_TYPE_DATE_HEADER;
         }
     }
 
@@ -50,26 +59,45 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         if (viewType == VIEW_TYPE_CURRENT_USER) {
             view = LayoutInflater.from(parent.getContext()).inflate(R.layout.chat_message_current_user, parent, false);
             return new CurrentUserViewHolder(view);
-        } else {
+        } else if (viewType == VIEW_TYPE_OTHER_USER) {
             view = LayoutInflater.from(parent.getContext()).inflate(R.layout.chat_message_other_user, parent, false);
             return new OtherUserViewHolder(view);
+        } else {
+            view = LayoutInflater.from(parent.getContext()).inflate(R.layout.chat_date_header, parent, false);
+            return new DateHeaderViewHolder(view);
         }
     }
 
     @Override
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
-        ChatMessage chatMessage = chatMessages.get(position);
         if (holder.getItemViewType() == VIEW_TYPE_CURRENT_USER) {
-            ((CurrentUserViewHolder) holder).bind(chatMessage);
+            ((CurrentUserViewHolder) holder).bind((ChatMessage) chatItems.get(position));
+        } else if (holder.getItemViewType() == VIEW_TYPE_OTHER_USER) {
+            ((OtherUserViewHolder) holder).bind((ChatMessage) chatItems.get(position));
         } else {
-            ((OtherUserViewHolder) holder).bind(chatMessage);
+            ((DateHeaderViewHolder) holder).bind((DateHeader) chatItems.get(position));
         }
     }
 
     @Override
     public int getItemCount() {
-        return chatMessages.size();
+        return chatItems.size();
     }
+
+    class DateHeaderViewHolder extends RecyclerView.ViewHolder {
+        TextView dateTextView;
+
+        public DateHeaderViewHolder(@NonNull View itemView) {
+            super(itemView);
+            dateTextView = itemView.findViewById(R.id.dateTextView);
+        }
+
+        public void bind(DateHeader dateHeader) {
+            SimpleDateFormat sdf = new SimpleDateFormat("dd MMM yyyy", Locale.getDefault());
+            dateTextView.setText(sdf.format(dateHeader.getDate().toDate()));
+        }
+    }
+
     class CurrentUserViewHolder extends RecyclerView.ViewHolder {
         TextView messageTextView;
         ImageView profileImageView;
@@ -191,6 +219,4 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             }
         }
     }
-
-
-     }
+}

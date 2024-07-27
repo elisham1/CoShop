@@ -4,6 +4,8 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.Button;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -27,6 +29,32 @@ public class OrderDeletedActivity extends AppCompatActivity {
 
         setContentView(R.layout.activity_order_deleted);
         menuUtils = new MenuUtils(this, globalUserType);
+
+        Button backButton = findViewById(R.id.back_button);
+        if (globalUserType.equals("Supplier"))
+        {
+            backButton.setBackgroundResource(R.drawable.bg_selected_supplier);
+        }
+        backButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                navigateBack();
+            }
+        });
+    }
+
+    private void navigateBack() {
+        Intent intent;
+        if ("Consumer".equals(globalUserType)) {
+            intent = new Intent(this, HomePageActivity.class);
+        } else if ("Supplier".equals(globalUserType)) {
+            intent = new Intent(this, MyOrdersActivity.class);
+        } else {
+            intent = new Intent(this, HomePageActivity.class);
+        }
+        intent.putExtra("userType", globalUserType);
+        startActivity(intent);
+        finish();
     }
 
     @Override

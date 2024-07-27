@@ -31,9 +31,11 @@ import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.FirebaseFirestoreException;
 import com.google.firebase.firestore.ListenerRegistration;
+import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.firestore.WriteBatch;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -55,7 +57,7 @@ public class ChatActivity extends AppCompatActivity {
     private LinearLayout orderDetailsLayout;
 
     private ChatAdapter chatAdapter;
-    private ArrayList<ChatMessage> chatMessages;
+    private ArrayList<ChatItem> chatMessages; // Change to ChatItem
 
     private MenuUtils menuUtils;
     private ListenerRegistration chatListener;
@@ -74,7 +76,7 @@ public class ChatActivity extends AppCompatActivity {
             setTheme(R.style.SupplierTheme);
         }
         setContentView(R.layout.activity_chat);
-        menuUtils = new MenuUtils(this,globalUserType);
+        menuUtils = new MenuUtils(this, globalUserType);
 
         db = FirebaseFirestore.getInstance();
         mAuth = FirebaseAuth.getInstance();
@@ -89,7 +91,7 @@ public class ChatActivity extends AppCompatActivity {
         orderTitle = findViewById(R.id.orderTitle);
 
         chatMessages = new ArrayList<>();
-        chatAdapter = new ChatAdapter(chatMessages);
+        chatAdapter = new ChatAdapter(chatMessages); // Pass the correct type
         chatRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         chatRecyclerView.setAdapter(chatAdapter);
 
@@ -122,7 +124,8 @@ public class ChatActivity extends AppCompatActivity {
 
         messageInput.addTextChangedListener(new TextWatcher() {
             @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
@@ -134,7 +137,8 @@ public class ChatActivity extends AppCompatActivity {
             }
 
             @Override
-            public void afterTextChanged(Editable s) {}
+            public void afterTextChanged(Editable s) {
+            }
         });
 
         sendIcon.setOnClickListener(v -> sendMessage());
@@ -150,11 +154,18 @@ public class ChatActivity extends AppCompatActivity {
 
             chatMessages.clear();
             if (snapshots != null) {
+                Timestamp lastTimestamp = null;
                 for (DocumentSnapshot doc : snapshots.getDocuments()) {
                     String message = doc.getString("message");
                     String sender = doc.getString("sender");
                     Timestamp timestamp = doc.getTimestamp("timestamp");
-                    chatMessages.add(new ChatMessage(sender, message, timestamp)); // להוסיף את timestamp
+
+                    if (lastTimestamp == null || !isSameDay(lastTimestamp, timestamp)) {
+                        chatMessages.add(new DateHeader(timestamp));
+                    }
+
+                    chatMessages.add(new ChatMessage(sender, message, timestamp));
+                    lastTimestamp = timestamp;
                 }
                 chatAdapter.notifyDataSetChanged();
                 chatRecyclerView.scrollToPosition(chatMessages.size() - 1);
@@ -162,6 +173,11 @@ public class ChatActivity extends AppCompatActivity {
                 Toast.makeText(this, "No chat messages found", Toast.LENGTH_SHORT).show();
             }
         });
+    }
+
+    private boolean isSameDay(Timestamp t1, Timestamp t2) {
+        SimpleDateFormat fmt = new SimpleDateFormat("yyyyMMdd");
+        return fmt.format(t1.toDate()).equals(fmt.format(t2.toDate()));
     }
 
     private void sendMessage() {
@@ -178,16 +194,39 @@ public class ChatActivity extends AppCompatActivity {
 
         CollectionReference chatRef = db.collection("orders").document(orderId).collection("chat");
 
-        Map<String, Object> chatMessage = new HashMap<>();
-        chatMessage.put("sender", userEmail);
-        chatMessage.put("message", messageText);
-        chatMessage.put("timestamp", new Timestamp(new Date()));
-        chatMessage.put("readBy", Collections.singletonList(userEmail)); // Add readBy field
+        chatRef.orderBy("timestamp", Query.Direction.DESCENDING).limit(1).get().addOnCompleteListener(task -> {
+            if (task.isSuccessful()) {
+                boolean addDateHeader = true;
+                for (DocumentSnapshot document : task.getResult()) {
+                    Timestamp lastTimestamp = document.getTimestamp("timestamp");
+                    if (lastTimestamp != null) {
+                        Date lastDate = lastTimestamp.toDate();
+                        Date currentDate = new Date();
+                        SimpleDateFormat fmt = new SimpleDateFormat("yyyyMMdd");
+                        addDateHeader = !fmt.format(lastDate).equals(fmt.format(currentDate));
+                    }
+                }
 
-        chatRef.add(chatMessage).addOnSuccessListener(documentReference -> {
-            messageInput.setText("");
-            chatRecyclerView.scrollToPosition(chatMessages.size() - 1);
-        }).addOnFailureListener(e -> Toast.makeText(this, "Failed to send message", Toast.LENGTH_SHORT).show());
+                WriteBatch batch = db.batch();
+                if (addDateHeader) {
+                    Map<String, Object> dateHeader = new HashMap<>();
+                    dateHeader.put("type", "dateHeader");
+                    dateHeader.put("date", new Timestamp(new Date()));
+                    chatRef.add(dateHeader);
+                }
+
+                Map<String, Object> chatMessage = new HashMap<>();
+                chatMessage.put("sender", userEmail);
+                chatMessage.put("message", messageText);
+                chatMessage.put("timestamp", new Timestamp(new Date()));
+                chatMessage.put("readBy", Collections.singletonList(userEmail));
+
+                chatRef.add(chatMessage).addOnSuccessListener(documentReference -> {
+                    messageInput.setText("");
+                    chatRecyclerView.scrollToPosition(chatMessages.size() - 1);
+                }).addOnFailureListener(e -> Toast.makeText(this, "Failed to send message", Toast.LENGTH_SHORT).show());
+            }
+        });
     }
 
     private void updateReadStatusInRealtime() {

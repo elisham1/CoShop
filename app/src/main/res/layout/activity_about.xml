@@ -46,6 +46,7 @@
             android:text="Co-Shop is an innovative platform designed to connect people for group purchases online, helping save money and reduce shipping costs. Our app offers a seamless and efficient shopping experience for both consumers and suppliers by leveraging collective buying power."
             android:textColor="#000000"
             android:textSize="18sp"
+            android:gravity="center"
             app:layout_constraintTop_toBottomOf="@id/logoImageView"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent" />
@@ -73,6 +74,7 @@
             android:text="Our mission is to foster a collaborative shopping environment that allows users to benefit from group purchases. We aim to make online shopping more affordable and accessible through community-driven initiatives."
             android:textColor="#000000"
             android:textSize="18sp"
+            android:gravity="center"
             app:layout_constraintTop_toBottomOf="@id/missionTitle"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent" />
@@ -100,6 +102,7 @@
             android:text="We envision a global network of users who can easily and confidently join group purchases. Our goal is to expand Co-Shop to connect people worldwide, promoting affordability and convenience in online shopping."
             android:textColor="#000000"
             android:textSize="18sp"
+            android:gravity="center"
             app:layout_constraintTop_toBottomOf="@id/visionTitle"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent" />
@@ -127,6 +130,7 @@
             android:text="• Google user authentication\n• Multi-user chat\n• Secure group payment options\n• Real-time order notifications\n• Separate interfaces for suppliers and consumers\n• Detailed order tracking\n• Customizable profiles\n• Easy sharing of group purchase links"
             android:textColor="#000000"
             android:textSize="18sp"
+            android:gravity="center"
             app:layout_constraintTop_toBottomOf="@id/featuresTitle"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent" />

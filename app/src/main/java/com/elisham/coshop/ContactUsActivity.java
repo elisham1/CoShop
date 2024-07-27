@@ -73,9 +73,9 @@ public class ContactUsActivity extends AppCompatActivity {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
                 if (globalUserType.equals("Supplier")) {
-                    saveButton.setBackgroundColor(getColor(R.color.supplierPrimary));
+                    saveButton.setBackgroundResource(R.drawable.bg_selected_supplier);
                 } else {
-                    saveButton.setBackgroundColor(getColor(R.color.consumerPrimary));
+                    saveButton.setBackgroundResource(R.drawable.bg_selected_consumer);
                 }
                 saveButton.setText("cancel");
                 saveButton.setOnClickListener(new View.OnClickListener() {
@@ -89,8 +89,8 @@ public class ContactUsActivity extends AppCompatActivity {
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
                 if (s.length() > 0) {
-                    saveButton.setText("send feedback");
-                    saveButton.setBackgroundColor(getResources().getColor(R.color.unsaved_red));
+                    saveButton.setText("SEND FEEDBACK");
+                    saveButton.setBackgroundResource(R.drawable.bg_send_feedback);
                     saveButton.setOnClickListener(new View.OnClickListener() {
                         @Override
                         public void onClick(View v) {
@@ -164,12 +164,12 @@ public class ContactUsActivity extends AppCompatActivity {
         inputFeedback.setVisibility(View.GONE);
         feedbackSent.setVisibility(View.VISIBLE);
 
-        saveButton.setText("finish");
+        saveButton.setText("GO TO HOME PAGE");
         saveButton.setVisibility(View.VISIBLE);
         if (globalUserType.equals("Supplier")) {
-            saveButton.setBackgroundColor(getColor(R.color.supplierPrimary));
+            saveButton.setBackgroundResource(R.drawable.bg_selected_supplier);
         } else {
-            saveButton.setBackgroundColor(getColor(R.color.consumerPrimary));
+            saveButton.setBackgroundResource(R.drawable.bg_selected_consumer);
         }
 
         saveButton.setOnClickListener(new View.OnClickListener() {

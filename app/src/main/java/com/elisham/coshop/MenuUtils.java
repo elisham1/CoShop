@@ -83,24 +83,20 @@ public class MenuUtils {
     }
 
     public void home() {
-        if (isHomePageActivity()) {
-            Intent intent;
-            if (userType.equals("Consumer")) {
-                intent = new Intent(context, HomePageActivity.class);
-            } else {
-                intent = new Intent(context, MyOrdersActivity.class);
-            }
-            intent.putExtra("userType", userType);
-            context.startActivity(intent);
-            finishActivity();
+        Intent intent;
+        if (userType.equals("Consumer")) {
+            intent = new Intent(context, HomePageActivity.class);
+        } else {
+            intent = new Intent(context, MyOrdersActivity.class);
         }
+        intent.putExtra("userType", userType);
+        context.startActivity(intent);
+        finishActivity();
     }
 
     private void finishActivity() {
-        if (context instanceof AppCompatActivity) {
-            if (isHomePageActivity()){
-                ((AppCompatActivity) context).finish();
-            }
+        if (context instanceof AppCompatActivity && !(context instanceof HomePageActivity)) {
+            ((AppCompatActivity) context).finish();
         }
     }
     public void allChats() {
@@ -117,11 +113,4 @@ public class MenuUtils {
         finishActivity();
     }
 
-    public boolean isHomePageActivity() {
-        if (userType.equals("Supplier")) {
-            return !(context instanceof MyOrdersActivity);
-        } else {
-            return !(context instanceof HomePageActivity);
-        }
-    }
 }

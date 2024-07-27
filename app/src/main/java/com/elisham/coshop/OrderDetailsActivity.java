@@ -8,6 +8,7 @@ import androidx.core.view.ViewCompat;
 import androidx.viewpager2.widget.ViewPager2;
 
 import android.app.Dialog;
+import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.drawable.Drawable;
@@ -33,7 +34,6 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
@@ -69,7 +69,8 @@ public class OrderDetailsActivity extends AppCompatActivity {
     private FirebaseAuth mAuth;
     private FirebaseUser currentUser;
     private TextView descriptionTextView, categoryTextView,
-            addressTextView, timeTextView, titleTextView, groupInfoTextView;
+            addressTextView, timeTextView, titleTextView, groupInfoTextView, closedOrderTextView,
+            joinText, leaveText, shareText, chatText, waitingListText;
     private ImageView categoryImageView, joinIcon,
             waitingListButton, leaveButton, chatIcon, saveUrlButton;
     private EditText urlEditText;
@@ -80,6 +81,7 @@ public class OrderDetailsActivity extends AppCompatActivity {
     private List<String> listPeopleInOrder;
     private boolean showAllUsers = false, inOrder = false,
             inWaitingList = false, orderDeleted = false;
+    private ProgressDialog progressDialog;
 
     private int[] imageResources = {
             R.drawable.one,
@@ -118,6 +120,9 @@ public class OrderDetailsActivity extends AppCompatActivity {
         // Get the orderId from the intent
         orderId = intent.getStringExtra("orderId");
         email = currentUser.getEmail();
+        progressDialog = new ProgressDialog(this);
+        progressDialog.setMessage("Loading...");
+        progressDialog.setCancelable(false);
         initializeUI();
     }
 
@@ -135,25 +140,63 @@ public class OrderDetailsActivity extends AppCompatActivity {
         waitingListButton = findViewById(R.id.waitingListButton);
         leaveButton = findViewById(R.id.leaveButton);
         userListLayout = findViewById(R.id.userListLayout);
+        joinText = findViewById(R.id.joinText);
+        leaveText = findViewById(R.id.leaveText);
+        shareText = findViewById(R.id.shareText);
+        chatText = findViewById(R.id.chatText);
+        waitingListText = findViewById(R.id.waitingListText);
+        closedOrderTextView = findViewById(R.id.closed_order);
         urlEditText = findViewById(R.id.url);
         saveUrlButton = findViewById(R.id.saveUrlButton);
         Button siteButton = findViewById(R.id.siteButton);
         ImageView tapIcon = findViewById(R.id.tap_icon);
 
         if (orderId != null) {
+            progressDialog.show();
             checkUserInList();
             // Fetch order details and then user details
             fetchOrderDetails(orderId, email);
         } else {
-            Toast.makeText(this, "Order ID is null", Toast.LENGTH_SHORT).show();
+            Log.e("OrderDetailsActivity", "Order ID is null");
         }
 
         joinIcon.setOnClickListener(v -> {
-            addUserToOrder();
-            inOrder = true;
+            new AlertDialog.Builder(OrderDetailsActivity.this)
+                    .setTitle("Join the order?")
+                    .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int which) {
+                            progressDialog.show();
+                            addUserToOrder();
+                            inOrder = true;
+                        }
+                    })
+                    .setNegativeButton("Cancel", null)
+                    .show();
+        });
+
+        joinText.setOnClickListener(v -> {
+            new AlertDialog.Builder(OrderDetailsActivity.this)
+                    .setTitle("Join the order?")
+                    .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int which) {
+                            progressDialog.show();
+                            addUserToOrder();
+                            inOrder = true;
+                        }
+                    })
+                    .setNegativeButton("Cancel", null)
+                    .show();
         });
 
         chatIcon.setOnClickListener(v -> {
+            Intent chatIntent = new Intent(OrderDetailsActivity.this, ChatActivity.class);
+            chatIntent.putExtra("userType", globalUserType);
+            chatIntent.putExtra("orderId", orderId);
+            startActivity(chatIntent);
+        });
+
+
+        chatText.setOnClickListener(v -> {
             Intent chatIntent = new Intent(OrderDetailsActivity.this, ChatActivity.class);
             chatIntent.putExtra("userType", globalUserType);
             chatIntent.putExtra("orderId", orderId);
@@ -168,32 +211,113 @@ public class OrderDetailsActivity extends AppCompatActivity {
                 new AlertDialog.Builder(OrderDetailsActivity.this)
                         .setTitle("Confirm")
                         .setMessage("Are you sure you want to get off the waiting list?")
-                        .setPositiveButton("OK", (dialog, which) -> removeUserFromWaitingList())
+                        .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int which) {
+                                progressDialog.show();
+                                removeUserFromWaitingList();
+                            }
+                        })
                         .setNegativeButton("Cancel", null)
                         .show();
             } else {
                 new AlertDialog.Builder(OrderDetailsActivity.this)
                         .setTitle("Confirm")
                         .setMessage("Are you sure you want to get on the waiting list?")
-                        .setPositiveButton("OK", (dialog, which) -> addUserToWaitingList())
+                        .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int which) {
+                                progressDialog.show();
+                                addUserToWaitingList();
+                            }
+                        })
                         .setNegativeButton("Cancel", null)
                         .show();
             }
         });
 
-        leaveButton.setOnClickListener(v -> removeUserFromOrder());
+        waitingListText.setOnClickListener(v -> {
+            if (inWaitingList) {
+                new AlertDialog.Builder(OrderDetailsActivity.this)
+                        .setTitle("Confirm")
+                        .setMessage("Are you sure you want to get off the waiting list?")
+                        .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int which) {
+                                progressDialog.show();
+                                removeUserFromWaitingList();
+                            }
+                        })
+                        .setNegativeButton("Cancel", null)
+                        .show();
+            } else {
+                new AlertDialog.Builder(OrderDetailsActivity.this)
+                        .setTitle("Confirm")
+                        .setMessage("Are you sure you want to get on the waiting list?")
+                        .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int which) {
+                                progressDialog.show();
+                                addUserToWaitingList();
+                            }
+                        })
+                        .setNegativeButton("Cancel", null)
+                        .show();
+            }
+        });
+
+        leaveButton.setOnClickListener(v -> {
+            new AlertDialog.Builder(OrderDetailsActivity.this)
+                    .setTitle("Confirm")
+                    .setMessage("Are you sure you want to leave the order?")
+                    .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int which) {
+                            progressDialog.show();
+                            removeUserFromOrder();
+                        }
+                    })
+                    .setNegativeButton("Cancel", null)
+                    .show();
+        });
+
+        leaveText.setOnClickListener(v -> {
+            new AlertDialog.Builder(OrderDetailsActivity.this)
+                    .setTitle("Confirm")
+                    .setMessage("Are you sure you want to leave the order?")
+                    .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int which) {
+                            progressDialog.show();
+                            removeUserFromOrder();
+                        }
+                    })
+                    .setNegativeButton("Cancel", null)
+                    .show();
+        });
 
         saveUrlButton.setOnClickListener(v -> saveUrl());
 
         ImageView shareIcon = findViewById(R.id.shareIcon);
         if (globalUserType.equals("Supplier")) {
             shareIcon.setImageResource(R.drawable.ic_share_supplier);
+            shareText.setTextColor(ContextCompat.getColor(this, R.color.supplierPrimary));
+            joinText.setTextColor(ContextCompat.getColor(this, R.color.supplierPrimary));
+            leaveText.setTextColor(ContextCompat.getColor(this, R.color.supplierPrimary));
+            chatText.setTextColor(ContextCompat.getColor(this, R.color.supplierPrimary));
+            waitingListText.setTextColor(ContextCompat.getColor(this, R.color.supplierPrimary));
         }
         if (globalUserType.equals("Consumer")) {
             shareIcon.setImageResource(R.drawable.ic_share_consumer);
+            shareText.setTextColor(ContextCompat.getColor(this, R.color.consumerPrimary));
+            joinText.setTextColor(ContextCompat.getColor(this, R.color.consumerPrimary));
+            leaveText.setTextColor(ContextCompat.getColor(this, R.color.consumerPrimary));
+            chatText.setTextColor(ContextCompat.getColor(this, R.color.consumerPrimary));
+            waitingListText.setTextColor(ContextCompat.getColor(this, R.color.consumerPrimary));
         }
         shareIcon.setOnClickListener(v -> {
             Log.d("OrderDetailsActivity", "Share icon clicked");
+            progressDialog.show();
+            shareOrderDetails();
+        });
+
+        shareText.setOnClickListener(v -> {
+            Log.d("OrderDetailsActivity", "Share icon clicked");
+            progressDialog.show();
             shareOrderDetails();
         });
 
@@ -375,43 +499,67 @@ public class OrderDetailsActivity extends AppCompatActivity {
                     // Always show joinIcon and hide waitingListButton when max_people is 0 and user is not in the list
                     if (maxPeople == 0 && (listPeopleInOrder.isEmpty() || !listPeopleInOrder.contains(email))) {
                         joinIcon.setVisibility(View.VISIBLE);
+                        joinText.setVisibility(View.VISIBLE);
                         chatIcon.setVisibility(View.GONE);
+                        chatText.setVisibility(View.GONE);
                         waitingListButton.setVisibility(View.GONE);
+                        waitingListText.setVisibility(View.GONE);
                         leaveButton.setVisibility(View.GONE);
+                        leaveText.setVisibility(View.GONE);
                     } else {
                         // Existing logic to check if the user is in the order or waiting list
                         if (listPeopleInOrder.contains(email)) {
                             inOrder = true;
                             joinIcon.setVisibility(View.GONE); // Hide the join icon
+                            joinText.setVisibility(View.GONE);
                             chatIcon.setVisibility(View.VISIBLE); // Show the chat icon
+                            chatText.setVisibility(View.VISIBLE);
                             waitingListButton.setVisibility(View.GONE); // Hide the waiting list button
+                            waitingListText.setVisibility(View.GONE);
                             leaveButton.setVisibility(View.VISIBLE); // Show the leave button
+                            leaveText.setVisibility(View.VISIBLE);
                         } else if (numberOfPeopleInOrder >= maxPeople) {
                             joinIcon.setVisibility(View.GONE);
+                            joinText.setVisibility(View.GONE);
                             chatIcon.setVisibility(View.GONE);
+                            chatText.setVisibility(View.GONE);
                             leaveButton.setVisibility(View.GONE);
+                            leaveText.setVisibility(View.GONE);
                             if (inWaitingList) {
                                 waitingListButton.setImageResource(R.drawable.ic_unwaitlist);
+                                waitingListText.setText("Unwaitlist");
                             } else {
                                 waitingListButton.setImageResource(R.drawable.ic_waitlist);
+                                waitingListText.setText("Waitlist");
                             }
                             waitingListButton.setVisibility(View.VISIBLE);
+                            waitingListText.setVisibility(View.VISIBLE);
                         } else {
                             joinIcon.setVisibility(View.VISIBLE);
+                            joinText.setVisibility(View.VISIBLE);
                             waitingListButton.setVisibility(View.GONE);
+                            waitingListText.setVisibility(View.GONE);
                             chatIcon.setVisibility(View.GONE);
+                            chatText.setVisibility(View.GONE);
                             leaveButton.setVisibility(View.GONE);
+                            leaveText.setVisibility(View.GONE);
                         }
                     }
                 }
-            } else {
-                Toast.makeText(this, "Order deleted", Toast.LENGTH_SHORT).show();
+            }
+            else {
+                Log.e("OrderDetailsActivity", "Document does not exist");
+                progressDialog.dismiss();
                 Intent intent = new Intent(OrderDetailsActivity.this, OrderDeletedActivity.class);
                 intent.putExtra("userType", globalUserType);
                 startActivity(intent);
                 finish();
             }
-        }).addOnFailureListener(e -> Toast.makeText(this, "Failed to fetch document", Toast.LENGTH_SHORT).show());
+            progressDialog.dismiss();
+        }).addOnFailureListener(e -> {
+            Log.e("OrderDetailsActivity", "Error fetching order details", e);
+            progressDialog.dismiss();
+        });
     }
     private void shareOrderDetails() {
         createDynamicLink(orderId, globalUserType, shortLink -> {
@@ -427,8 +575,9 @@ public class OrderDetailsActivity extends AppCompatActivity {
                     startActivity(chooser);
                 }
             } else {
-                Toast.makeText(OrderDetailsActivity.this, "Failed to create shareable link", Toast.LENGTH_SHORT).show();
+                Log.e("OrderDetailsActivity", "Error creating short link");
             }
+            progressDialog.dismiss();
         });
     }
 
@@ -493,11 +642,14 @@ public class OrderDetailsActivity extends AppCompatActivity {
             }
             return null;
         }).addOnSuccessListener(aVoid -> {
-            Toast.makeText(this, "Removed from waiting list", Toast.LENGTH_SHORT).show();
             waitingListButton.setImageResource(R.drawable.ic_waitlist); // Update button text
+            waitingListText.setText("Waitlist");
             inWaitingList = false; // Update the inWaitingList flag
+            waitingListButton.setVisibility(View.VISIBLE); // Show the waiting list button
+            progressDialog.dismiss();
         }).addOnFailureListener(e -> {
-            Toast.makeText(this, "Failed to remove from waiting list", Toast.LENGTH_SHORT).show();
+            Log.e("OrderDetailsActivity", "Error removing from waiting list", e);
+            progressDialog.dismiss();
         });
     }
 
@@ -550,7 +702,7 @@ public class OrderDetailsActivity extends AppCompatActivity {
             // Show the users in order after fetching all details
             showUsersInOrder(userDetailList);
         }).addOnFailureListener(e -> {
-            Toast.makeText(this, "Failed to fetch user details", Toast.LENGTH_SHORT).show();
+            Log.e("OrderDetailsActivity", "Error fetching user details", e);
         });
     }
 
@@ -584,12 +736,15 @@ public class OrderDetailsActivity extends AppCompatActivity {
             }
             return null;
         }).addOnSuccessListener(aVoid -> {
-            Toast.makeText(this, "Added to waiting list", Toast.LENGTH_SHORT).show();
             inWaitingList = true; // Update the inWaitingList flag
             waitingListButton.setImageResource(R.drawable.ic_unwaitlist); // Update button text
+            waitingListText.setText("Unwaitlist");
             waitingListButton.setVisibility(View.VISIBLE); // Show the waiting list button
+            waitingListText.setVisibility(View.VISIBLE);
+            progressDialog.dismiss();
         }).addOnFailureListener(e -> {
-            Toast.makeText(this, "Failed to add to waiting list", Toast.LENGTH_SHORT).show();
+            Log.e("OrderDetailsActivity", "Error adding to waiting list", e);
+            progressDialog.dismiss();
         });
     }
 
@@ -694,7 +849,6 @@ public class OrderDetailsActivity extends AppCompatActivity {
 
     private void removeUserFromOrder() {
         String userEmail = mAuth.getCurrentUser().getEmail();
-
         removeUserFromOrderList(orderId, userEmail)
                 .continueWithTask(task -> {
                     if (task.isSuccessful()) {
@@ -713,18 +867,17 @@ public class OrderDetailsActivity extends AppCompatActivity {
                 .addOnCompleteListener(task -> {
                     if (task.isSuccessful()) {
                         if (orderDeleted) {
-                            Toast.makeText(OrderDetailsActivity.this, "Order deleted", Toast.LENGTH_SHORT).show();
                             Intent intent = new Intent(OrderDetailsActivity.this, MyOrdersActivity.class);
                             intent.putExtra("userType", globalUserType);
                             startActivity(intent);
                             finish();
                         } else {
-                            Toast.makeText(OrderDetailsActivity.this, "You left the order", Toast.LENGTH_SHORT).show();
                             fetchOrderDetails(orderId, userEmail);
                         }
                     } else {
-                        Toast.makeText(OrderDetailsActivity.this, "Failed to leave the order", Toast.LENGTH_SHORT).show();
+                        Log.e("OrderDetailsActivity", "Error leaving the order", task.getException());
                     }
+                    progressDialog.dismiss();
                 });
     }
 
@@ -775,7 +928,7 @@ public class OrderDetailsActivity extends AppCompatActivity {
         }
     }
 
-    private void addUserToLayout(String email, String userName, String userRating, String profilePicUrl, boolean isOrderCreator, boolean isCurrentUser) {
+    private void addUserToLayout(String displayedEmail, String userName, String userRating, String profilePicUrl, boolean isOrderCreator, boolean isCurrentUser) {
         View userItemView = getLayoutInflater().inflate(R.layout.user_item, userListLayout, false);
 
         TextView userNameTextView = userItemView.findViewById(R.id.userNameTextView);
@@ -820,12 +973,12 @@ public class OrderDetailsActivity extends AppCompatActivity {
                 // Handle report and rate icons
                 reportImageView.setOnClickListener(v -> {
                     // Handle report user
-                    showReportDialog(email);
+                    showReportDialog(displayedEmail);
                 });
 
                 rateImageView.setOnClickListener(v -> {
                     // Handle rate user
-                    showRatingDialog(email);
+                    showRatingDialog(displayedEmail);
                 });
             }
         }
@@ -854,7 +1007,7 @@ public class OrderDetailsActivity extends AppCompatActivity {
                 List<Map<String, Object>> ratings = (List<Map<String, Object>>) documentSnapshot.get("ratings");
                 if (ratings != null) {
                     for (Map<String, Object> rating : ratings) {
-                        if (rating.get("email").equals(email) && rating.get("order").equals(orderId)) {
+                        if (rating.get("email").equals(currentUser.getEmail()) && rating.get("order").equals(orderId)) {
                             selectedRating[0] = ((Long) rating.get("rating")).intValue();
                             updateStarUI(stars, selectedRating[0]);
                             break;
@@ -862,7 +1015,8 @@ public class OrderDetailsActivity extends AppCompatActivity {
                     }
                 }
             }
-        }).addOnFailureListener(e -> Toast.makeText(this, "Failed to fetch existing rating", Toast.LENGTH_SHORT).show());
+        }).addOnFailureListener(e ->
+                Log.e("OrderDetailsActivity", "Error fetching existing rating", e));
 
         for (int i = 0; i < stars.length; i++) {
             final int starIndex = i;
@@ -878,6 +1032,7 @@ public class OrderDetailsActivity extends AppCompatActivity {
 
         Button submitButton = dialog.findViewById(R.id.submitButton);
         submitButton.setOnClickListener(v -> {
+            progressDialog.show();
             updateRating(email, orderId, selectedRating[0]);
             dialog.dismiss();
         });
@@ -885,7 +1040,7 @@ public class OrderDetailsActivity extends AppCompatActivity {
         dialog.show();
     }
 
-    private void showReportDialog(String email) {
+    private void showReportDialog(String reportedEmail) {
         Dialog dialog = new Dialog(this);
         dialog.setContentView(R.layout.dialog_report_user);
 
@@ -900,8 +1055,8 @@ public class OrderDetailsActivity extends AppCompatActivity {
                 showAlertDialog("Please provide additional details for the report");
                 return;
             }
-
-            submitReport(email, orderId, selectedReason, additionalDetails);
+            progressDialog.show();
+            submitReport(reportedEmail, orderId, selectedReason, additionalDetails);
             dialog.dismiss();
         });
 
@@ -936,6 +1091,7 @@ public class OrderDetailsActivity extends AppCompatActivity {
                     }
 
                     if (alreadyReported) {
+                        progressDialog.dismiss();
                         showAlertDialog("You have already reported this user in this order");
                     } else {
                         Map<String, Object> updateData = new HashMap<>();
@@ -943,11 +1099,10 @@ public class OrderDetailsActivity extends AppCompatActivity {
 
                         docRef.update(updateData)
                                 .addOnSuccessListener(aVoid -> {
-                                    Toast.makeText(this, "Report submitted successfully", Toast.LENGTH_SHORT).show();
                                     checkAndBlockUser(reportedUserEmail, reports.size() + 1);
                                 })
                                 .addOnFailureListener(e -> {
-                                    Toast.makeText(this, "Failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                                    progressDialog.dismiss();
                                 });
                     }
                 } else {
@@ -956,18 +1111,20 @@ public class OrderDetailsActivity extends AppCompatActivity {
 
                     docRef.set(newDocData)
                             .addOnSuccessListener(aVoid -> {
-                                Toast.makeText(this, "Report submitted successfully", Toast.LENGTH_SHORT).show();
                                 checkAndBlockUser(reportedUserEmail, 1);
                             })
                             .addOnFailureListener(e -> {
-                                Toast.makeText(this, "Failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                                progressDialog.dismiss();
+                                Log.e("OrderDetailsActivity", "Error creating report document", e);
                             });
                 }
             }).addOnFailureListener(e -> {
-                Toast.makeText(this, "Failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                progressDialog.dismiss();
+                Log.e("OrderDetailsActivity", "Error fetching report document", e);
             });
         } else {
-            Toast.makeText(this, "You need to be logged in to report a user", Toast.LENGTH_SHORT).show();
+            progressDialog.dismiss();
+            Log.e("OrderDetailsActivity", "Current user is null");
         }
     }
 
@@ -979,9 +1136,9 @@ public class OrderDetailsActivity extends AppCompatActivity {
             updateData.put("blockedTimestamp", new Timestamp(new Date()));
 
             userRef.update(updateData).addOnSuccessListener(aVoid -> {
-                Toast.makeText(this, "User has been blocked due to multiple reports", Toast.LENGTH_SHORT).show();
+                progressDialog.dismiss();
             }).addOnFailureListener(e -> {
-                Toast.makeText(this, "Failed to block user: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                progressDialog.dismiss();
             });
         }
     }
@@ -1020,7 +1177,7 @@ public class OrderDetailsActivity extends AppCompatActivity {
 
             boolean ratingExists = false;
             for (Map<String, Object> rating : ratings) {
-                if (rating.get("email").equals(email) && rating.get("order").equals(order)) {
+                if (rating.get("email").equals(currentUser.getEmail()) && rating.get("order").equals(order)) {
                     ratingExists = true;
                     rating.put("rating", newRating); // Update existing rating
                     break;
@@ -1030,7 +1187,7 @@ public class OrderDetailsActivity extends AppCompatActivity {
             if (!ratingExists) {
                 // Add new rating if not exists
                 Map<String, Object> newRatingMap = new HashMap<>();
-                newRatingMap.put("email", email);
+                newRatingMap.put("email", currentUser.getEmail());
                 newRatingMap.put("order", order);
                 newRatingMap.put("rating", newRating);
                 ratings.add(newRatingMap);
@@ -1039,10 +1196,12 @@ public class OrderDetailsActivity extends AppCompatActivity {
             transaction.update(userRef, "ratings", ratings);
             return null;
         }).addOnSuccessListener(aVoid -> {
-            Toast.makeText(this, "User rated successfully", Toast.LENGTH_SHORT).show();
             // Refresh the user list to show updated ratings
-            fetchOrderDetails(orderId, email);
-        }).addOnFailureListener(e -> Toast.makeText(this, "Failed to rate user", Toast.LENGTH_SHORT).show());
+            fetchOrderDetails(orderId, currentUser.getEmail());
+            progressDialog.dismiss();
+        }).addOnFailureListener(e -> {
+            progressDialog.dismiss();
+        });
     }
 
     private String getAddressFromLatLng(double latitude, double longitude) {
@@ -1086,7 +1245,6 @@ public class OrderDetailsActivity extends AppCompatActivity {
         }).addOnFailureListener(e -> {
             groupInfoTextView.setText("Order created by " + userEmail + "\non " + formattedOpenOrderTime);
             Log.e("OrderDetailsActivity", "Failed to fetch user details", e);
-            Toast.makeText(this, "Failed to fetch user details", Toast.LENGTH_SHORT).show();
         });
     }
 
@@ -1143,7 +1301,9 @@ public class OrderDetailsActivity extends AppCompatActivity {
         long timeRemaining = date.getTime() - currentTime;
 
         if (timeRemaining > 0) {
+            Log.d("OrderDetailsActivity", "Time remaining: " + timeRemaining);
             timerContainer.setVisibility(View.VISIBLE);
+            closedOrderTextView.setVisibility(View.GONE);
             new CountDownTimer(timeRemaining, 1000) {
 
                 public void onTick(long millisUntilFinished) {
@@ -1158,7 +1318,8 @@ public class OrderDetailsActivity extends AppCompatActivity {
                 }
             }.start();
         } else {
-            timerContainer.setVisibility(View.GONE);
+//            timerContainer.setVisibility(View.GONE);
+            closedOrderTextView.setVisibility(View.VISIBLE);
             daysTextView.setText("00");
             hoursTextView.setText("00");
             minutesTextView.setText("00");
@@ -1180,7 +1341,8 @@ public class OrderDetailsActivity extends AppCompatActivity {
                     inWaitingList = true;
                 }
             }
-        }).addOnFailureListener(e -> Toast.makeText(this, "Failed to check user in list", Toast.LENGTH_SHORT).show());
+        }).addOnFailureListener(e ->
+                Log.e("OrderDetailsActivity", "Error checking user in list", e));
     }
 
     private void addUserToOrder() {
@@ -1196,9 +1358,12 @@ public class OrderDetailsActivity extends AppCompatActivity {
             }
             return null;
         }).addOnSuccessListener(aVoid -> {
-            Toast.makeText(this, "Added to order", Toast.LENGTH_SHORT).show();
             fetchOrderDetails(orderId, email);
-        }).addOnFailureListener(e -> Toast.makeText(this, "Failed to add user to order", Toast.LENGTH_SHORT).show());
+            progressDialog.dismiss();
+        }).addOnFailureListener(e -> {
+            Log.e("OrderDetailsActivity", "Error adding user to order", e);
+            progressDialog.dismiss();
+        });
     }
     private boolean isValidURL(String url) {
         try {
@@ -1212,19 +1377,18 @@ public class OrderDetailsActivity extends AppCompatActivity {
     private void saveUrl() {
         String url = urlEditText.getText().toString().trim();
         if (url.isEmpty()) {
-            Toast.makeText(this, "Please enter a URL", Toast.LENGTH_SHORT).show();
+            Log.e("OrderDetailsActivity", "URL is empty");
             return;
         }
 
         if (!isValidURL(url)) {
-            Toast.makeText(this, "Invalid URL", Toast.LENGTH_SHORT).show();
+            Log.e("OrderDetailsActivity", "Invalid URL");
             return;
         }
 
         DocumentReference orderRef = db.collection("orders").document(orderId);
         orderRef.update("URL", url)
                 .addOnSuccessListener(aVoid -> {
-                    Toast.makeText(this, "URL saved successfully", Toast.LENGTH_SHORT).show();
                     urlEditText.setVisibility(View.GONE);
                     saveUrlButton.setVisibility(View.GONE);
                     fetchOrderDetails(orderId, email);
@@ -1235,7 +1399,8 @@ public class OrderDetailsActivity extends AppCompatActivity {
                     tapIcon.setVisibility(View.GONE);
                     siteButton.setVisibility(View.VISIBLE);
                 })
-                .addOnFailureListener(e -> Toast.makeText(this, "Failed to save URL", Toast.LENGTH_SHORT).show());
+                .addOnFailureListener(e ->
+                        Log.e("OrderDetailsActivity", "Error saving URL", e));
     }    @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_items, menu);

@@ -3,7 +3,7 @@
     android:layout_height="wrap_content"
     android:orientation="horizontal"
     android:padding="8dp"
-    android:background="@android:color/white">
+    android:background="@drawable/border">
 
     <ImageView
         android:id="@+id/orderImageView"

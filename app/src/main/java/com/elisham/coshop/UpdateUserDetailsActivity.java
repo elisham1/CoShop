@@ -122,6 +122,7 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
     private MenuUtils menuUtils;
     private ArrayList<String> currentCategories;
     private String globalUserType, webClientId;
+    private ProgressDialog progressDialog;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -156,11 +157,23 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
         editAddressButton = findViewById(R.id.edit_address_button);
         currentCategories = new ArrayList<String>();
 
+        progressDialog = new ProgressDialog(this);
+        progressDialog.setMessage("Loading...");
+        progressDialog.setCancelable(false);
+
         getUserInformation();
 
         showLocationWindow();
 
         fullNameTextView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                showNameEditDialog();
+            }
+        });
+
+        ImageButton nameEditButton = findViewById(R.id.edit_name_button);
+        nameEditButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 showNameEditDialog();
@@ -201,8 +214,28 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
             }
         });
 
+        TextView categoriesText = findViewById(R.id.update_categories_text);
+        categoriesText.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(UpdateUserDetailsActivity.this, CategoriesActivity.class);
+                intent.putExtra("userType", globalUserType);
+                intent.putExtra("categories_update", true);
+                startActivityForResult(intent, UPDATE_CATEGORIES_REQUEST);
+            }
+        });
+
+
         ImageButton changePasswordButton = findViewById(R.id.change_password_button);
         changePasswordButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                changePassword();
+            }
+        });
+
+        TextView passwordText = findViewById(R.id.change_password_text);
+        passwordText.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 changePassword();
@@ -236,6 +269,7 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
                             address = new GeoPoint(lastLatitude, lastLongitude);
                             Map<String, Object> updateAddress = new HashMap<>();
                             updateAddress.put("address", address);
+                            progressDialog.show();
                             updateDB(updateAddress);
                         }
 
@@ -349,8 +383,12 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
                             case 3:
                                 if (profileImageUrl != null) {
                                     // Handle deleting the photo
+                                    progressDialog.show();
                                     deleteUserProfileImage(profileImageUrl);
                                     picUrl = null;
+                                    Map<String, Object> updatePicUrl = new HashMap<>();
+                                    updatePicUrl.put("profileImageUrl", picUrl);
+                                    updateDB(updatePicUrl);
                                     changePic = true;
                                     profileImageView.setImageResource(R.drawable.ic_profile);
                                 }
@@ -424,6 +462,7 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
                 Bitmap bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), imageUri);
                 bitmap = rotateImageIfRequired(bitmap, imageUri);
                 profileImageView.setImageBitmap(bitmap);
+                progressDialog.show();
                 Map<String, Object> updatePicUrl = new HashMap<>();
                 uploadImage(updatePicUrl);
                 changePic = true;
@@ -437,6 +476,7 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
                 bitmap = rotateImageIfRequired(bitmap, imageUri);
                 profileImageView.setImageBitmap(bitmap);
                 Map<String, Object> updatePicUrl = new HashMap<>();
+                progressDialog.show();
                 uploadImage(updatePicUrl);
                 changePic = true;
             } catch (IOException e) {
@@ -607,6 +647,7 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
                 Map<String, Object> updateName = new HashMap<>();
                 updateName.put("first name", firstName);
                 updateName.put("family name", familyName);
+                progressDialog.show();
                 updateDB(updateName);
                 // Dismiss dialog
                 dialog.dismiss();
@@ -615,9 +656,9 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
     }
 
     public void getUserInformation() {
-
         currentUser = mAuth.getCurrentUser();
         if (currentUser != null) {
+            progressDialog.show();
             email = currentUser.getEmail();
             db.collection("users").document(email).get()
                     .addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
@@ -641,16 +682,20 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
                                     if (picUrl != null && !picUrl.isEmpty()) {
                                         Glide.with(UpdateUserDetailsActivity.this)
                                                 .load(picUrl)
+                                                .error(R.drawable.ic_profile)
                                                 .into(profileImageView);
                                     }
+                                    progressDialog.dismiss();
                                     // Log or use the retrieved information
                                     Log.d("firebase", "Name: " + firstName + ", Family Name: " + familyName);
                                 }
                                 else {
+                                    progressDialog.dismiss();
                                     Log.d("firebase", "No such document");
                                 }
                             }
                             else {
+                                progressDialog.dismiss();
                                 Log.d("firebase", "get failed with ", task.getException());
                             }
                         }
@@ -692,31 +737,7 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
         return address;
     }
 
-    public void editUserDetails() {
-        Map<String, Object> userDetails = new HashMap<>();
-        //check if change name is true and update map based on this.
-        if (changeName) {
-            userDetails.put("first name", firstName);
-            userDetails.put("family name", familyName);
-        }
-
-        userDetails.put("address", address);
-
-        //check if change pic is true and update based on this.
-        if (changePic) {
-            uploadImage(userDetails);
-        } else {
-            // Update Firestore with the new details
-            updateDB(userDetails);
-        }
-
-    }
-
     private void updateDB(Map<String, Object> userDetails){
-        ProgressDialog progressDialog = new ProgressDialog(this);
-        progressDialog.setMessage("Loading...");
-        progressDialog.setCancelable(false);
-        progressDialog.show();
         // Update Firestore with the new details
         db.collection("users").document(email)
                 .update(userDetails)
@@ -785,6 +806,7 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
                 .setPositiveButton("OK", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
                         if (currentUser != null) {
+                            //todo progress
                             Log.d("UpdateUserDetailsActivity", "User is signed in, proceeding to reauthenticateAndDeleteUser.");
                             reauthenticateAndDeleteUser();
                         } else {
@@ -891,7 +913,7 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
 
     private void performDeleteTasks() {
         Log.d("UpdateUserDetailsActivity", "performDeleteTasks called.");
-
+        progressDialog.show();
         Task<Void> deleteProfileImageTask = Tasks.forResult(null);
         if (picUrl != null && !picUrl.isEmpty()) {
             Log.d("UpdateUserDetailsActivity", "Adding deleteUserProfileImage task.");
@@ -905,6 +927,7 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
                         return deleteUserFromAllOrders(db, email);
                     } else {
                         Log.e("UpdateUserDetailsActivity", "Failed to delete UserProfileImage.", task.getException());
+                        progressDialog.dismiss();
                         throw task.getException();
                     }
                 })
@@ -914,6 +937,7 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
                         return deleteUserNotifications(db, email);
                     } else {
                         Log.e("UpdateUserDetailsActivity", "Failed to remove user from all orders.", task.getException());
+                        progressDialog.dismiss();
                         throw task.getException();
                     }
                 })
@@ -923,6 +947,7 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
                         return deleteUserDetails(db, email);
                     } else {
                         Log.e("UpdateUserDetailsActivity", "Failed to delete user notifications.", task.getException());
+                        progressDialog.dismiss();
                         throw task.getException();
                     }
                 })
@@ -932,12 +957,15 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
                         return deleteUser(currentUser);
                     } else {
                         Log.e("UpdateUserDetailsActivity", "Failed to delete user details.", task.getException());
+                        progressDialog.dismiss();
                         throw task.getException();
                     }
                 })
                 .addOnCompleteListener(task -> {
                     if (task.isSuccessful()) {
+
                         Log.d("UpdateUserDetailsActivity", "All deletion tasks completed successfully.");
+                        progressDialog.dismiss();
                         menuUtils.logOut();
                         Toast.makeText(UpdateUserDetailsActivity.this,
                                 "Account and associated data deleted successfully.", Toast.LENGTH_SHORT).show();
@@ -964,6 +992,7 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
                 Toast.makeText(UpdateUserDetailsActivity.this,
                         "Failed to delete profile image", Toast.LENGTH_SHORT).show();
                 Log.e("UpdateUserDetailsActivity", "Error deleting profile image", exception);
+                progressDialog.dismiss();
             }
         });
     }
@@ -1025,6 +1054,7 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
                 return Tasks.whenAll(updateTasks);
             } else {
                 Log.e("UpdateUserDetailsActivity", "Error getting orders collection.", task.getException());
+                progressDialog.dismiss();
                 throw task.getException();
             }
         });
@@ -1043,6 +1073,7 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
                 return Tasks.whenAll(deleteTasks);
             } else {
                 Log.e("UpdateUserDetailsActivity", "Error getting chat collection.", task.getException());
+                progressDialog.dismiss();
                 throw task.getException();
             }
         });
@@ -1061,6 +1092,7 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
                 return Tasks.whenAll(deleteTasks);
             } else {
                 Log.e("UpdateUserDetailsActivity", "Error getting notifications collection.", task.getException());
+                progressDialog.dismiss();
                 throw task.getException();
             }
         });
@@ -1081,6 +1113,7 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
                         Toast.makeText(UpdateUserDetailsActivity.this,
                                 "Failed to remove user details", Toast.LENGTH_SHORT).show();
                         Log.w("UpdateUserDetailsActivity", "Error deleting user document.", e);
+                        progressDialog.dismiss();
                     }
                 });
     }
@@ -1091,34 +1124,21 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
             @Override
             public void onSuccess(Void aVoid) {
                 Log.d("UpdateUserDetailsActivity", "User account deleted.");
+                progressDialog.dismiss();
             }
         }).addOnFailureListener(new OnFailureListener() {
             @Override
             public void onFailure(@NonNull Exception e) {
                 Log.e("UpdateUserDetailsActivity", "Error deleting user account.", e);
+                progressDialog.dismiss();
             }
         });
     }
-
-
 
     public void changePassword() {
         Intent toy = new Intent(UpdateUserDetailsActivity.this, ChangePasswordActivity.class);
         toy.putExtra("userType", globalUserType);
         startActivity(toy);
-    }
-
-    private void showAlertDialog(String message) {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setMessage(message)
-                .setCancelable(false)
-                .setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int id) {
-                        dialog.dismiss();
-                    }
-                });
-        AlertDialog alert = builder.create();
-        alert.show();
     }
 
     @Override

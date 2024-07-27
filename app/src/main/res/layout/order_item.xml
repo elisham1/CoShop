@@ -36,12 +36,9 @@
             android:textSize="14sp"
             android:textColor="@android:color/black"
             android:textStyle="bold"
-            android:textAlignment="viewEnd"
-            android:gravity="end"
-            android:layout_gravity="end"
-            android:text="check the title"
-            android:layout_marginEnd="5dp"
-            android:layoutDirection="ltr"/>
+            android:gravity="right"
+            android:text="title"
+            android:layout_marginEnd="5dp" />
     </LinearLayout>
 
     <LinearLayout
