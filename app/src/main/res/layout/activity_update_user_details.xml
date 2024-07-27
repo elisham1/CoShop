@@ -75,6 +75,7 @@
             android:textSize="14sp"
             android:textStyle="bold"
             android:layoutDirection="ltr" />
+
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="50dp"
@@ -217,6 +218,7 @@
             android:layoutDirection="ltr">
 
             <TextView
+                android:id="@+id/update_categories_text"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
@@ -241,6 +243,7 @@
 
         <!-- Change Password Section -->
         <LinearLayout
+            android:id="@+id/change_password_layout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
@@ -251,6 +254,7 @@
             android:layoutDirection="ltr">
 
             <TextView
+                android:id="@+id/change_password_text"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="1"

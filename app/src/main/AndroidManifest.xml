@@ -28,6 +28,7 @@
         android:label="@string/app_name"
         android:supportsRtl="false"
         android:theme="@style/Theme.CoShop"
+        android:windowSoftInputMode="adjustResize"
         tools:targetApi="31">
 
         <activity
