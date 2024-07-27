@@ -4,6 +4,7 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.app.ProgressDialog;
 import android.content.Intent;
 import android.graphics.Typeface;
 import android.os.Bundle;
@@ -42,6 +43,7 @@ public class CategoriesActivity extends AppCompatActivity {
     private boolean isEmailSignUp;
     private boolean isCategoriesUpdate;
     private String globalUserType;
+    private ProgressDialog progressDialog;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -65,6 +67,10 @@ public class CategoriesActivity extends AppCompatActivity {
         currentUser = mAuth.getCurrentUser();
         selectedCategories = new ArrayList<>();
 
+        progressDialog = new ProgressDialog(this);
+        progressDialog.setMessage("Loading...");
+        progressDialog.setCancelable(false);
+
         isGoogleSignUp = intent.getBooleanExtra("google_sign_up", false);
         isEmailSignUp = intent.getBooleanExtra("email_sign_up", false);
         isCategoriesUpdate = intent.getBooleanExtra("categories_update", false);
@@ -85,15 +91,18 @@ public class CategoriesActivity extends AppCompatActivity {
             }
             updateHelloUser();
             displayCategories();
-        } else if (isEmailSignUp) {
+        }
+        else if (isEmailSignUp) {
             Toast.makeText(CategoriesActivity.this, "email signup", Toast.LENGTH_SHORT).show();
             email = intent.getStringExtra("email");
             firstName = intent.getStringExtra("firstName");
             familyName = intent.getStringExtra("familyName");
             updateHelloUser();
             displayCategories();
-        } else if (isCategoriesUpdate) {
+        }
+        else if (isCategoriesUpdate) {
             Log.d("CategoriesActivity", "category update");
+            progressDialog.show();
             Toast.makeText(CategoriesActivity.this, "update categories", Toast.LENGTH_SHORT).show();
             email = currentUser.getEmail();
             db.collection("users").document(email).get()
@@ -108,11 +117,14 @@ public class CategoriesActivity extends AppCompatActivity {
                                     Log.d("firebase", "Name: " + firstName + ", Family Name: " + familyName);
                                     updateHelloUser();
                                     displayCategories();
+                                    progressDialog.dismiss();
                                 } else {
                                     Log.d("firebase", "No such document");
+                                    progressDialog.dismiss();
                                 }
                             } else {
                                 Log.d("firebase", "get failed with ", task.getException());
+                                progressDialog.dismiss();
                             }
                         }
                     });
@@ -226,6 +238,7 @@ public class CategoriesActivity extends AppCompatActivity {
 
         if (isCategoriesUpdate) {
             Map<String, Object> userDetails = new HashMap<>();
+
             userDetails.put("favorite categories", selectedCategories);
             db.collection("users").document(email)
                     .update(userDetails)
