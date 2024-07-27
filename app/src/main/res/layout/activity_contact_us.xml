@@ -58,9 +58,11 @@
 
     <Button
         android:id="@+id/save"
-        android:layout_width="match_parent"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="cancel"
+        android:layout_gravity="center"
+        android:background="@drawable/bg_selected_consumer"
         android:layout_marginTop="16dp"
         android:textColor="#FFFFFF"
         android:onClick="sendFeedback" />
