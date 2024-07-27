@@ -23,6 +23,7 @@
             android:background="@drawable/border">
 
             <!-- Left icons (Share and Chat) -->
+
             <LinearLayout
                 android:id="@+id/shareLayout"
                 android:layout_width="wrap_content"
@@ -445,6 +446,7 @@
             android:textSize="14sp"
             android:textStyle="bold"
             android:layoutDirection="ltr" />
+
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -452,6 +454,7 @@
             android:gravity="center"
             android:background="@drawable/border"
             android:layout_marginTop="1dp">
+
             <TextView
                 android:id="@+id/descriptionTextView"
                 android:layout_width="match_parent"
@@ -463,15 +466,65 @@
                 android:textStyle="bold"
                 android:gravity="start"
                 android:padding="8dp"/>
+
             <Button
                 android:id="@+id/siteButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:gravity="center"
                 android:text="Click to open Url"
-                android:visibility="visible"
-                android:layout_margin="4dp" />
+                android:visibility="gone"
+                android:layout_margin="4dp"/>
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp">
+
+                <ImageView
+                    android:id="@+id/tap_icon"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:background="?android:attr/selectableItemBackground"
+                    android:contentDescription="Tap icon"
+                    android:scaleType="fitCenter"
+                    android:src="@drawable/tap"
+                    android:layoutDirection="ltr"
+                    android:visibility="gone"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"/>
+
+                <EditText
+                    android:id="@+id/url"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:hint="Insert a payment link Or site"
+                    android:inputType="textUri"
+                    android:padding="8dp"
+                    android:background="@drawable/border"
+                    android:visibility="gone"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintStart_toEndOf="@id/tap_icon"
+                    app:layout_constraintEnd_toStartOf="@id/saveUrlButton"/>
+
+                <ImageView
+                    android:id="@+id/saveUrlButton"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:padding="8dp"
+                    android:src="@drawable/tick"
+                    android:contentDescription="Save URL"
+                    android:visibility="gone"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"/>
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
         </LinearLayout>
+
         <!-- Order address -->
         <TextView
             android:layout_width="match_parent"
@@ -481,6 +534,7 @@
             android:textSize="14sp"
             android:textStyle="bold"
             android:layoutDirection="ltr" />
+
         <TextView
             android:id="@+id/addressTextView"
             android:layout_width="match_parent"
@@ -526,5 +580,4 @@
             android:paddingEnd="13dp"
             android:visibility="gone" />
     </LinearLayout>
-
 </ScrollView>

@@ -5,6 +5,7 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 import androidx.core.view.ViewCompat;
+import androidx.viewpager2.widget.ViewPager2;
 
 import android.app.Dialog;
 import android.app.ProgressDialog;
@@ -16,6 +17,7 @@ import android.location.Geocoder;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.CountDownTimer;
+import android.text.Html;
 import android.text.Spannable;
 import android.text.SpannableStringBuilder;
 import android.text.style.ImageSpan;
@@ -27,6 +29,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Spinner;
@@ -50,6 +53,7 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.GeoPoint;
 
 import java.io.IOException;
+import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -68,7 +72,8 @@ public class OrderDetailsActivity extends AppCompatActivity {
             addressTextView, timeTextView, titleTextView, groupInfoTextView, closedOrderTextView,
             joinText, leaveText, shareText, chatText, waitingListText;
     private ImageView categoryImageView, joinIcon,
-            waitingListButton, leaveButton, chatIcon;
+            waitingListButton, leaveButton, chatIcon, saveUrlButton;
+    private EditText urlEditText;
     private String orderId, globalUserType, email;
     private Geocoder geocoder;
     private MenuUtils menuUtils;
@@ -77,6 +82,18 @@ public class OrderDetailsActivity extends AppCompatActivity {
     private boolean showAllUsers = false, inOrder = false,
             inWaitingList = false, orderDeleted = false;
     private ProgressDialog progressDialog;
+
+    private int[] imageResources = {
+            R.drawable.one,
+            R.drawable.two,
+            R.drawable.three,
+            R.drawable.four,
+            R.drawable.five,
+            R.drawable.six,
+            R.drawable.seven,
+            R.drawable.eight,
+
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -107,7 +124,6 @@ public class OrderDetailsActivity extends AppCompatActivity {
         progressDialog.setMessage("Loading...");
         progressDialog.setCancelable(false);
         initializeUI();
-
     }
 
     private void initializeUI() {
@@ -130,6 +146,10 @@ public class OrderDetailsActivity extends AppCompatActivity {
         chatText = findViewById(R.id.chatText);
         waitingListText = findViewById(R.id.waitingListText);
         closedOrderTextView = findViewById(R.id.closed_order);
+        urlEditText = findViewById(R.id.url);
+        saveUrlButton = findViewById(R.id.saveUrlButton);
+        Button siteButton = findViewById(R.id.siteButton);
+        ImageView tapIcon = findViewById(R.id.tap_icon);
 
         if (orderId != null) {
             progressDialog.show();
@@ -175,12 +195,16 @@ public class OrderDetailsActivity extends AppCompatActivity {
             startActivity(chatIntent);
         });
 
+
         chatText.setOnClickListener(v -> {
             Intent chatIntent = new Intent(OrderDetailsActivity.this, ChatActivity.class);
             chatIntent.putExtra("userType", globalUserType);
             chatIntent.putExtra("orderId", orderId);
             startActivity(chatIntent);
         });
+
+        // Initialize the tap icon
+        tapIcon.setOnClickListener(v -> showImageAlertDialog());
 
         waitingListButton.setOnClickListener(v -> {
             if (inWaitingList) {
@@ -266,6 +290,8 @@ public class OrderDetailsActivity extends AppCompatActivity {
                     .show();
         });
 
+        saveUrlButton.setOnClickListener(v -> saveUrl());
+
         ImageView shareIcon = findViewById(R.id.shareIcon);
         if (globalUserType.equals("Supplier")) {
             shareIcon.setImageResource(R.drawable.ic_share_supplier);
@@ -294,6 +320,82 @@ public class OrderDetailsActivity extends AppCompatActivity {
             progressDialog.show();
             shareOrderDetails();
         });
+
+        // Hide tap icon if site button is visible
+        if (siteButton.getVisibility() == View.VISIBLE) {
+            tapIcon.setVisibility(View.GONE);
+        } else {
+            tapIcon.setVisibility(View.VISIBLE);
+        }
+    }
+    private void showImageAlertDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+
+        // Custom view for the AlertDialog
+        View dialogView = getLayoutInflater().inflate(R.layout.dialog_image_viewer, null);
+        ViewPager2 viewPager = dialogView.findViewById(R.id.view_pager);
+        LinearLayout dotsLayout = dialogView.findViewById(R.id.dots_layout);
+        Button skipButton = dialogView.findViewById(R.id.skip_button);
+        builder.setView(dialogView);
+
+        AlertDialog alertDialog = builder.create();
+        // Make the dialog non-cancelable
+        alertDialog.setCancelable(false);
+
+        String[] imageCaptions = {
+                "Open the PayBox app.",
+                "Select \"Box group\" and click on plus.",
+                "Fill in details and click on \"Next\" and at the end \"Done\".",
+                "Click \"View Group\".",
+                "Click \"Invite Friends\".",
+                "Click \"Share Link\".",
+                "Click \"Copy\".",
+                "Paste the generated link here"
+        };
+
+        ViewPagerAdapter adapter = new ViewPagerAdapter(imageResources, imageCaptions);
+        viewPager.setAdapter(adapter);
+
+        addDots(dotsLayout, imageCaptions.length, 0);
+
+        viewPager.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
+            @Override
+            public void onPageSelected(int position) {
+                addDots(dotsLayout, imageCaptions.length, position);
+            }
+        });
+
+        skipButton.setOnClickListener(v -> alertDialog.dismiss());
+
+        alertDialog.setOnShowListener(dialog -> {
+            // Get the screen width and height
+            int dialogWidth = getResources().getDisplayMetrics().widthPixels;
+            int dialogHeight = getResources().getDisplayMetrics().heightPixels;
+
+            // Set the dialog to 2/3 the screen size
+            alertDialog.getWindow().setLayout((int)(dialogWidth), (int)(dialogHeight * 0.66));
+        });
+
+        alertDialog.show();
+    }
+    private void addDots(LinearLayout dotsLayout, int size, int currentPosition) {
+        dotsLayout.removeAllViews();
+        TextView[] dots = new TextView[size];
+        for (int i = 0; i < size; i++) {
+            dots[i] = new TextView(this);
+            dots[i].setText(Html.fromHtml("&#8226;"));
+            dots[i].setTextSize(35);
+            dots[i].setTextColor(getResources().getColor(R.color.inactive_dot));
+            dotsLayout.addView(dots[i]);
+        }
+        if (dots.length > 0) {
+            if (globalUserType.equals("Supplier")) {
+                dots[currentPosition].setTextColor(getResources().getColor(R.color.supplierPrimary));
+            }
+            if (globalUserType.equals("Consumer")) {
+                dots[currentPosition].setTextColor(getResources().getColor(R.color.consumerPrimary));
+            }
+        }
     }
 
     // Inside OrderDetailsActivity.java
@@ -328,14 +430,32 @@ public class OrderDetailsActivity extends AppCompatActivity {
 
                 // Update Button logic
                 Button siteButton = findViewById(R.id.siteButton);
-                if (siteUrl != null && !siteUrl.isEmpty()) {
-                    siteButton.setVisibility(View.VISIBLE);
-                    siteButton.setOnClickListener(v -> {
-                        Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(siteUrl));
-                        startActivity(browserIntent);
-                    });
+                urlEditText = findViewById(R.id.url);
+                saveUrlButton = findViewById(R.id.saveUrlButton);
+                ImageView tapIcon = findViewById(R.id.tap_icon);
+
+                // Show/Hide URL fields based on user_email
+                if (userEmail.equals(currentUserEmail)) {
+                    if (siteUrl != null && !siteUrl.isEmpty()) {
+                        siteButton.setVisibility(View.VISIBLE);
+                        urlEditText.setVisibility(View.GONE);
+                        saveUrlButton.setVisibility(View.GONE);
+                        siteButton.setOnClickListener(v -> {
+                            Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(siteUrl));
+                            startActivity(browserIntent);
+                        });
+                        tapIcon.setVisibility(View.GONE); // Hide tap icon if site button is visible
+                    } else {
+                        siteButton.setVisibility(View.GONE);
+                        urlEditText.setVisibility(View.VISIBLE);
+                        saveUrlButton.setVisibility(View.VISIBLE);
+                        tapIcon.setVisibility(View.VISIBLE); // Show tap icon if site button is not visible
+                    }
                 } else {
                     siteButton.setVisibility(View.GONE);
+                    urlEditText.setVisibility(View.GONE);
+                    saveUrlButton.setVisibility(View.GONE);
+                    tapIcon.setVisibility(View.GONE);
                 }
 
                 String peopleText;
@@ -441,7 +561,6 @@ public class OrderDetailsActivity extends AppCompatActivity {
             progressDialog.dismiss();
         });
     }
-
     private void shareOrderDetails() {
         createDynamicLink(orderId, globalUserType, shortLink -> {
             if (shortLink != null) {
@@ -1027,10 +1146,8 @@ public class OrderDetailsActivity extends AppCompatActivity {
     private void showAlertDialog(String message) {
         new AlertDialog.Builder(this)
                 .setMessage(message)
-                .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int which) {
-                        // Do nothing
-                    }
+                .setPositiveButton(android.R.string.ok, (dialog, which) -> {
+                    // Do nothing
                 })
                 .setIcon(android.R.drawable.ic_dialog_alert)
                 .show();
@@ -1248,8 +1365,43 @@ public class OrderDetailsActivity extends AppCompatActivity {
             progressDialog.dismiss();
         });
     }
+    private boolean isValidURL(String url) {
+        try {
+            new URL(url).toURI();
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
 
-    @Override
+    private void saveUrl() {
+        String url = urlEditText.getText().toString().trim();
+        if (url.isEmpty()) {
+            Toast.makeText(this, "Please enter a URL", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        if (!isValidURL(url)) {
+            Toast.makeText(this, "Invalid URL", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        DocumentReference orderRef = db.collection("orders").document(orderId);
+        orderRef.update("URL", url)
+                .addOnSuccessListener(aVoid -> {
+                    Toast.makeText(this, "URL saved successfully", Toast.LENGTH_SHORT).show();
+                    urlEditText.setVisibility(View.GONE);
+                    saveUrlButton.setVisibility(View.GONE);
+                    fetchOrderDetails(orderId, email);
+
+                    // Hide tap icon when URL is saved
+                    ImageView tapIcon = findViewById(R.id.tap_icon);
+                    Button siteButton = findViewById(R.id.siteButton);
+                    tapIcon.setVisibility(View.GONE);
+                    siteButton.setVisibility(View.VISIBLE);
+                })
+                .addOnFailureListener(e -> Toast.makeText(this, "Failed to save URL", Toast.LENGTH_SHORT).show());
+    }    @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_items, menu);
         if ("Supplier".equals(globalUserType)) {
