@@ -100,7 +100,10 @@ public class FilterActivity extends AppCompatActivity {
         checkBoxUnlimited = findViewById(R.id.checkBoxUnlimited);
 
         ImageButton plusIcon = findViewById(R.id.plus_icon);
-        plusIcon.setOnClickListener(v -> toggleCategoryVisibility(v));
+        plusIcon.setOnClickListener(this::toggleCategoryVisibility);
+
+        TextView categoryTextView = findViewById(R.id.category_text);
+        categoryTextView.setOnClickListener(v -> toggleCategoryVisibility(plusIcon));
 
         locationWindowLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
@@ -123,20 +126,28 @@ public class FilterActivity extends AppCompatActivity {
                 }
         );
 
-
-
         searchAddressButton.setOnClickListener(v -> {
-            if (searchAddressButton.getTag() != null && searchAddressButton.getTag().equals("clear")) {
-                searchAddressText.setText("");
-                searchAddressButton.setTag("search");
-                searchAddressButton.setImageResource(R.drawable.baseline_search_24);
-                editAddressButton.setVisibility(View.GONE);
+            if (searchAddressButton.getTag() != null ) {
+                if (searchAddressButton.getTag().equals("clear")) {
+                    searchAddressText.setText("");
+                    searchAddressButton.setTag("search");
+                    searchAddressButton.setImageResource(R.drawable.baseline_search_24);
+                    editAddressButton.setVisibility(View.GONE);
 
-                // איפוס הערכים האחרונים
-                lastAddress = null;
-                lastDistance = 0;
-                lastLatitude = 0;
-                lastLongitude = 0;
+                    // איפוס הערכים האחרונים
+                    lastAddress = null;
+                    lastDistance = 0;
+                    lastLatitude = 0;
+                    lastLongitude = 0;
+                } else {
+                    Intent intentLocation = new Intent(FilterActivity.this, LocationWindow.class);
+                    intentLocation.putExtra("userType", globalUserType);
+                    if (lastAddress != null && !lastAddress.isEmpty() && lastDistance > 0) {
+                        intentLocation.putExtra("address", lastAddress);
+                        intentLocation.putExtra("distance", lastDistance);
+                    }
+                    locationWindowLauncher.launch(intentLocation);
+                }
             }
         });
 
@@ -169,6 +180,16 @@ public class FilterActivity extends AppCompatActivity {
 
         LinearLayout searchRow = findViewById(R.id.search_row);
         searchRow.setOnClickListener(v -> {
+            Intent intentLocation = new Intent(FilterActivity.this, LocationWindow.class);
+            intentLocation.putExtra("userType", globalUserType);
+            if (lastAddress != null && !lastAddress.isEmpty() && lastDistance > 0) {
+                intentLocation.putExtra("address", lastAddress);
+                intentLocation.putExtra("distance", lastDistance);
+            }
+            locationWindowLauncher.launch(intentLocation);
+        });
+
+        editAddressButton.setOnClickListener(v -> {
             Intent intentLocation = new Intent(FilterActivity.this, LocationWindow.class);
             intentLocation.putExtra("userType", globalUserType);
             if (lastAddress != null && !lastAddress.isEmpty() && lastDistance > 0) {
@@ -238,6 +259,7 @@ public class FilterActivity extends AppCompatActivity {
         }
     }
 
+
     private void readCategoriesFromFireStore() {
         db.collection("categories").document("jQ4hXL6kr1AbKwPvEdXl")
                 .get()
@@ -266,7 +288,7 @@ public class FilterActivity extends AppCompatActivity {
             plusIcon.setImageResource(R.drawable.baseline_add_24);
         } else {
             categoryListView.setVisibility(View.VISIBLE);
-            plusIcon.setImageResource(R.drawable.tick);
+            plusIcon.setImageResource(R.drawable.baseline_check_24);
         }
         isCategoryListVisible = !isCategoryListVisible;
 

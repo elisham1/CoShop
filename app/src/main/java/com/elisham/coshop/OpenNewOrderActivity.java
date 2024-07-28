@@ -201,19 +201,6 @@ public class OpenNewOrderActivity extends AppCompatActivity {
                 }
         );
 
-        searchAddressButton.setOnClickListener(v -> {
-            if (searchAddressButton.getTag() != null && searchAddressButton.getTag().equals("clear")) {
-                searchAddressText.setText("");
-                searchAddressButton.setTag("search");
-                searchAddressButton.setImageResource(R.drawable.baseline_search_24);
-                editAddressButton.setVisibility(View.GONE);
-
-                lastAddress = null;
-                lastLatitude = 0;
-                lastLongitude = 0;
-            }
-        });
-
         searchAddressText.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
@@ -236,6 +223,38 @@ public class OpenNewOrderActivity extends AppCompatActivity {
                 intentLocation.putExtra("address", lastAddress);
             }
             locationWindowLauncher.launch(intentLocation);
+        });
+
+        editAddressButton.setOnClickListener(v -> {
+            Intent intentLocation = new Intent(OpenNewOrderActivity.this, LocationWindow.class);
+            intentLocation.putExtra("userType", globalUserType);
+            intentLocation.putExtra("hideDistanceLayout", true); // העברת פרמטר להסתרת ה-KM
+            if (lastAddress != null && !lastAddress.isEmpty()) {
+                intentLocation.putExtra("address", lastAddress);
+            }
+            locationWindowLauncher.launch(intentLocation);
+        });
+
+        searchAddressButton.setOnClickListener(v -> {
+            if (searchAddressButton.getTag() != null) {
+                if (searchAddressButton.getTag().equals("clear")) {
+                    searchAddressText.setText("");
+                    searchAddressButton.setTag("search");
+                    searchAddressButton.setImageResource(R.drawable.baseline_search_24);
+                    editAddressButton.setVisibility(View.GONE);
+
+                    lastAddress = null;
+                    lastLatitude = 0;
+                    lastLongitude = 0;
+                } else {
+                    Intent intentLocation = new Intent(OpenNewOrderActivity.this, LocationWindow.class);
+                    intentLocation.putExtra("hideDistanceLayout", true);
+                    if (lastAddress != null && !lastAddress.isEmpty()) {
+                        intentLocation.putExtra("address", lastAddress);
+                    }
+                    locationWindowLauncher.launch(intentLocation);
+                }
+            }
         });
 
         urlEditText.addTextChangedListener(new TextWatcher() {
