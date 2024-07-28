@@ -100,7 +100,10 @@ public class FilterActivity extends AppCompatActivity {
         checkBoxUnlimited = findViewById(R.id.checkBoxUnlimited);
 
         ImageButton plusIcon = findViewById(R.id.plus_icon);
-        plusIcon.setOnClickListener(v -> toggleCategoryVisibility(v));
+        plusIcon.setOnClickListener(this::toggleCategoryVisibility);
+
+        TextView categoryTextView = findViewById(R.id.category_text);
+        categoryTextView.setOnClickListener(v -> toggleCategoryVisibility(plusIcon));
 
         locationWindowLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
