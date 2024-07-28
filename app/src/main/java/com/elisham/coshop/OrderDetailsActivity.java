@@ -18,9 +18,11 @@ import android.location.Geocoder;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.CountDownTimer;
+import android.text.Editable;
 import android.text.Html;
 import android.text.Spannable;
 import android.text.SpannableStringBuilder;
+import android.text.TextWatcher;
 import android.text.style.ImageSpan;
 import android.util.Log;
 import android.util.TypedValue;
@@ -28,6 +30,7 @@ import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
@@ -1057,18 +1060,61 @@ public class OrderDetailsActivity extends AppCompatActivity {
 
         Spinner reportReasonSpinner = dialog.findViewById(R.id.reportReasonSpinner);
         EditText reportDetailsEditText = dialog.findViewById(R.id.reportDetailsEditText);
+        TextView errorTextView = dialog.findViewById(R.id.errorTextView);
+        ImageView clearReportDetailsIcon = dialog.findViewById(R.id.clearReportDetailsIcon);
+        LinearLayout reportDetailsContainer = dialog.findViewById(R.id.reportDetailsContainer);
         Button submitReportButton = dialog.findViewById(R.id.submitReportButton);
+
+        reportReasonSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                String selectedReason = parent.getItemAtPosition(position).toString();
+                if (selectedReason.equals("Other")) {
+                    reportDetailsEditText.setHint("Additional details");
+                } else {
+                    reportDetailsEditText.setHint("Additional details (optional)");
+                }
+                errorTextView.setVisibility(View.GONE); // Hide error when selection changes
+                reportDetailsContainer.setBackgroundResource(R.drawable.border); // Reset border
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+                // Do nothing
+            }
+        });
+
+        reportDetailsEditText.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                clearReportDetailsIcon.setVisibility(s.length() > 0 ? View.VISIBLE : View.INVISIBLE);
+                errorTextView.setVisibility(View.GONE); // Hide error when text changes
+                reportDetailsContainer.setBackgroundResource(R.drawable.border); // Reset border
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {}
+        });
+
+        clearReportDetailsIcon.setOnClickListener(v -> reportDetailsEditText.setText(""));
 
         submitReportButton.setOnClickListener(v -> {
             String selectedReason = reportReasonSpinner.getSelectedItem().toString();
             String additionalDetails = reportDetailsEditText.getText().toString().trim();
+
             if (selectedReason.equals("Other") && additionalDetails.isEmpty()) {
-                showAlertDialog("Please provide additional details for the report");
-                return;
+                errorTextView.setVisibility(View.VISIBLE);
+                reportDetailsContainer.setBackgroundResource(R.drawable.red_border); // Change border to red
+            } else {
+                errorTextView.setVisibility(View.GONE);
+                reportDetailsContainer.setBackgroundResource(R.drawable.border); // Reset border
+                progressDialog.show();
+                submitReport(reportedEmail, orderId, selectedReason, additionalDetails);
+                dialog.dismiss();
             }
-            progressDialog.show();
-            submitReport(reportedEmail, orderId, selectedReason, additionalDetails);
-            dialog.dismiss();
         });
 
         dialog.show();
