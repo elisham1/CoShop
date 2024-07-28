@@ -212,22 +212,31 @@ public class UserDetailsActivity extends AppCompatActivity {
         searchRow.setOnClickListener(v -> {
             Intent intent = new Intent(UserDetailsActivity.this, LocationWindow.class);
             intent.putExtra("hideDistanceLayout", true); // העברת פרמטר להסתרת ה-KM
-            if (lastAddress != null && !lastAddress.isEmpty()) {
-                intent.putExtra("address", lastAddress);
-            }
-            locationWindowLauncher.launch(intent);
+                if (lastAddress != null && !lastAddress.isEmpty()) {
+                    intent.putExtra("address", lastAddress);
+                }
+                locationWindowLauncher.launch(intent);
         });
 
         searchAddressButton.setOnClickListener(v -> {
-            if (searchAddressButton.getTag() != null && searchAddressButton.getTag().equals("clear")) {
-                searchAddressText.setText("");
-                searchAddressButton.setTag("search");
-                searchAddressButton.setImageResource(R.drawable.baseline_search_24);
-                editAddressButton.setVisibility(View.GONE);
+            if (searchAddressButton.getTag() != null) {
+                if (searchAddressButton.getTag().equals("clear")) {
+                    searchAddressText.setText("");
+                    searchAddressButton.setTag("search");
+                    searchAddressButton.setImageResource(R.drawable.baseline_search_24);
+                    editAddressButton.setVisibility(View.GONE);
 
-                lastAddress = null;
-                lastLatitude = 0;
-                lastLongitude = 0;
+                    lastAddress = null;
+                    lastLatitude = 0;
+                    lastLongitude = 0;
+                } else {
+                    Intent intent = new Intent(UserDetailsActivity.this, LocationWindow.class);
+                    intent.putExtra("hideDistanceLayout", true);
+                    if (lastAddress != null && !lastAddress.isEmpty()) {
+                        intent.putExtra("address", lastAddress);
+                    }
+                    locationWindowLauncher.launch(intent);
+                }
             }
         });
 

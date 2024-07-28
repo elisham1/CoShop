@@ -1111,6 +1111,7 @@ public class OrderDetailsActivity extends AppCompatActivity {
                         docRef.update(updateData)
                                 .addOnSuccessListener(aVoid -> {
                                     checkAndBlockUser(reportedUserEmail, reports.size() + 1);
+                                    progressDialog.dismiss();
                                 })
                                 .addOnFailureListener(e -> {
                                     progressDialog.dismiss();
@@ -1123,6 +1124,7 @@ public class OrderDetailsActivity extends AppCompatActivity {
                     docRef.set(newDocData)
                             .addOnSuccessListener(aVoid -> {
                                 checkAndBlockUser(reportedUserEmail, 1);
+                                progressDialog.dismiss();
                             })
                             .addOnFailureListener(e -> {
                                 progressDialog.dismiss();

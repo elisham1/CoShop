@@ -296,16 +296,24 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
         });
 
         searchAddressButton.setOnClickListener(v -> {
-            if (searchAddressButton.getTag() != null && searchAddressButton.getTag().equals("clear")) {
-                searchAddressText.setText("");
-                searchAddressButton.setTag("search");
-                searchAddressButton.setImageResource(R.drawable.baseline_search_24);
-                editAddressButton.setVisibility(View.GONE);
+            if (searchAddressButton.getTag() != null) {
+                if (searchAddressButton.getTag().equals("clear")) {
+                    searchAddressText.setText("");
+                    searchAddressButton.setTag("search");
+                    searchAddressButton.setImageResource(R.drawable.baseline_search_24);
+                    editAddressButton.setVisibility(View.GONE);
 
-                // איפוס הערכים האחרונים
-                lastAddress = null;
-                lastLatitude = 0;
-                lastLongitude = 0;
+                    lastAddress = null;
+                    lastLatitude = 0;
+                    lastLongitude = 0;
+                } else {
+                    Intent intent = new Intent(UpdateUserDetailsActivity.this, LocationWindow.class);
+                    intent.putExtra("hideDistanceLayout", true);
+                    if (lastAddress != null && !lastAddress.isEmpty()) {
+                        intent.putExtra("address", lastAddress);
+                    }
+                    locationWindowLauncher.launch(intent);
+                }
             }
         });
 

@@ -123,20 +123,28 @@ public class FilterActivity extends AppCompatActivity {
                 }
         );
 
-
-
         searchAddressButton.setOnClickListener(v -> {
-            if (searchAddressButton.getTag() != null && searchAddressButton.getTag().equals("clear")) {
-                searchAddressText.setText("");
-                searchAddressButton.setTag("search");
-                searchAddressButton.setImageResource(R.drawable.baseline_search_24);
-                editAddressButton.setVisibility(View.GONE);
+            if (searchAddressButton.getTag() != null ) {
+                if (searchAddressButton.getTag().equals("clear")) {
+                    searchAddressText.setText("");
+                    searchAddressButton.setTag("search");
+                    searchAddressButton.setImageResource(R.drawable.baseline_search_24);
+                    editAddressButton.setVisibility(View.GONE);
 
-                // איפוס הערכים האחרונים
-                lastAddress = null;
-                lastDistance = 0;
-                lastLatitude = 0;
-                lastLongitude = 0;
+                    // איפוס הערכים האחרונים
+                    lastAddress = null;
+                    lastDistance = 0;
+                    lastLatitude = 0;
+                    lastLongitude = 0;
+                } else {
+                    Intent intentLocation = new Intent(FilterActivity.this, LocationWindow.class);
+                    intentLocation.putExtra("userType", globalUserType);
+                    if (lastAddress != null && !lastAddress.isEmpty() && lastDistance > 0) {
+                        intentLocation.putExtra("address", lastAddress);
+                        intentLocation.putExtra("distance", lastDistance);
+                    }
+                    locationWindowLauncher.launch(intentLocation);
+                }
             }
         });
 
@@ -169,6 +177,16 @@ public class FilterActivity extends AppCompatActivity {
 
         LinearLayout searchRow = findViewById(R.id.search_row);
         searchRow.setOnClickListener(v -> {
+            Intent intentLocation = new Intent(FilterActivity.this, LocationWindow.class);
+            intentLocation.putExtra("userType", globalUserType);
+            if (lastAddress != null && !lastAddress.isEmpty() && lastDistance > 0) {
+                intentLocation.putExtra("address", lastAddress);
+                intentLocation.putExtra("distance", lastDistance);
+            }
+            locationWindowLauncher.launch(intentLocation);
+        });
+
+        editAddressButton.setOnClickListener(v -> {
             Intent intentLocation = new Intent(FilterActivity.this, LocationWindow.class);
             intentLocation.putExtra("userType", globalUserType);
             if (lastAddress != null && !lastAddress.isEmpty() && lastDistance > 0) {
@@ -237,6 +255,7 @@ public class FilterActivity extends AppCompatActivity {
             editAddressButton.setVisibility(View.GONE);
         }
     }
+
 
     private void readCategoriesFromFireStore() {
         db.collection("categories").document("jQ4hXL6kr1AbKwPvEdXl")
