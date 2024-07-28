@@ -23,7 +23,6 @@
             android:background="@drawable/border">
 
             <!-- Left icons (Share and Chat) -->
-
             <LinearLayout
                 android:id="@+id/shareLayout"
                 android:layout_width="wrap_content"
@@ -48,6 +47,7 @@
                     android:id="@+id/shareText"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
                     android:text="Share"
                     android:textColor="@color/black"
                     android:visibility="visible"
@@ -69,7 +69,7 @@
                     android:layout_marginTop="16dp"
                     android:layout_marginEnd="16dp"
                     android:layout_marginBottom="0dp"
-                    android:layout_marginStart="10dp"
+                    android:layout_marginStart="16dp"
                     android:src="@drawable/ic_chat_consumer"
                     android:contentDescription="Chat Icon"
                     android:visibility="gone" />
@@ -97,96 +97,129 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toEndOf="parent" />
 
-            <!-- Right icon (Join) -->
+            <!-- Right icons (Cart, Join/Leave/Waitlist) -->
             <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
+                android:orientation="horizontal"
                 android:gravity="center"
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toEndOf="@id/categoryImageView">
 
-                <ImageView
-                    android:id="@+id/joinIcon"
+                <!-- Cart icon -->
+                <LinearLayout
+                    android:id="@+id/cartLayout"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
-                    android:layout_marginStart="17dp"
-                    android:layout_marginBottom="0dp"
-                    android:layout_marginEnd="16dp"
-                    android:gravity="center"
-                    android:src="@drawable/ic_join_consumer"
-                    android:contentDescription="Join Icon" />
+                    android:orientation="vertical"
+                    android:gravity="center">
 
-                <TextView
-                    android:id="@+id/joinText"
+                    <ImageView
+                        android:id="@+id/cartIcon"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="16dp"
+                        android:layout_marginStart="8dp"
+                        android:layout_marginBottom="0dp"
+                        android:layout_marginEnd="10dp"
+                        android:src="@drawable/ic_cart_consumer"
+                        android:contentDescription="Cart Icon"
+                        android:visibility="gone" />
+
+                    <TextView
+                        android:id="@+id/cartText"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Items"
+                        android:textColor="@color/black"
+                        android:visibility="gone"
+                        android:gravity="center" />
+                </LinearLayout>
+
+                <!-- Join/Leave/Waitlist icon -->
+                <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Join"
-                    android:textColor="@color/black"
-                    android:visibility="visible"
-                    android:gravity="center" />
-            </LinearLayout>
+                    android:orientation="vertical"
+                    android:gravity="center">
 
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:gravity="center"
-                app:layout_constraintTop_toTopOf="parent"
-                app:layout_constraintStart_toEndOf="@id/categoryImageView"
-                app:layout_constraintEnd_toEndOf="parent">
+                    <ImageView
+                        android:id="@+id/joinIcon"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="16dp"
+                        android:layout_marginStart="17dp"
+                        android:layout_marginBottom="0dp"
+                        android:layout_marginEnd="16dp"
+                        android:gravity="center"
+                        android:src="@drawable/ic_join_consumer"
+                        android:contentDescription="Join Icon" />
 
-                <ImageView
-                    android:id="@+id/waitingListButton"
+                    <TextView
+                        android:id="@+id/joinText"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Join"
+                        android:textColor="@color/black"
+                        android:visibility="visible"
+                        android:gravity="center" />
+                </LinearLayout>
+
+                <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:visibility="gone"
-                    android:src="@drawable/ic_waitlist"
-                    android:layout_marginTop="16dp"
-                    android:layout_marginStart="16dp"
-                    android:layout_marginBottom="0dp"
-                    android:layout_marginEnd="16dp" />
+                    android:orientation="vertical"
+                    android:gravity="center">
 
-                <TextView
-                    android:id="@+id/waitingListText"
+                    <ImageView
+                        android:id="@+id/waitingListButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:visibility="gone"
+                        android:src="@drawable/ic_waitlist"
+                        android:layout_marginTop="16dp"
+                        android:layout_marginStart="16dp"
+                        android:layout_marginBottom="0dp"
+                        android:layout_marginEnd="16dp" />
+
+                    <TextView
+                        android:id="@+id/waitingListText"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Waitlist"
+                        android:textColor="@color/black"
+                        android:visibility="gone"
+                        android:gravity="center" />
+                </LinearLayout>
+
+                <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Waitlist"
-                    android:textColor="@color/black"
-                    android:visibility="gone"
-                    android:gravity="center" />
-            </LinearLayout>
+                    android:orientation="vertical"
+                    android:gravity="center">
 
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:gravity="center"
-                app:layout_constraintTop_toTopOf="parent"
-                app:layout_constraintStart_toEndOf="@id/categoryImageView"
-                app:layout_constraintEnd_toEndOf="parent">
+                    <ImageView
+                        android:id="@+id/leaveButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:visibility="gone"
+                        android:src="@drawable/ic_leave_consumer"
+                        android:layout_marginTop="16dp"
+                        android:layout_marginStart="16dp"
+                        android:layout_marginBottom="0dp"
+                        android:layout_marginEnd="16dp" />
 
-                <ImageView
-                    android:id="@+id/leaveButton"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:visibility="gone"
-                    android:src="@drawable/ic_leave_consumer"
-                    android:layout_marginTop="16dp"
-                    android:layout_marginStart="16dp"
-                    android:layout_marginBottom="0dp"
-                    android:layout_marginEnd="16dp" />
+                    <TextView
+                        android:id="@+id/leaveText"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Leave"
+                        android:textColor="@color/black"
+                        android:visibility="gone"
+                        android:gravity="center" />
+                </LinearLayout>
 
-                <TextView
-                    android:id="@+id/leaveText"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Leave"
-                    android:textColor="@color/black"
-                    android:visibility="gone"
-                    android:gravity="center" />
             </LinearLayout>
 
             <!-- Order title -->
@@ -267,7 +300,6 @@
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintEnd_toEndOf="parent"
                     android:layout_marginBottom="8dp">
-
 
                     <LinearLayout
                         android:id="@+id/daysContainer"
@@ -433,7 +465,7 @@
                     android:textSize="16sp"
                     android:textColor="@color/black"
                     android:textStyle="bold"
-                    android:visibility="gone"/>
+                    android:visibility="gone" />
 
             </LinearLayout>
         </LinearLayout>
@@ -466,16 +498,17 @@
                 android:textColor="@color/black"
                 android:textStyle="bold"
                 android:gravity="start"
-                android:padding="8dp"/>
+                android:padding="8dp" />
 
             <Button
                 android:id="@+id/siteButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:gravity="center"
+                android:background="@drawable/bg_selected_consumer"
                 android:text="Click to open Url"
                 android:visibility="visible"
-                android:layout_marginTop="4dp"/>
+                android:layout_margin="4dp" />
 
             <androidx.constraintlayout.widget.ConstraintLayout
                 android:id="@+id/urlLayout"
@@ -498,7 +531,7 @@
                     android:visibility="visible"
                     app:layout_constraintTop_toTopOf="parent"
                     app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintStart_toStartOf="parent"/>
+                    app:layout_constraintStart_toStartOf="parent" />
 
                 <EditText
                     android:id="@+id/url"
@@ -514,7 +547,7 @@
                     app:layout_constraintTop_toTopOf="parent"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintStart_toEndOf="@id/tap_icon"
-                    app:layout_constraintEnd_toStartOf="@id/saveUrlButton"/>
+                    app:layout_constraintEnd_toStartOf="@id/saveUrlButton" />
 
                 <ImageView
                     android:id="@+id/saveUrlButton"
@@ -526,7 +559,7 @@
                     android:visibility="visible"
                     app:layout_constraintTop_toTopOf="parent"
                     app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintEnd_toEndOf="parent"/>
+                    app:layout_constraintEnd_toEndOf="parent" />
             </androidx.constraintlayout.widget.ConstraintLayout>
 
         </LinearLayout>
@@ -570,7 +603,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:layout_marginTop="1dp"/>
+            android:layout_marginTop="1dp" />
 
         <!-- Add views for each user dynamically -->
 
