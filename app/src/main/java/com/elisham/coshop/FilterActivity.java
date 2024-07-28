@@ -285,7 +285,7 @@ public class FilterActivity extends AppCompatActivity {
             plusIcon.setImageResource(R.drawable.baseline_add_24);
         } else {
             categoryListView.setVisibility(View.VISIBLE);
-            plusIcon.setImageResource(R.drawable.tick);
+            plusIcon.setImageResource(R.drawable.baseline_check_24);
         }
         isCategoryListVisible = !isCategoryListVisible;
 
