@@ -33,7 +33,7 @@ public class EmailSignupActivity extends AppCompatActivity {
     private boolean isConfirmPasswordVisible = false;
     private ImageView togglePasswordVisibility, toggleConfirmPasswordVisibility;
     private ImageView clearFirstNameIcon, clearFamilyNameIcon, clearEmailIcon;
-    private TextView firstNameError, emailError, passwordError, confirmPasswordError;
+    private TextView firstNameError, emailError, passwordError, confirmPasswordError, passwordRules;
     private LinearLayout passwordLayout, confirmPasswordLayout, emailLayout, firstNameLayout, familyNameLayout;
     private FirebaseAuth mAuth;
 
@@ -63,6 +63,7 @@ public class EmailSignupActivity extends AppCompatActivity {
         emailError = findViewById(R.id.emailError);
         passwordError = findViewById(R.id.passwordError);
         confirmPasswordError = findViewById(R.id.confirmPasswordError);
+        passwordRules = findViewById(R.id.passwordRules);
 
         togglePassword();
         addTextWatchers();
@@ -181,13 +182,16 @@ public class EmailSignupActivity extends AppCompatActivity {
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
-                if (s.length() >= 6) {
-                    passwordError.setVisibility(View.GONE);
+                if (s.length() >= 8 && s.toString().matches(".*[A-Z].*") && s.toString().matches(".*[a-z].*") && s.toString().matches(".*[0-9].*")) {
                     passwordLayout.setBackgroundResource(R.drawable.border);
+                    passwordRules.setTextColor(getResources().getColor(android.R.color.black));
+                    passwordRules.setVisibility(View.GONE);
+                    passwordError.setVisibility(View.GONE);
                 } else {
-                    passwordError.setVisibility(View.VISIBLE);
-                    passwordError.setText("Password must be at least 6 characters");
                     passwordLayout.setBackgroundResource(R.drawable.red_border);
+                    passwordRules.setTextColor(getResources().getColor(android.R.color.holo_red_dark));
+                    passwordRules.setVisibility(View.VISIBLE);
+                    passwordError.setVisibility(View.GONE);
                 }
             }
 
@@ -266,8 +270,7 @@ public class EmailSignupActivity extends AppCompatActivity {
             emailError.setVisibility(View.VISIBLE);
             emailEditText.setBackgroundResource(R.drawable.red_border);
             return;
-        }
-        else if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+        } else if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
             emailError.setVisibility(View.VISIBLE);
             emailError.setText("Invalid email format");
             emailEditText.setBackgroundResource(R.drawable.red_border);
@@ -278,6 +281,7 @@ public class EmailSignupActivity extends AppCompatActivity {
             passwordError.setVisibility(View.VISIBLE);
             passwordError.setText("Password is required");
             passwordEditText.setBackgroundResource(R.drawable.red_border);
+            passwordRules.setTextColor(getResources().getColor(android.R.color.holo_red_dark));
             return;
         }
 
@@ -288,16 +292,16 @@ public class EmailSignupActivity extends AppCompatActivity {
             return;
         }
 
-        if (password.length() < 6) {
-            passwordError.setVisibility(View.VISIBLE);
-            passwordError.setText(R.string.password_length_error);
+        if (password.length() < 8 || !password.matches(".*[A-Z].*") || !password.matches(".*[a-z].*") || !password.matches(".*[0-9].*")) {
+            passwordError.setVisibility(View.GONE);
             passwordEditText.setBackgroundResource(R.drawable.red_border);
+            passwordRules.setVisibility(View.VISIBLE);
             return;
         }
 
         if (!password.equals(confirmPassword)) {
             confirmPasswordError.setVisibility(View.VISIBLE);
-            confirmPasswordError.setText(R.string.passwords_do_not_match);
+            confirmPasswordError.setText("Passwords do not match");
             confirmPasswordEditText.setBackgroundResource(R.drawable.red_border);
             return;
         }
