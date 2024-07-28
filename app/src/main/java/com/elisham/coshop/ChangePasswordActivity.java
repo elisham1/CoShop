@@ -47,6 +47,7 @@ public class ChangePasswordActivity extends AppCompatActivity {
     private MenuUtils menuUtils;
     private String globalUserType;
     private ProgressDialog progressDialog;
+    private TextView passwordRules;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -82,6 +83,7 @@ public class ChangePasswordActivity extends AppCompatActivity {
         confirmNewPasswordError = findViewById(R.id.confirmNewPasswordError);
         forgotPasswordTextView = findViewById(R.id.forgotPasswordTextView);
         Button doneButton = findViewById(R.id.done_button);
+        passwordRules = findViewById(R.id.passwordRules);
 
         mAuth = FirebaseAuth.getInstance();
         user = mAuth.getCurrentUser();
@@ -131,13 +133,14 @@ public class ChangePasswordActivity extends AppCompatActivity {
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
-                if (s.length() >= 6) {
+                if (s.length() >= 8 && s.toString().matches(".*[A-Z].*") && s.toString().matches(".*[a-z].*") && s.toString().matches(".*[0-9].*")) {
                     newPasswordError.setVisibility(View.GONE);
                     newPasswordLayout.setBackgroundResource(R.drawable.border);
+                    passwordRules.setVisibility(View.GONE);
                 } else {
-                    newPasswordError.setVisibility(View.VISIBLE);
-                    newPasswordError.setText(getString(R.string.field_required));
+                    newPasswordError.setVisibility(View.GONE);
                     newPasswordLayout.setBackgroundResource(R.drawable.red_border);
+                    passwordRules.setVisibility(View.VISIBLE);
                 }
             }
 
@@ -343,10 +346,10 @@ public class ChangePasswordActivity extends AppCompatActivity {
             return;
         }
 
-        if (newPassword.length() < 6) {
-            newPasswordError.setVisibility(View.VISIBLE);
-            newPasswordError.setText(getString(R.string.password_length_error));
+        if (newPassword.length() < 8 || !newPassword.matches(".*[A-Z].*") || !newPassword.matches(".*[a-z].*") || !newPassword.matches(".*[0-9].*")) {
+            newPasswordError.setVisibility(View.GONE);
             newPasswordLayout.setBackgroundResource(R.drawable.red_border);
+            passwordRules.setVisibility(View.VISIBLE);
             progressDialog.dismiss();
             return;
         }

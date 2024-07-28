@@ -1,7 +1,7 @@
-<?xml version="1.0" encoding="utf-8"?>
+<!-- dialog_report_user.xml -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
+    android:layout_height="match_parent"
     android:orientation="vertical"
     android:padding="16dp">
 
@@ -9,29 +9,72 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Report User"
+        android:textColor="@color/black"
         android:textSize="20sp"
         android:textStyle="bold" />
 
-    <Spinner
-        android:id="@+id/reportReasonSpinner"
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="50dp"
+        android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
-        android:entries="@array/report_reasons" />
+        android:orientation="horizontal"
+        android:background="@drawable/border">
 
-    <EditText
-        android:id="@+id/reportDetailsEditText"
+        <Spinner
+            android:id="@+id/reportReasonSpinner"
+            android:layout_width="0dp"
+            android:layout_height="50dp"
+            android:layout_weight="1"
+            android:entries="@array/report_reasons"
+            android:padding="8dp" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/reportDetailsContainer"
         android:layout_width="match_parent"
-        android:layout_height="50dp"
+        android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
-        android:hint="Additional details (optional)"
-        android:inputType="textMultiLine"
-        android:minLines="1" />
+        android:orientation="horizontal"
+        android:background="@drawable/border">
+
+        <EditText
+            android:id="@+id/reportDetailsEditText"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:hint="Additional details"
+            android:background="@android:color/transparent"
+            android:inputType="textMultiLine"
+            android:minLines="2"
+            android:padding="8dp" />
+
+        <ImageView
+            android:id="@+id/clearReportDetailsIcon"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:src="@drawable/ic_clear"
+            android:contentDescription="Clear Icon"
+            android:visibility="gone"
+            android:clickable="true"
+            android:focusable="true"
+            android:padding="8dp" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/errorTextView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Please provide additional details"
+        android:textColor="@android:color/holo_red_dark"
+        android:textSize="12sp"
+        android:visibility="gone" />
 
     <Button
         android:id="@+id/submitReportButton"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:background="@drawable/bg_selected_consumer"
+        android:layout_gravity="center"
         android:layout_marginTop="16dp"
         android:text="Submit Report" />
 </LinearLayout>

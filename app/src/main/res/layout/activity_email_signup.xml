@@ -1,4 +1,3 @@
-<?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -187,6 +186,17 @@
                 android:textSize="12sp"
                 android:visibility="gone"/>
 
+            <!-- Password Rules -->
+            <TextView
+                android:id="@+id/passwordRules"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Password must include:\n- at least 8 characters\n- one capital letter\n- one small letter\n- one number"
+                android:textColor="@android:color/holo_red_light"
+                android:textSize="14sp"
+                android:visibility="gone"
+                android:layout_marginTop="8dp"/>
+
             <!-- Confirm Password -->
             <LinearLayout
                 android:id="@+id/confirmPasswordLayout"
@@ -228,6 +238,7 @@
                 android:textColor="@android:color/holo_red_dark"
                 android:textSize="12sp"
                 android:visibility="gone"/>
+
         </LinearLayout>
     </ScrollView>
 
