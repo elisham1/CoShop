@@ -6,32 +6,29 @@
     android:padding="16dp">
 
     <TextView
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Add Item to Cart"
         android:textSize="20sp"
         android:textStyle="bold"
         android:textColor="@color/black"
-        android:layout_gravity="center"
+        android:gravity="center"
         android:layout_marginBottom="16dp"/>
 
-    <EditText
-        android:id="@+id/itemUrlEditText"
+    <LinearLayout
+        android:id="@+id/itemsContainer"
         android:layout_width="match_parent"
-        android:layout_height="50dp"
-        android:paddingStart="8dp"
-        android:hint="Item URL"
-        android:background="@drawable/border"/>
+        android:layout_height="wrap_content"
+        android:orientation="vertical"/>
 
-    <EditText
-        android:id="@+id/itemPriceEditText"
+    <ImageView
+        android:id="@+id/addItemIcon"
         android:layout_width="match_parent"
-        android:layout_height="50dp"
-        android:hint="Price"
-        android:paddingStart="8dp"
-        android:inputType="numberDecimal"
-        android:layout_marginTop="8dp"
-        android:background="@drawable/border"/>
+        android:layout_height="wrap_content"
+        android:src="@drawable/baseline_add_24"
+        android:layout_gravity="end"
+        android:contentDescription="Add Item"
+        android:layout_marginTop="16dp"/>
 
     <Button
         android:id="@+id/addItemButton"

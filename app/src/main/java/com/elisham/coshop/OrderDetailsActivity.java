@@ -8,6 +8,7 @@ import androidx.core.content.ContextCompat;
 import androidx.core.view.ViewCompat;
 import androidx.viewpager2.widget.ViewPager2;
 
+import android.view.WindowManager;
 import android.widget.Toast;
 import android.app.Dialog;
 import android.app.ProgressDialog;
@@ -1086,24 +1087,86 @@ public class OrderDetailsActivity extends AppCompatActivity {
         Dialog dialog = new Dialog(this);
         dialog.setContentView(R.layout.dialog_add_to_cart);
 
-        EditText itemUrlEditText = dialog.findViewById(R.id.itemUrlEditText);
-        EditText itemPriceEditText = dialog.findViewById(R.id.itemPriceEditText);
+        // Set dialog width to 90% of the screen width
+        WindowManager.LayoutParams layoutParams = new WindowManager.LayoutParams();
+        layoutParams.copyFrom(dialog.getWindow().getAttributes());
+        layoutParams.width = (int) (getResources().getDisplayMetrics().widthPixels);
+        dialog.getWindow().setAttributes(layoutParams);
+
+        LinearLayout itemsContainer = dialog.findViewById(R.id.itemsContainer);
         Button addItemButton = dialog.findViewById(R.id.addItemButton);
+        ImageView addItemIcon = dialog.findViewById(R.id.addItemIcon);
 
-        addItemButton.setOnClickListener(v -> {
+        // Add initial item layout
+        addItemLayout(itemsContainer);
+
+        addItemIcon.setOnClickListener(v ->
+        {
+            View itemView = itemsContainer.getChildAt((itemsContainer.getChildCount()-1));
+            EditText itemUrlEditText = itemView.findViewById(R.id.itemUrlEditText);
+            TextView urlError = itemView.findViewById(R.id.urlError);
+
             String itemUrl = itemUrlEditText.getText().toString().trim();
-            String itemPrice = itemPriceEditText.getText().toString().trim();
 
-            if (itemUrl.isEmpty() || itemPrice.isEmpty()) {
-                Toast.makeText(this, "Please enter both URL and price", Toast.LENGTH_SHORT).show();
+            if (itemUrl.isEmpty()) {
+                urlError.setVisibility(View.VISIBLE);
+                itemUrlEditText.setBackgroundResource(R.drawable.red_border);
                 return;
             }
+            else {
+                urlError.setVisibility(View.GONE);
+                itemUrlEditText.setBackgroundResource(R.drawable.border);
+            }
 
-            addItemToCart(userEmail, itemUrl, itemPrice);
+            addItemLayout(itemsContainer);
+        });
+
+        addItemButton.setOnClickListener(v -> {
+            List<Map<String, String>> items = new ArrayList<>();
+
+            for (int i = 0; i < itemsContainer.getChildCount(); i++) {
+                View itemView = itemsContainer.getChildAt(i);
+                EditText itemUrlEditText = itemView.findViewById(R.id.itemUrlEditText);
+                EditText itemPriceEditText = itemView.findViewById(R.id.itemPriceEditText);
+                TextView urlError = itemView.findViewById(R.id.urlError);
+
+                String itemUrl = itemUrlEditText.getText().toString().trim();
+                String itemPrice = itemPriceEditText.getText().toString().trim();
+
+                if (itemUrl.isEmpty()) {
+                    urlError.setVisibility(View.VISIBLE);
+                    itemUrlEditText.setBackgroundResource(R.drawable.red_border);
+                    return;
+                }
+
+                Map<String, String> item = new HashMap<>();
+                item.put("url", itemUrl);
+                item.put("price", itemPrice);
+                items.add(item);
+            }
+
+            for (Map<String, String> item : items) {
+                addItemToCart(userEmail, item.get("url"), item.get("price"));
+            }
+
             dialog.dismiss();
         });
 
         dialog.show();
+    }
+
+    private void addItemLayout(LinearLayout container) {
+        View itemLayout = getLayoutInflater().inflate(R.layout.item_cart_add, container, false);
+        ImageView deleteItemIcon = itemLayout.findViewById(R.id.deleteItemIcon);
+        EditText urlEditText = itemLayout.findViewById(R.id.itemUrlEditText);
+
+        String itemUrl = urlEditText.getText().toString().trim();
+
+        deleteItemIcon.setOnClickListener(v -> {
+            container.removeView(itemLayout);
+        });
+
+        container.addView(itemLayout);
     }
 
     private void addItemToCart(String userEmail, String itemUrl, String itemPrice) {
