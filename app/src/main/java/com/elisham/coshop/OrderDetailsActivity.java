@@ -8,6 +8,7 @@ import androidx.core.content.ContextCompat;
 import androidx.core.view.ViewCompat;
 import androidx.viewpager2.widget.ViewPager2;
 
+import android.widget.Toast;
 import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
@@ -31,13 +32,16 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ListView;
 import android.widget.Spinner;
 import android.widget.TextView;
+import android.graphics.Typeface;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
@@ -86,6 +90,8 @@ public class OrderDetailsActivity extends AppCompatActivity {
     private boolean showAllUsers = false, inOrder = false,
             inWaitingList = false, orderDeleted = false;
     private ProgressDialog progressDialog;
+    private ImageView cartIcon;
+    private TextView cartText;
 
     private int[] imageResources = {
             R.drawable.one,
@@ -155,6 +161,8 @@ public class OrderDetailsActivity extends AppCompatActivity {
         Button siteButton = findViewById(R.id.siteButton);
         ImageView tapIcon = findViewById(R.id.tap_icon);
         ConstraintLayout urlLayout = findViewById(R.id.urlLayout);
+        cartIcon = findViewById(R.id.cartIcon);
+        cartText = findViewById(R.id.cartText);
 
         if (orderId != null) {
             progressDialog.show();
@@ -199,7 +207,6 @@ public class OrderDetailsActivity extends AppCompatActivity {
             chatIntent.putExtra("orderId", orderId);
             startActivity(chatIntent);
         });
-
 
         chatText.setOnClickListener(v -> {
             Intent chatIntent = new Intent(OrderDetailsActivity.this, ChatActivity.class);
@@ -295,16 +302,24 @@ public class OrderDetailsActivity extends AppCompatActivity {
                     .show();
         });
 
+        cartIcon.setOnClickListener(v -> showCartDialog());
+
+        cartText.setOnClickListener(v -> showCartDialog());
+
         saveUrlButton.setOnClickListener(v -> saveUrl());
 
         ImageView shareIcon = findViewById(R.id.shareIcon);
         if (globalUserType.equals("Supplier")) {
             shareIcon.setImageResource(R.drawable.ic_share_supplier);
+            leaveButton.setImageResource(R.drawable.ic_leave_supplier);
+            chatIcon.setImageResource(R.drawable.ic_chat_supplier);
+            cartIcon.setImageResource(R.drawable.ic_cart_supplier);
             shareText.setTextColor(ContextCompat.getColor(this, R.color.supplierPrimary));
             joinText.setTextColor(ContextCompat.getColor(this, R.color.supplierPrimary));
             leaveText.setTextColor(ContextCompat.getColor(this, R.color.supplierPrimary));
             chatText.setTextColor(ContextCompat.getColor(this, R.color.supplierPrimary));
             waitingListText.setTextColor(ContextCompat.getColor(this, R.color.supplierPrimary));
+            cartText.setTextColor(ContextCompat.getColor(this, R.color.supplierPrimary));
         }
         if (globalUserType.equals("Consumer")) {
             shareIcon.setImageResource(R.drawable.ic_share_consumer);
@@ -313,6 +328,7 @@ public class OrderDetailsActivity extends AppCompatActivity {
             leaveText.setTextColor(ContextCompat.getColor(this, R.color.consumerPrimary));
             chatText.setTextColor(ContextCompat.getColor(this, R.color.consumerPrimary));
             waitingListText.setTextColor(ContextCompat.getColor(this, R.color.consumerPrimary));
+            cartText.setTextColor(ContextCompat.getColor(this, R.color.consumerPrimary));
         }
         shareIcon.setOnClickListener(v -> {
             Log.d("OrderDetailsActivity", "Share icon clicked");
@@ -531,6 +547,8 @@ public class OrderDetailsActivity extends AppCompatActivity {
                             waitingListText.setVisibility(View.GONE);
                             leaveButton.setVisibility(View.VISIBLE); // Show the leave button
                             leaveText.setVisibility(View.VISIBLE);
+                            cartIcon.setVisibility(View.VISIBLE); // Show cart icon
+                            cartText.setVisibility(View.VISIBLE);
                         } else if (numberOfPeopleInOrder >= maxPeople) {
                             joinIcon.setVisibility(View.GONE);
                             joinText.setVisibility(View.GONE);
@@ -574,6 +592,63 @@ public class OrderDetailsActivity extends AppCompatActivity {
             progressDialog.dismiss();
         });
     }
+
+    private void showCartDialog() {
+        Dialog dialog = new Dialog(this);
+        dialog.setContentView(R.layout.dialog_cart);
+
+        LinearLayout cartLayout = dialog.findViewById(R.id.cartLayout);
+        Button closeButton = dialog.findViewById(R.id.closeButton);
+
+        db.collection("orders").document(orderId).get()
+                .addOnSuccessListener(documentSnapshot -> {
+                    if (documentSnapshot.exists()) {
+                        List<Map<String, Object>> cartItems = (List<Map<String, Object>>) documentSnapshot.get("cartItems");
+
+                        if (cartItems != null) {
+                            Map<String, List<Map<String, Object>>> userItemsMap = new HashMap<>();
+
+                            // Group items by user
+                            for (Map<String, Object> item : cartItems) {
+                                String userEmail = (String) item.get("userEmail");
+                                if (!userItemsMap.containsKey(userEmail)) {
+                                    userItemsMap.put(userEmail, new ArrayList<>());
+                                }
+                                userItemsMap.get(userEmail).add(item);
+                            }
+
+                            // Display grouped items
+                            for (Map.Entry<String, List<Map<String, Object>>> entry : userItemsMap.entrySet()) {
+                                String userEmail = entry.getKey();
+                                List<Map<String, Object>> items = entry.getValue();
+
+                                TextView userNameTextView = new TextView(this);
+                                userNameTextView.setText(userEmail); // Display email or fetch and display user's name
+                                userNameTextView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 18);
+                                userNameTextView.setTypeface(null, Typeface.BOLD);
+                                userNameTextView.setPadding(0, 16, 0, 8);
+                                cartLayout.addView(userNameTextView);
+
+                                for (Map<String, Object> item : items) {
+                                    String url = (String) item.get("url");
+                                    String price = (String) item.get("price");
+
+                                    TextView itemTextView = new TextView(this);
+                                    itemTextView.setText("URL: " + url + "\nPrice: $" + price);
+                                    itemTextView.setPadding(0, 8, 0, 8);
+                                    cartLayout.addView(itemTextView);
+                                }
+                            }
+                        }
+                    }
+                })
+                .addOnFailureListener(e -> Log.e("OrderDetailsActivity", "Error fetching cart items", e));
+
+        closeButton.setOnClickListener(v -> dialog.dismiss());
+
+        dialog.show();
+    }
+
     private void shareOrderDetails() {
         createDynamicLink(orderId, globalUserType, shortLink -> {
             if (shortLink != null) {
@@ -950,6 +1025,7 @@ public class OrderDetailsActivity extends AppCompatActivity {
         ImageView userProfileImageView = userItemView.findViewById(R.id.userProfileImageView);
         ImageView reportImageView = userItemView.findViewById(R.id.reportImageView);
         ImageView rateImageView = userItemView.findViewById(R.id.rateImageView);
+        ImageView addToCartImageView = userItemView.findViewById(R.id.addToCartImageView); // Add this line
 
         // Create a SpannableString that will hold the image and the text
         SpannableStringBuilder ssb = new SpannableStringBuilder(" " + " " + userRating + "/5");
@@ -977,13 +1053,19 @@ public class OrderDetailsActivity extends AppCompatActivity {
         if (!inOrder) {
             reportImageView.setVisibility(View.GONE);
             rateImageView.setVisibility(View.GONE);
+            addToCartImageView.setVisibility(View.GONE);
         } else {
             // Hide report and rate icons for current user
             if (isCurrentUser) {
                 reportImageView.setVisibility(View.GONE);
                 rateImageView.setVisibility(View.GONE);
                 userNameTextView.setText("You");
+                addToCartImageView.setVisibility(View.VISIBLE);
+                addToCartImageView.setOnClickListener(v -> {
+                    showAddToCartDialog(displayedEmail);
+                });
             } else {
+                addToCartImageView.setVisibility(View.GONE);
                 // Handle report and rate icons
                 reportImageView.setOnClickListener(v -> {
                     // Handle report user
@@ -998,6 +1080,43 @@ public class OrderDetailsActivity extends AppCompatActivity {
         }
 
         userListLayout.addView(userItemView);
+    }
+
+    private void showAddToCartDialog(String userEmail) {
+        Dialog dialog = new Dialog(this);
+        dialog.setContentView(R.layout.dialog_add_to_cart);
+
+        EditText itemUrlEditText = dialog.findViewById(R.id.itemUrlEditText);
+        EditText itemPriceEditText = dialog.findViewById(R.id.itemPriceEditText);
+        Button addItemButton = dialog.findViewById(R.id.addItemButton);
+
+        addItemButton.setOnClickListener(v -> {
+            String itemUrl = itemUrlEditText.getText().toString().trim();
+            String itemPrice = itemPriceEditText.getText().toString().trim();
+
+            if (itemUrl.isEmpty() || itemPrice.isEmpty()) {
+                Toast.makeText(this, "Please enter both URL and price", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            addItemToCart(userEmail, itemUrl, itemPrice);
+            dialog.dismiss();
+        });
+
+        dialog.show();
+    }
+
+    private void addItemToCart(String userEmail, String itemUrl, String itemPrice) {
+        DocumentReference orderRef = db.collection("orders").document(orderId);
+
+        Map<String, Object> cartItem = new HashMap<>();
+        cartItem.put("userEmail", userEmail);
+        cartItem.put("url", itemUrl);
+        cartItem.put("price", itemPrice);
+
+        orderRef.update("cartItems", FieldValue.arrayUnion(cartItem))
+                .addOnSuccessListener(aVoid -> Toast.makeText(this, "Item added to cart", Toast.LENGTH_SHORT).show())
+                .addOnFailureListener(e -> Log.e("OrderDetailsActivity", "Error adding item to cart", e));
     }
 
     private void showRatingDialog(String email) {

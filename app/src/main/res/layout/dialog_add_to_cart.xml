@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Add Item to Cart"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:textColor="@color/black"
+        android:layout_gravity="center"
+        android:layout_marginBottom="16dp"/>
+
+    <EditText
+        android:id="@+id/itemUrlEditText"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:paddingStart="8dp"
+        android:hint="Item URL"
+        android:background="@drawable/border"/>
+
+    <EditText
+        android:id="@+id/itemPriceEditText"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:hint="Price"
+        android:paddingStart="8dp"
+        android:inputType="numberDecimal"
+        android:layout_marginTop="8dp"
+        android:background="@drawable/border"/>
+
+    <Button
+        android:id="@+id/addItemButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Add to Cart"
+        android:background="@drawable/bg_selected_consumer"
+        android:layout_marginTop="16dp"/>
+</LinearLayout>
