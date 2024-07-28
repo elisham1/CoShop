@@ -1,6 +1,8 @@
 package com.elisham.coshop;
 
 import android.Manifest;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
@@ -84,6 +86,8 @@ public class HomePageActivity extends AppCompatActivity {
         db = FirebaseFirestore.getInstance();
         displayedOrderIds = new ArrayList<>();
         requestNotificationPermission();
+        createNotificationChannel();
+
 
 
         // Set the theme based on the user type
@@ -953,7 +957,7 @@ public class HomePageActivity extends AppCompatActivity {
         }
     }
     private void requestNotificationPermission() {
-        requestPermissionLauncher = registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
+        ActivityResultLauncher<String> requestPermissionLauncher = registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
             if (isGranted) {
                 Log.d("Permission", "Notification permission granted");
             } else {
@@ -964,8 +968,20 @@ public class HomePageActivity extends AppCompatActivity {
         // Check and request notification permission if needed
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
-                requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS);
+                requestPermissionLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS);
             }
+        }
+    }
+
+    private void createNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            CharSequence name = "example_channel";
+            String description = "Channel for example notifications";
+            int importance = NotificationManager.IMPORTANCE_DEFAULT;
+            NotificationChannel channel = new NotificationChannel("example_channel_id", name, importance);
+            channel.setDescription(description);
+            NotificationManager notificationManager = getSystemService(NotificationManager.class);
+            notificationManager.createNotificationChannel(channel);
         }
     }
 
