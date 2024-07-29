@@ -96,7 +96,7 @@ public class notificationActivity extends AppCompatActivity {
                             String timestamp = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(document.getTimestamp("timestamp").toDate());
 
                             Map<String, Object> notification = new HashMap<>();
-                            notification.put("newOrder", "New order");
+                            notification.put("newOrder", "New Order");
                             notification.put("message", message);
                             notification.put("linkButton", link);
                             notification.put("timestamp", timestamp);

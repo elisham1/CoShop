@@ -8,17 +8,18 @@
     android:padding="16dp"
     android:layoutDirection="locale"
     tools:context=".notificationActivity"
-    android:gravity="left"> <!-- Align content to start -->
+    android:background="@drawable/border"
+    android:layout_marginBottom="2dp"> <!-- Align content to start -->
 
     <TextView
         android:id="@+id/newOrder"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textStyle="bold"
-        android:text="New order"
+        android:text="New Order"
         android:textSize="20sp"
         android:textColor="#000000"
-        android:layout_gravity="left" /> <!-- Align to the start -->
+        android:layout_gravity="center"/> <!-- Align to the start -->
 
     <TextView
         android:id="@+id/message"
@@ -26,7 +27,8 @@
         android:layout_height="wrap_content"
         android:text="Message"
         android:textSize="15sp"
-        android:layout_gravity="left" /> <!-- Align to the start -->
+        android:layout_gravity="center"
+        android:visibility="gone"/> <!-- Align to the start -->
 
     <Button
         android:id="@+id/linkButton"
@@ -34,7 +36,10 @@
         android:layout_height="wrap_content"
         android:text="click here to see order"
         android:textSize="15sp"
-        android:layout_gravity="left" /> <!-- Align to the start -->
+        android:background="@drawable/bg_selected_consumer"
+        android:layout_gravity="center"
+        android:layout_marginBottom="16dp"
+        android:layout_marginTop="16dp"/> <!-- Align to the start -->
 
     <TextView
         android:id="@+id/timestamp"
@@ -42,6 +47,6 @@
         android:layout_height="wrap_content"
         android:text="Timestamp"
         android:textSize="15sp"
-        android:layout_gravity="left" /> <!-- Align to the start -->
+        android:layout_gravity="center"/> <!-- Align to the start -->
 
 </LinearLayout>
