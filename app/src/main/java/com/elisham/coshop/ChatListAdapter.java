@@ -1,4 +1,5 @@
-package com.elisham.coshop;import android.content.Context;
+package com.elisham.coshop;
+
 import android.content.Context;
 import android.location.Address;
 import android.location.Geocoder;
@@ -26,6 +27,7 @@ import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.Locale;
 
+// Adapter for displaying chat orders in a RecyclerView
 public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.ChatViewHolder> {
     private List<ChatOrder> chatOrders;
     private OnChatSelectedListener onChatSelectedListener;
@@ -33,6 +35,7 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.ChatVi
     private Context context;
     private FirebaseUser currentUser;
 
+    // Constructor for ChatListAdapter
     public ChatListAdapter(Context context, List<ChatOrder> chatOrders, OnChatSelectedListener onChatSelectedListener) {
         this.context = context;
         this.chatOrders = chatOrders;
@@ -41,6 +44,7 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.ChatVi
         this.currentUser = FirebaseAuth.getInstance().getCurrentUser();
     }
 
+    // Creates a new ViewHolder for chat items
     @NonNull
     @Override
     public ChatViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
@@ -48,17 +52,20 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.ChatVi
         return new ChatViewHolder(view);
     }
 
+    // Binds data to the ViewHolder
     @Override
     public void onBindViewHolder(@NonNull ChatViewHolder holder, int position) {
         ChatOrder chatOrder = chatOrders.get(position);
         holder.bind(chatOrder, onChatSelectedListener);
     }
 
+    // Returns the total number of chat orders
     @Override
     public int getItemCount() {
         return chatOrders.size();
     }
 
+    // ViewHolder for displaying a chat order
     class ChatViewHolder extends RecyclerView.ViewHolder {
         private ImageView orderImageView;
         private TextView orderTitleTextView;
@@ -66,6 +73,7 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.ChatVi
         private TextView lastMessageTimeTextView;
         private TextView unreadCountTextView;
 
+        // Initializes the ViewHolder
         public ChatViewHolder(@NonNull View itemView) {
             super(itemView);
             orderImageView = itemView.findViewById(R.id.orderImageView);
@@ -75,8 +83,8 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.ChatVi
             unreadCountTextView = itemView.findViewById(R.id.unreadCountTextView);
         }
 
+        // Binds data to the chat order item
         public void bind(ChatOrder chatOrder, OnChatSelectedListener listener) {
-
             // Fetch titleOfOrder and location from Firestore
             DocumentReference orderRef = db.collection("orders").document(chatOrder.getOrderId());
             orderRef.get().addOnSuccessListener(documentSnapshot -> {
@@ -93,7 +101,6 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.ChatVi
                             .diskCacheStrategy(DiskCacheStrategy.ALL)
                             .override(100, 100) // Adjust according to your ImageView size
                             .into(orderImageView);
-
 
                     orderTitleTextView.setText(titleOfOrder);
 
@@ -117,6 +124,7 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.ChatVi
             itemView.setOnClickListener(v -> listener.onChatSelected(chatOrder.getOrderId()));
         }
 
+        // Retrieves address from GeoPoint and sets it to the TextView
         private void getAddressFromGeoPoint(GeoPoint geoPoint, TextView textView) {
             Geocoder geocoder = new Geocoder(context, Locale.getDefault());
             try {
@@ -133,6 +141,7 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.ChatVi
             }
         }
 
+        // Sets the unread message count for the chat order
         private void setUnreadCount(String orderId, TextView unreadCountTextView) {
             db.collection("orders").document(orderId).collection("chat")
                     .whereNotEqualTo("readBy", currentUser.getEmail())
@@ -158,6 +167,7 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.ChatVi
         }
     }
 
+    // Interface for handling chat selection
     public interface OnChatSelectedListener {
         void onChatSelected(String orderId);
     }

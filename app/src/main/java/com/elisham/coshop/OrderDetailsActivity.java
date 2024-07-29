@@ -142,6 +142,7 @@ public class OrderDetailsActivity extends AppCompatActivity {
         initializeUI();
     }
 
+    // Initialize UI elements and set up listeners
     private void initializeUI() {
         // Initialize TextViews and ImageView
         descriptionTextView = findViewById(R.id.descriptionTextView);
@@ -367,6 +368,7 @@ public class OrderDetailsActivity extends AppCompatActivity {
         }
     }
 
+    // Show image alert dialog for tutorial
     private void showImageAlertDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
 
@@ -418,6 +420,7 @@ public class OrderDetailsActivity extends AppCompatActivity {
         alertDialog.show();
     }
 
+    // Add dots for the image pager
     private void addDots(LinearLayout dotsLayout, int size, int currentPosition) {
         dotsLayout.removeAllViews();
         TextView[] dots = new TextView[size];
@@ -438,7 +441,7 @@ public class OrderDetailsActivity extends AppCompatActivity {
         }
     }
 
-    // Inside OrderDetailsActivity.java
+    // Fetch order details and update UI
     private void fetchOrderDetails(String orderId, String currentUserEmail) {
         DocumentReference orderRef = db.collection("orders").document(orderId);
         orderRef.get().addOnSuccessListener(documentSnapshot -> {
@@ -612,6 +615,7 @@ public class OrderDetailsActivity extends AppCompatActivity {
         });
     }
 
+    // Share order details via dynamic link
     private void shareOrderDetails() {
         createDynamicLink(orderId, globalUserType, shortLink -> {
             if (shortLink != null) {
@@ -632,6 +636,7 @@ public class OrderDetailsActivity extends AppCompatActivity {
         });
     }
 
+    // Build share text with order details
     private String buildShareText(String shortLink) {
         String title = titleTextView.getText().toString();
         String category = categoryTextView.getText().toString();
@@ -647,18 +652,21 @@ public class OrderDetailsActivity extends AppCompatActivity {
                 "Join the order: " + shortLink;
     }
 
+    // Get timestamp from TextView tag
     private Timestamp getTimestampFromTextView(TextView textView) {
         // Fetch timestamp from TextView if it's stored in a tag or another way
         Object tag = textView.getTag();
         return tag instanceof Timestamp ? (Timestamp) tag : null;
     }
 
+    // Convert Timestamp to String
     private String convertTimestampToString(Timestamp timestamp) {
         SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault());
         Date date = timestamp.toDate();
         return sdf.format(date);
     }
 
+    // Create dynamic link for sharing
     private void createDynamicLink(String orderId, String userType, DynamicLinkCallback callback) {
         String domainUriPrefix = "https://coshopapp.page.link";
         String deepLink = "https://coshopapp.page.link/order?orderId=" + orderId + "&userType=" + userType;
@@ -679,10 +687,12 @@ public class OrderDetailsActivity extends AppCompatActivity {
                 });
     }
 
+    // Callback interface for dynamic link creation
     interface DynamicLinkCallback {
         void onLinkCreated(String shortLink);
     }
 
+    // Remove user from waiting list
     private void removeUserFromWaitingList() {
         DocumentReference orderRef = db.collection("orders").document(orderId);
         db.runTransaction(transaction -> {
@@ -704,6 +714,7 @@ public class OrderDetailsActivity extends AppCompatActivity {
         });
     }
 
+    // Fetch and show users in order
     private void fetchAndShowUsersInOrder(List<String> userEmails, String orderCreatorEmail, String currentUserEmail) {
         // Reorder list current user first, then order creator, then others
         List<String> reorderedList = getReorderedList(userEmails, orderCreatorEmail, currentUserEmail);
@@ -774,6 +785,7 @@ public class OrderDetailsActivity extends AppCompatActivity {
         return reorderedList;
     }
 
+    // Add user to waiting list
     private void addUserToWaitingList() {
         DocumentReference orderRef = db.collection("orders").document(orderId);
         db.runTransaction(transaction -> {
@@ -799,6 +811,7 @@ public class OrderDetailsActivity extends AppCompatActivity {
         });
     }
 
+    // Remove user from order list and update order info
     private Task<Void> removeUserFromOrderList(String orderId, String userEmail) {
         DocumentReference orderRef = db.collection("orders").document(orderId);
 
@@ -846,6 +859,7 @@ public class OrderDetailsActivity extends AppCompatActivity {
         });
     }
 
+    // Update order info after removal
     private Task<Void> updateOrderInfoAfterRemoval(String orderId, String userEmail) {
         DocumentReference orderRef = db.collection("orders").document(orderId);
 
@@ -873,6 +887,7 @@ public class OrderDetailsActivity extends AppCompatActivity {
         });
     }
 
+    // Check and delete order chat if needed
     private Task<Void> checkAndDeleteOrderChatIfNeeded(String orderId) {
         if (orderDeleted) {
             return deleteOrderChat(orderId);
@@ -881,6 +896,7 @@ public class OrderDetailsActivity extends AppCompatActivity {
         }
     }
 
+    // Delete order chat
     private Task<Void> deleteOrderChat(String orderId) {
         DocumentReference orderRef = db.collection("orders").document(orderId);
 
@@ -898,6 +914,7 @@ public class OrderDetailsActivity extends AppCompatActivity {
         });
     }
 
+    // Remove user from order
     private void removeUserFromOrder() {
         String userEmail = mAuth.getCurrentUser().getEmail();
         removeUserFromOrderList(orderId, userEmail)
@@ -932,6 +949,7 @@ public class OrderDetailsActivity extends AppCompatActivity {
                 });
     }
 
+    // Show users in order
     private void showUsersInOrder(List<UserDetail> userDetailList) {
         userListLayout.removeAllViews();
         int displayCount = showAllUsers ? userDetailList.size() : Math.min(userDetailList.size(), 3);
@@ -960,6 +978,7 @@ public class OrderDetailsActivity extends AppCompatActivity {
         progressDialog.dismiss();
     }
 
+    // User detail class
     private static class UserDetail {
         String email;
         String firstName;
@@ -980,6 +999,7 @@ public class OrderDetailsActivity extends AppCompatActivity {
         }
     }
 
+    // Add user to layout
     private void addUserToLayout(String displayedEmail, String userName, String userRating, String profilePicUrl, boolean isOrderCreator, boolean isCurrentUser) {
         View userItemView = getLayoutInflater().inflate(R.layout.user_item, userListLayout, false);
 
@@ -1045,6 +1065,7 @@ public class OrderDetailsActivity extends AppCompatActivity {
         userListLayout.addView(userItemView);
     }
 
+      // Show cart dialog with items
     private void showCartDialog() {
         Dialog dialog = new Dialog(this);
         dialog.setContentView(R.layout.dialog_cart);
@@ -1159,6 +1180,7 @@ public class OrderDetailsActivity extends AppCompatActivity {
                 .addOnFailureListener(e -> Log.e("OrderDetailsActivity", "Error removing item from cart", e));
     }
 
+   // Show add to cart dialog
     private void showAddToCartDialog(String userEmail, String sharedLink) {
         Dialog dialog = new Dialog(this);
         dialog.setContentView(R.layout.dialog_add_to_cart);
@@ -1254,6 +1276,8 @@ public class OrderDetailsActivity extends AppCompatActivity {
         dialog.show();
     }
 
+
+     // Add item layout for cart
     private void addItemLayout(LinearLayout container, String sharedLink) {
         View itemLayout = getLayoutInflater().inflate(R.layout.item_cart_add, container, false);
         ImageView deleteItemIcon = itemLayout.findViewById(R.id.deleteItemIcon);
@@ -1270,6 +1294,7 @@ public class OrderDetailsActivity extends AppCompatActivity {
         container.addView(itemLayout);
     }
 
+      // Add item to cart in Firestore
     private void addItemToCart(String userEmail, String itemText, String itemPrice) {
         DocumentReference orderRef = db.collection("orders").document(orderId);
 
@@ -1292,6 +1317,7 @@ public class OrderDetailsActivity extends AppCompatActivity {
                 .addOnFailureListener(e -> Log.e("OrderDetailsActivity", "Error adding item to cart", e));
     }
 
+    // Show rating dialog
     private void showRatingDialog(String email) {
         Dialog dialog = new Dialog(this);
         dialog.setContentView(R.layout.dialog_rate_user);
@@ -1346,6 +1372,7 @@ public class OrderDetailsActivity extends AppCompatActivity {
         dialog.show();
     }
 
+    // Show report dialog
     private void showReportDialog(String reportedEmail) {
         Dialog dialog = new Dialog(this);
         dialog.setContentView(R.layout.dialog_report_user);
@@ -1412,6 +1439,7 @@ public class OrderDetailsActivity extends AppCompatActivity {
         dialog.show();
     }
 
+    // Submit user report
     private void submitReport(String reportedUserEmail, String orderID, String reason, String details) {
         if (currentUser != null) {
             String reporterEmail = email;
@@ -1479,6 +1507,7 @@ public class OrderDetailsActivity extends AppCompatActivity {
         }
     }
 
+    // Check and block user if report count exceeds limit
     private void checkAndBlockUser(String userEmail, int reportCount) {
         if (reportCount == 5) {
             DocumentReference userRef = db.collection("users").document(userEmail);
@@ -1494,6 +1523,7 @@ public class OrderDetailsActivity extends AppCompatActivity {
         }
     }
 
+    // Show alert dialog with message
     private void showAlertDialog(String message) {
         new AlertDialog.Builder(this)
                 .setMessage(message)
@@ -1504,6 +1534,7 @@ public class OrderDetailsActivity extends AppCompatActivity {
                 .show();
     }
 
+    // Update star UI for rating dialog
     private void updateStarUI(ImageView[] stars, int rating) {
         for (int i = 0; i < stars.length; i++) {
             if (i < rating) {
@@ -1514,6 +1545,7 @@ public class OrderDetailsActivity extends AppCompatActivity {
         }
     }
 
+    // Update user rating in Firestore
     private void updateRating(String email, String order, int newRating) {
         DocumentReference userRef = db.collection("users").document(email);
 
@@ -1555,6 +1587,7 @@ public class OrderDetailsActivity extends AppCompatActivity {
         });
     }
 
+    // Get address from latitude and longitude
     private String getAddressFromLatLng(double latitude, double longitude) {
         try {
             List<Address> addresses = geocoder.getFromLocation(latitude, longitude, 1);
@@ -1568,6 +1601,7 @@ public class OrderDetailsActivity extends AppCompatActivity {
         return "N/A";
     }
 
+    // Fetch user details and update group info
     private void fetchUserDetails(String userEmail, String formattedOpenOrderTime) {
         DocumentReference userRef = db.collection("users").document(userEmail);
         userRef.get().addOnSuccessListener(documentSnapshot -> {
@@ -1599,6 +1633,7 @@ public class OrderDetailsActivity extends AppCompatActivity {
         });
     }
 
+    // Update timer text views
     private void updateTimerTextViews(LinearLayout daysContainer, TextView daysTextView, TextView colon1, LinearLayout hoursContainer, TextView hoursTextView, TextView colon2, LinearLayout minutesContainer, TextView minutesTextView, TextView colon3, LinearLayout secondsContainer, TextView secondsTextView, long millisUntilFinished) {
         long seconds = millisUntilFinished / 1000;
         long minutes = seconds / 60;
@@ -1630,6 +1665,7 @@ public class OrderDetailsActivity extends AppCompatActivity {
         }
     }
 
+    // Start countdown timer
     private void startCountdownTimer(Timestamp timestamp) {
         LinearLayout timerContainer = findViewById(R.id.timerContainer);
         LinearLayout daysContainer = findViewById(R.id.daysContainer);
@@ -1678,6 +1714,7 @@ public class OrderDetailsActivity extends AppCompatActivity {
         }
     }
 
+    // Check if user is in list
     private void checkUserInList() {
         DocumentReference orderRef = db.collection("orders").document(orderId);
         orderRef.get().addOnSuccessListener(documentSnapshot -> {
@@ -1696,6 +1733,7 @@ public class OrderDetailsActivity extends AppCompatActivity {
                 Log.e("OrderDetailsActivity", "Error checking user in list", e));
     }
 
+    // Add user to order
     private void addUserToOrder() {
         DocumentReference orderRef = db.collection("orders").document(orderId);
         db.runTransaction(transaction -> {
@@ -1736,6 +1774,7 @@ public class OrderDetailsActivity extends AppCompatActivity {
         }
     }
 
+    // Save URL to Firestore
     private void saveUrl() {
         String url = urlEditText.getText().toString().trim();
         if (url.isEmpty()) {

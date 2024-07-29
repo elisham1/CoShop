@@ -15,7 +15,6 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -26,6 +25,7 @@ import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 
+// Handles email signup functionality
 public class EmailSignupActivity extends AppCompatActivity {
 
     private EditText emailEditText, passwordEditText, firstNameEditText, familyNameEditText, confirmPasswordEditText;
@@ -37,6 +37,7 @@ public class EmailSignupActivity extends AppCompatActivity {
     private LinearLayout passwordLayout, confirmPasswordLayout, emailLayout, firstNameLayout, familyNameLayout;
     private FirebaseAuth mAuth;
 
+    // Initializes the activity and its components
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -107,6 +108,7 @@ public class EmailSignupActivity extends AppCompatActivity {
         });
     }
 
+    // Adds text watchers to input fields
     private void addTextWatchers() {
         firstNameEditText.addTextChangedListener(new TextWatcher() {
             @Override
@@ -220,6 +222,7 @@ public class EmailSignupActivity extends AppCompatActivity {
         });
     }
 
+    // Toggles password visibility in the password and confirm password fields
     private void togglePassword() {
         togglePasswordVisibility.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -252,6 +255,7 @@ public class EmailSignupActivity extends AppCompatActivity {
         });
     }
 
+    // Handles user signup
     private void signUpUser() {
         String email = emailEditText.getText().toString().trim();
         String password = passwordEditText.getText().toString().trim();
@@ -320,6 +324,7 @@ public class EmailSignupActivity extends AppCompatActivity {
                 });
     }
 
+    // Sends a verification email to the user
     private void sendVerificationEmail() {
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         if (user != null) {
@@ -337,6 +342,7 @@ public class EmailSignupActivity extends AppCompatActivity {
         }
     }
 
+    // Shows a dialog informing the user that a verification email has been sent
     private void showVerificationDialog(String email, String firstName, String familyName) {
         AlertDialog.Builder builder = new AlertDialog.Builder(EmailSignupActivity.this);
         builder.setMessage("A verification email has been sent to " + email + ". Please verify your email before logging in.")
@@ -351,6 +357,7 @@ public class EmailSignupActivity extends AppCompatActivity {
         alert.show();
     }
 
+    // Navigates the user to the login activity
     private void navigateToLogin(String email, String firstName, String familyName) {
         Intent intent = new Intent(EmailSignupActivity.this, EmailLoginActivity.class);
         intent.putExtra("source", "EmailSignupActivity");
@@ -362,11 +369,13 @@ public class EmailSignupActivity extends AppCompatActivity {
         finish();
     }
 
+    // Handles signup failure
     private void handleSignUpFailure(Task<AuthResult> task) {
         Log.w("FirebaseAuth", "createUserWithEmail:failure", task.getException());
         showAlertDialog("Signup failed: " + task.getException().getMessage());
     }
 
+    // Shows an alert dialog with a given message
     private void showAlertDialog(String message) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setMessage(message)

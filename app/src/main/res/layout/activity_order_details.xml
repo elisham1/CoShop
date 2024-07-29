@@ -84,7 +84,7 @@
                     android:gravity="center" />
             </LinearLayout>
 
-            <!-- עיגול עם תמונת הקטגוריה -->
+            <!-- picture -->
             <com.elisham.coshop.CircularImageView
                 android:id="@+id/categoryImageView"
                 android:layout_width="136dp"
@@ -237,7 +237,7 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toEndOf="parent" />
 
-            <!-- שם הקטגוריה מתחת לתמונה -->
+            <!-- name category -->
             <TextView
                 android:id="@+id/categoryTextView"
                 style="@style/CustomTextViewStyle"
@@ -607,7 +607,7 @@
 
         <!-- Add views for each user dynamically -->
 
-        <!-- TextView שמוסתר -->
+        <!-- TextView  -->
         <TextView
             android:id="@+id/timeTextView"
             style="@style/CustomTextViewStyle"

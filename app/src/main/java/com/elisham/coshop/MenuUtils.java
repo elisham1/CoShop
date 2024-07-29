@@ -13,7 +13,6 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
 
-
 public class MenuUtils {
 
     private static FirebaseAuth mAuth;
@@ -29,9 +28,9 @@ public class MenuUtils {
         mAuth = FirebaseAuth.getInstance();
         currentUser = mAuth.getCurrentUser();
         this.userType = userType;
-
     }
 
+    // Opens the personal information update activity
     public void personalInfo() {
         Intent intent = new Intent(context, UpdateUserDetailsActivity.class);
         intent.putExtra("userType", userType);
@@ -39,6 +38,7 @@ public class MenuUtils {
         finishActivity();
     }
 
+    // Opens the user's orders activity
     public void myOrders() {
         Intent intent = new Intent(context, MyOrdersActivity.class);
         intent.putExtra("userType", userType);
@@ -46,6 +46,7 @@ public class MenuUtils {
         finishActivity();
     }
 
+    // Opens the about us activity
     public void aboutUs() {
         Intent intent = new Intent(context, AboutActivity.class);
         intent.putExtra("userType", userType);
@@ -53,6 +54,7 @@ public class MenuUtils {
         finishActivity();
     }
 
+    // Opens the contact us activity
     public void contactUs() {
         Intent intent = new Intent(context, ContactUsActivity.class);
         intent.putExtra("userType", userType);
@@ -60,6 +62,7 @@ public class MenuUtils {
         finishActivity();
     }
 
+    // Logs out the user
     public void logOut() {
         if (googleSignInAccount != null) {
             // Signed in with Google
@@ -82,6 +85,7 @@ public class MenuUtils {
         finishActivity();
     }
 
+    // Navigates to the home activity based on user type
     public void home() {
         Intent intent;
         if (userType.equals("Consumer")) {
@@ -94,11 +98,14 @@ public class MenuUtils {
         finishActivity();
     }
 
+    // Finishes the current activity if it's not HomePageActivity
     private void finishActivity() {
         if (context instanceof AppCompatActivity && !(context instanceof HomePageActivity)) {
             ((AppCompatActivity) context).finish();
         }
     }
+
+    // Opens the all chats activity
     public void allChats() {
         Intent intent = new Intent(context, AllChatOfUserActivity.class);
         intent.putExtra("userType", userType);
@@ -106,11 +113,11 @@ public class MenuUtils {
         finishActivity();
     }
 
-    public void chat_notification(){
+    // Opens the chat notifications activity
+    public void chat_notification() {
         Intent intent = new Intent(context, notificationActivity.class);
         intent.putExtra("userType", userType);
         context.startActivity(intent);
         finishActivity();
     }
-
 }

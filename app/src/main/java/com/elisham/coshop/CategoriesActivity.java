@@ -32,6 +32,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+// Handles the categories selection and updates for the user
 public class CategoriesActivity extends AppCompatActivity {
 
     private FirebaseFirestore db;
@@ -45,6 +46,7 @@ public class CategoriesActivity extends AppCompatActivity {
     private String globalUserType;
     private ProgressDialog progressDialog;
 
+    // Initializes the activity, sets the theme based on user type, and handles signup methods
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -76,7 +78,7 @@ public class CategoriesActivity extends AppCompatActivity {
         isCategoriesUpdate = intent.getBooleanExtra("categories_update", false);
 
         if (isGoogleSignUp) {
-            Toast.makeText(CategoriesActivity.this, "google signup", Toast.LENGTH_SHORT).show();
+            Log.d("CategoriesActivity", "google signup");
             email = currentUser.getEmail();
             fullName = currentUser.getDisplayName();
             if (fullName != null) {
@@ -93,7 +95,7 @@ public class CategoriesActivity extends AppCompatActivity {
             displayCategories();
         }
         else if (isEmailSignUp) {
-            Toast.makeText(CategoriesActivity.this, "email signup", Toast.LENGTH_SHORT).show();
+            Log.d("CategoriesActivity", "email signup");
             email = intent.getStringExtra("email");
             firstName = intent.getStringExtra("firstName");
             familyName = intent.getStringExtra("familyName");
@@ -103,7 +105,7 @@ public class CategoriesActivity extends AppCompatActivity {
         else if (isCategoriesUpdate) {
             Log.d("CategoriesActivity", "category update");
             progressDialog.show();
-            Toast.makeText(CategoriesActivity.this, "update categories", Toast.LENGTH_SHORT).show();
+            Log.d("CategoriesActivity", "update categories");
             email = currentUser.getEmail();
             db.collection("users").document(email).get()
                     .addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
@@ -136,12 +138,14 @@ public class CategoriesActivity extends AppCompatActivity {
         }
     }
 
+    // Updates the greeting message with the user's name
     private void updateHelloUser() {
         String helloUser = "Hello, " + firstName;
         TextView userName = findViewById(R.id.userName);
         userName.setText(helloUser);
     }
 
+    // Displays the categories for the user to select from
     public void displayCategories() {
         db.collection("categories").document("jQ4hXL6kr1AbKwPvEdXl")
                 .get()
@@ -210,6 +214,7 @@ public class CategoriesActivity extends AppCompatActivity {
                 });
     }
 
+    // Handles category image click event
     public void onCategoryImageClick(View categoryView, TextView textView) {
         String category = (String) categoryView.getTag();
         if (selectedCategories.contains(category)) {
@@ -226,6 +231,7 @@ public class CategoriesActivity extends AppCompatActivity {
         }
     }
 
+    // Handles the done button click event and updates user details or navigates to UserDetailsActivity
     public void doneCategory(View v) {
         if (selectedCategories.isEmpty()) {
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
@@ -245,7 +251,6 @@ public class CategoriesActivity extends AppCompatActivity {
                     .addOnSuccessListener(new OnSuccessListener<Void>() {
                         @Override
                         public void onSuccess(Void aVoid) {
-                            Toast.makeText(CategoriesActivity.this, "User details updated successfully", Toast.LENGTH_SHORT).show();
                             Log.d("CategoriesActivity", "User details updated.");
                             Intent toy = new Intent(CategoriesActivity.this, UpdateUserDetailsActivity.class);
                             toy.putExtra("userType", globalUserType);
@@ -256,7 +261,6 @@ public class CategoriesActivity extends AppCompatActivity {
                     .addOnFailureListener(new OnFailureListener() {
                         @Override
                         public void onFailure(@NonNull Exception e) {
-                            Toast.makeText(CategoriesActivity.this, "Failed to update user details", Toast.LENGTH_SHORT).show();
                             Log.e("CategoriesActivity", "Error updating user details", e);
                         }
                     });

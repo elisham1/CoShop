@@ -63,11 +63,9 @@ public class HomePageActivity extends AppCompatActivity {
 
     private FirebaseUser currentUser;
     private ActivityResultLauncher<String> requestPermissionLauncher;
-
     private Boolean clickOnStar = false;
     private List<OrderData> orderDataList = new ArrayList<>();
     private List<String> displayedOrderIds;
-
     private FirebaseFirestore db;
     private LinearLayout ordersContainer;
     private Geocoder geocoder;
@@ -88,8 +86,6 @@ public class HomePageActivity extends AppCompatActivity {
         requestNotificationPermission();
         createNotificationChannel();
 
-
-
         // Set the theme based on the user type
         Intent intent = getIntent();
         globalUserType = intent.getStringExtra("userType");
@@ -104,6 +100,7 @@ public class HomePageActivity extends AppCompatActivity {
         initializeUI();
     }
 
+    // Shows explanations if needed
     private void showExplanationsIfNeeded() {
         SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
         boolean firstTime = prefs.getBoolean(KEY_FIRST_TIME, true);
@@ -125,7 +122,6 @@ public class HomePageActivity extends AppCompatActivity {
             btnDismiss.setOnClickListener(v -> {
                 // Dismiss the explanations
                 explanationLayout.setVisibility(View.GONE);
-
                 // Update the shared preferences to mark that the user has seen the explanations
                 SharedPreferences.Editor editor = prefs.edit();
                 editor.putBoolean(KEY_FIRST_TIME, false);
@@ -137,6 +133,7 @@ public class HomePageActivity extends AppCompatActivity {
         }
     }
 
+    // Shows the next explanation step
     private void showNextExplanationStep() {
         ImageView arrowToPlus = explanationLayout.findViewById(R.id.arrow_to_plus);
         TextView textPlus = explanationLayout.findViewById(R.id.text_plus);
@@ -181,6 +178,7 @@ public class HomePageActivity extends AppCompatActivity {
         }
     }
 
+    // Initializes the UI components
     private void initializeUI() {
         if (currentUser != null) {
             userEmail = currentUser.getEmail();
@@ -250,10 +248,10 @@ public class HomePageActivity extends AppCompatActivity {
                                     // Call the new function with the user's location
                                     calculateDisplayedOrdersRecommendationRatings(currentUser, userLocation);
                                 } else {
-                                    Toast.makeText(this, "User location not found", Toast.LENGTH_SHORT).show();
+                                    Log.d(this.getLocalClassName(), "User location not found");
                                 }
                             } else {
-                                Toast.makeText(this, "Failed to get user location", Toast.LENGTH_SHORT).show();
+                                Log.d(this.getLocalClassName(), "Failed to get user location");
                             }
                         });
             } else {
@@ -292,11 +290,12 @@ public class HomePageActivity extends AppCompatActivity {
         showExplanationsIfNeeded();
     }
 
+    // Gets user location and shows filtered order IDs
     private void getUserLocationAndShowFilteredOrderIds(String filteredOrderIds) {
         if (currentUser != null) {
             userEmail = currentUser.getEmail();
         } else {
-            Toast.makeText(this, "User not logged in", Toast.LENGTH_SHORT).show();
+            Log.d(this.getLocalClassName(), "User not logged in");
             return;
         }
 
@@ -312,6 +311,7 @@ public class HomePageActivity extends AppCompatActivity {
                 });
     }
 
+    // Shows filtered order IDs
     private void showFilteredOrderIds(String filteredOrderIds, GeoPoint userLocation) {
         // Clear any existing orders
         ordersContainer.removeAllViews();
@@ -339,6 +339,7 @@ public class HomePageActivity extends AppCompatActivity {
         }
     }
 
+    // Shows filtered order IDs without user location
     private void showFilteredOrderIds(String filteredOrderIds) {
         // Clear any existing orders
         ordersContainer.removeAllViews();
@@ -368,6 +369,7 @@ public class HomePageActivity extends AppCompatActivity {
         }
     }
 
+    // Fetches all orders
     private void fetchAllOrders(GeoPoint userLocation) {
         CollectionReference ordersRef = db.collection("orders");
         ordersRef.get().addOnCompleteListener(task -> {
@@ -434,6 +436,7 @@ public class HomePageActivity extends AppCompatActivity {
         }
     }
 
+    // Calculates and displays ratings
     private void calculateAndDisplayRatings(String orderId, String titleOfOrder, String location,
                                             long numberOfPeopleInOrder, long maxPeople, String categorie,
                                             float distance, Timestamp timestamp) {
@@ -480,6 +483,7 @@ public class HomePageActivity extends AppCompatActivity {
         });
     }
 
+    // Calculates displayed orders recommendation ratings
     private void calculateDisplayedOrdersRecommendationRatings(FirebaseUser currentUser, GeoPoint userLocation) {
         ordersContainer.removeAllViews();
         getUserPreferredCategories(currentUser, userPreferredCategories -> {
@@ -555,6 +559,7 @@ public class HomePageActivity extends AppCompatActivity {
         });
     }
 
+    // Finds OrderData by order ID
     private OrderData findOrderDataById(String orderId) {
         for (OrderData orderData : orderDataList) {
             if (orderData.orderId.equals(orderId)) {
@@ -564,6 +569,7 @@ public class HomePageActivity extends AppCompatActivity {
         return null;
     }
 
+    // Updates rating order in Firestore
     private void updateRatingOrderInFirestore(String orderId, double averageRating) {
         db.collection("orders").document(orderId)
                 .update("ratingOrder", averageRating)
@@ -571,6 +577,7 @@ public class HomePageActivity extends AppCompatActivity {
                 .addOnFailureListener(e -> Log.w("Firestore", "Error updating rating order", e));
     }
 
+    // Calculates user rating
     private Double calculateUserRating(DocumentSnapshot userDoc) {
         List<Map<String, Object>> userRatings = (List<Map<String, Object>>) userDoc.get("ratings");
         if (userRatings == null || userRatings.isEmpty()) {
@@ -588,6 +595,7 @@ public class HomePageActivity extends AppCompatActivity {
         return totalRating / userRatings.size();
     }
 
+    // Shows filtered orders
     private void showFilteredOrders(String filteredOrders) {
         ordersContainer.removeAllViews();
 
@@ -611,6 +619,7 @@ public class HomePageActivity extends AppCompatActivity {
         }
     }
 
+    // Shows no orders found message
     private void showNoOrdersFoundMessage() {
         ordersContainer.removeAllViews();
         TextView noOrdersTextView = new TextView(this);
@@ -620,6 +629,7 @@ public class HomePageActivity extends AppCompatActivity {
         ordersContainer.addView(noOrdersTextView);
     }
 
+    // Calculates distance between two GeoPoints
     private float calculateDistance(GeoPoint userLocation, GeoPoint orderLocation) {
         if (userLocation == null || orderLocation == null) return 0;
 
@@ -629,17 +639,19 @@ public class HomePageActivity extends AppCompatActivity {
         return Math.abs(results[0] / 1000); // Distance in kilometers
     }
 
+    // Gets the user location
     private GeoPoint getUserLocation() {
         // Add code to get the current user's location from Firebase
         // For example, you can return a default location if the user's location is not defined
         return new GeoPoint(0, 0); // Replace with actual code
     }
 
+    // Gets user email and fetches orders
     private void getUserEmailAndFetchOrders() {
         if (currentUser != null) {
             userEmail = currentUser.getEmail();
         } else {
-            Toast.makeText(this, "User not logged in", Toast.LENGTH_SHORT).show();
+            Log.d(this.getLocalClassName(), "User not logged in");
             return;
         }
         // Clear any existing orders
@@ -657,6 +669,7 @@ public class HomePageActivity extends AppCompatActivity {
                 });
     }
 
+    // Gets address from latitude and longitude
     private String getAddressFromLatLng(double latitude, double longitude) {
         try {
             List<Address> addresses = geocoder.getFromLocation(latitude, longitude, 1);
@@ -670,6 +683,7 @@ public class HomePageActivity extends AppCompatActivity {
         return "N/A";
     }
 
+    // Adds order to layout
     private void addOrderToLayout(String orderId, String titleOfOrder, String location,
                                   long numberOfPeopleInOrder, long maxPeople, String categorie,
                                   double distance, Timestamp timestamp, double averageRating) {
@@ -773,6 +787,7 @@ public class HomePageActivity extends AppCompatActivity {
         ordersContainer.addView(orderLayout);
     }
 
+    // Adds scores to layout
     private void addScoresToLayout(View scoresLayout, String orderId) {
         // Set scores layout visibility to visible
         scoresLayout.setVisibility(View.VISIBLE);
@@ -797,11 +812,12 @@ public class HomePageActivity extends AppCompatActivity {
         }
     }
 
+    // Formats score
     private String formatScore(double score) {
-        // עיגול המספר לשני מספרים אחרי הנקודה
+        // Round the number to two decimal places
         score = Math.round(score * 10) / 10.0;
 
-        // בדיקה אם המספר הוא שלם
+        // Check if the number is an integer
         if (score % 1 == 0) {
             return String.format("%d%%", (int) score);
         } else {
@@ -809,7 +825,7 @@ public class HomePageActivity extends AppCompatActivity {
         }
     }
 
-
+    // Updates timer text views
     private void updateTimerTextViews(View timerView, long millisUntilFinished) {
         TextView daysTextView = timerView.findViewById(R.id.daysTextView);
         TextView hoursTextView = timerView.findViewById(R.id.hoursTextView);
@@ -850,6 +866,7 @@ public class HomePageActivity extends AppCompatActivity {
         }
     }
 
+    // Converts dp to pixels
     private int dpToPx(int dp) {
         return (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, dp, getResources().getDisplayMetrics());
     }
@@ -887,7 +904,6 @@ public class HomePageActivity extends AppCompatActivity {
                 return true;
             case R.id.home:
                 initializeUI();
-//                menuUtils.home();
                 return true;
             case R.id.chat_icon:
                 menuUtils.allChats();
@@ -900,18 +916,21 @@ public class HomePageActivity extends AppCompatActivity {
         }
     }
 
+    // Navigates to the filter activity
     public void gotofilter(View v) {
         Intent toy = new Intent(HomePageActivity.this, FilterActivity.class);
         toy.putExtra("userType", globalUserType);
         startActivity(toy);
     }
 
+    // Navigates to the new order activity
     public void gotoneworder(View v) {
         Intent toy = new Intent(HomePageActivity.this, OpenNewOrderActivity.class);
         toy.putExtra("userType", globalUserType);
         startActivity(toy);
     }
 
+    // Calculates category score
     private double calculateCategoryScore(String orderCategory, List<String> userPreferredCategories) {
         if (userPreferredCategories != null && userPreferredCategories.contains(orderCategory)) {
             return (100 / 3);
@@ -919,6 +938,7 @@ public class HomePageActivity extends AppCompatActivity {
         return 0;
     }
 
+    // Gets user preferred categories
     private void getUserPreferredCategories(FirebaseUser currentUser, OnCategoriesRetrievedListener listener) {
         if (currentUser != null) {
             String userEmail = currentUser.getEmail();
@@ -939,6 +959,7 @@ public class HomePageActivity extends AppCompatActivity {
         void onCategoriesRetrieved(List<String> categories);
     }
 
+    // Calculates rating score
     private double calculateRatingScore(Double rating) {
         if (rating == null) {
             return 0;
@@ -946,6 +967,7 @@ public class HomePageActivity extends AppCompatActivity {
         return Math.round((rating / 5.0) * (100 / 3) * 2) / 2.0;
     }
 
+    // Calculates distance score
     private float calculateDistanceScore(float distanceInKm, double minDistance, double maxDistance) {
         distanceInKm = Math.round(distanceInKm * 100) / 100.0f;
         Log.d("RecommendationRating", "Distance: " + distanceInKm);
@@ -956,12 +978,14 @@ public class HomePageActivity extends AppCompatActivity {
             return 0;
         }
     }
+
+    // Requests notification permission
     private void requestNotificationPermission() {
         ActivityResultLauncher<String> requestPermissionLauncher = registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
             if (isGranted) {
                 Log.d("Permission", "Notification permission granted");
             } else {
-                Toast.makeText(this, "Notification permission is required for this app", Toast.LENGTH_SHORT).show();
+                Log.d(this.getLocalClassName(), "Notification permission is required for this app");
             }
         });
 
@@ -973,6 +997,7 @@ public class HomePageActivity extends AppCompatActivity {
         }
     }
 
+    // Creates notification channel
     private void createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             CharSequence name = "example_channel";
@@ -985,6 +1010,7 @@ public class HomePageActivity extends AppCompatActivity {
         }
     }
 
+    // Adds stars to layout
     private void addStarsToLayout(LinearLayout layout, double rating) {
         int fullStars = (int) rating;
         boolean hasHalfStar = rating - fullStars > 0;

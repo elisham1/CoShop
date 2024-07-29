@@ -15,10 +15,12 @@ import androidx.fragment.app.DialogFragment;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 
+// Displays an image in a dialog fragment.
 public class ImageDialogFragment extends DialogFragment {
 
     private static final String ARG_IMAGE_URL = "image_url";
 
+    // Creates a new instance of ImageDialogFragment with the given image URL.
     public static ImageDialogFragment newInstance(String imageUrl) {
         ImageDialogFragment fragment = new ImageDialogFragment();
         Bundle args = new Bundle();
@@ -73,6 +75,7 @@ public class ImageDialogFragment extends DialogFragment {
         updateDialogSize(dialogImageView);
     }
 
+    // Updates the dialog size to match the parent dimensions.
     private void updateDialogSize(View dialogImageView) {
         ViewGroup.LayoutParams params = dialogImageView.getLayoutParams();
         params.width = ViewGroup.LayoutParams.MATCH_PARENT;
