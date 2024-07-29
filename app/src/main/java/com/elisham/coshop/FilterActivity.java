@@ -64,11 +64,12 @@ public class FilterActivity extends AppCompatActivity {
     private ImageButton editAddressButton;
     private EditText editTextURL;
     private ImageButton clearURLButton;
+    private TextView dateError, noFiltersError;
+    private LinearLayout timeLayout, dateLayout;
     private String lastURL, globalUserType;
     private MenuUtils menuUtils;
     private boolean isDatePickerDialogOpen = false;
     private boolean isTimePickerDialogOpen = false;
-
     private boolean isCategoryListVisible = false;
 
     // Initializes the activity and its components
@@ -98,6 +99,10 @@ public class FilterActivity extends AppCompatActivity {
         unlimitEditText = findViewById(R.id.unlimit_value);
         checkBoxLimit = findViewById(R.id.checkBoxLimit);
         checkBoxUnlimited = findViewById(R.id.checkBoxUnlimited);
+        dateError = findViewById(R.id.dateError);
+        noFiltersError = findViewById(R.id.noFiltersError);
+        timeLayout = findViewById(R.id.time_container);
+        dateLayout = findViewById(R.id.date_container);
 
         ImageButton plusIcon = findViewById(R.id.plus_icon);
         plusIcon.setOnClickListener(this::toggleCategoryVisibility);
@@ -313,15 +318,27 @@ public class FilterActivity extends AppCompatActivity {
         boolean filterByPeopleLimit = checkBoxLimit.isChecked();
         boolean filterByUnlimitedPeople = checkBoxUnlimited.isChecked();
         boolean filterByTime = selectedTime != null && selectedDate != null;
+        boolean noFiltersChosen = !filterByLocation && !filterByURLOrString &&
+                !filterByCategory && !filterByConsumer && !filterBySupplied &&
+                !filterByPeopleLimit && !filterByUnlimitedPeople && !filterByTime;
+
         int peopleLimit = 0;
 
         if (selectedDate != null && selectedTime == null) {
-            Log.d(this.getLocalClassName(), "You need to select a time");
+            dateError.setVisibility(View.VISIBLE);
+            dateError.setText("You need to select a time");
+            timeLayout.setBackgroundResource(R.drawable.red_border);
+            dateLayout.setBackgroundResource(R.drawable.border);
+            noFiltersError.setVisibility(View.GONE);
             return;
         }
 
         if (selectedTime != null && selectedDate == null) {
-            Log.d(this.getLocalClassName(), "You need to select a date");
+            dateError.setVisibility(View.VISIBLE);
+            dateError.setText("You need to select a date");
+            timeLayout.setBackgroundResource(R.drawable.border);
+            dateLayout.setBackgroundResource(R.drawable.red_border);
+            noFiltersError.setVisibility(View.GONE);
             return;
         }
 
@@ -334,9 +351,11 @@ public class FilterActivity extends AppCompatActivity {
             }
         }
 
-        if (!filterByLocation && !filterByURLOrString && !filterByCategory && !filterByConsumer && !filterBySupplied && !filterByPeopleLimit && !filterByUnlimitedPeople && !filterByTime) {
-            Log.d(this.getLocalClassName(), "Select minimum in one filter");
+        if (noFiltersChosen) {
+            noFiltersError.setVisibility(View.VISIBLE);
             return;
+        } else {
+            noFiltersError.setVisibility(View.GONE);
         }
 
         if (selectedDate != null && selectedTime != null) {
@@ -348,6 +367,10 @@ public class FilterActivity extends AppCompatActivity {
             selectedDateTime.set(Calendar.MINUTE, selectedTime.get(Calendar.MINUTE));
 
             if (selectedDateTime.before(Calendar.getInstance())) {
+                dateError.setVisibility(View.VISIBLE);
+                dateError.setText("The selected date and time have already passed");
+                timeLayout.setBackgroundResource(R.drawable.red_border);
+                dateLayout.setBackgroundResource(R.drawable.red_border);
                 Log.d(this.getLocalClassName(), "The selected date and time have already passed");
                 return;
             }
@@ -425,6 +448,12 @@ public class FilterActivity extends AppCompatActivity {
 
         selectedDate = null;
         selectedTime = null;
+
+        //reset errors
+        noFiltersError.setVisibility(View.GONE);
+        dateError.setVisibility(View.GONE);
+        timeLayout.setBackgroundResource(R.drawable.border);
+        dateLayout.setBackgroundResource(R.drawable.border);
     }
 
     // Validates if a string is a valid URL
@@ -479,7 +508,7 @@ public class FilterActivity extends AppCompatActivity {
                     long numberOfPeopleInOrder = documentSnapshot.getLong("NumberOfPeopleInOrder");
                     long maxPeople = documentSnapshot.getLong("max_people");
 
-                    if (numberOfPeopleInOrder == maxPeople) continue; // Skip full orders
+//                    if (numberOfPeopleInOrder == maxPeople) continue; // Skip full orders
 
                     boolean matchesCategory = true;
                     if (filterByCategory) {
@@ -574,6 +603,7 @@ public class FilterActivity extends AppCompatActivity {
                     }
                 }
                 startActivity(intent);
+                finish();
             }
         });
     }
@@ -834,6 +864,8 @@ public class FilterActivity extends AppCompatActivity {
 
                         TextView dateText = findViewById(R.id.date_text);
                         dateText.setText(dateString);
+                        dateLayout.setBackgroundResource(R.drawable.border);
+                        dateError.setVisibility(View.GONE);
 
                         ImageButton dateIcon = findViewById(R.id.date_icon);
                         dateIcon.setImageResource(R.drawable.baseline_calendar_month_24);
@@ -880,6 +912,8 @@ public class FilterActivity extends AppCompatActivity {
 
                         TextView timeText = findViewById(R.id.time_text);
                         timeText.setText(timeString);
+                        timeLayout.setBackgroundResource(R.drawable.border);
+                        dateError.setVisibility(View.GONE);
 
                         ImageButton timeIcon = findViewById(R.id.time_icon);
                         timeIcon.setImageResource(R.drawable.ic_baseline_access_time_24);

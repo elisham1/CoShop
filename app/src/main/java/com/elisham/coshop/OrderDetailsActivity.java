@@ -1014,7 +1014,7 @@ public class OrderDetailsActivity extends AppCompatActivity {
         SpannableStringBuilder ssb = new SpannableStringBuilder(" " + " " + userRating + "/5");
 
         // Create an ImageSpan with the drawable
-        Drawable drawable = getResources().getDrawable(R.drawable.ic_rating_face);
+        Drawable drawable = getResources().getDrawable(R.drawable.ic_star);
         drawable.setBounds(0, 0, drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight());
         ImageSpan imageSpan = new ImageSpan(drawable, ImageSpan.ALIGN_CENTER);
         // Set the ImageSpan at the beginning of the SpannableString
