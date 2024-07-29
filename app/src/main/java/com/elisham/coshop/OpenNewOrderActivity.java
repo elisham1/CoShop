@@ -30,21 +30,15 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
-import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 import androidx.core.content.ContextCompat;
 import androidx.viewpager2.widget.ViewPager2;
 
-import com.android.volley.Request;
-import com.android.volley.RequestQueue;
-import com.android.volley.toolbox.JsonObjectRequest;
-import com.android.volley.toolbox.Volley;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.tasks.Task;
@@ -64,9 +58,6 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.GeoPoint;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -84,6 +75,8 @@ public class OpenNewOrderActivity extends AppCompatActivity {
     private EditText urlEditText;
     private EditText descriptionEditText;
     private EditText titleEditText;
+    private TextView allFieldsErrorText, titleErrorText, maxPeopleError, urlError, dateError;
+    private LinearLayout timeLayout, dateLayout, searchLayout, urlLayout;
     private TextView searchAddressText;
     private String lastAddress;
     private String getUserEmail;
@@ -144,6 +137,15 @@ public class OpenNewOrderActivity extends AppCompatActivity {
         searchAddressButton = findViewById(R.id.search_address_button);
         editAddressButton = findViewById(R.id.edit_address_button);
         maxPeopleEditText = findViewById(R.id.maxPeopleEditText);
+        allFieldsErrorText = findViewById(R.id.allFieldsErrorText);
+        timeLayout = findViewById(R.id.time_layout);
+        dateLayout = findViewById(R.id.date_layout);
+        searchLayout = findViewById(R.id.search_row);
+        titleErrorText = findViewById(R.id.titleErrorText);
+        maxPeopleError = findViewById(R.id.maxPeopleErrorText);
+        urlError = findViewById(R.id.urlErrorText);
+        urlLayout = findViewById(R.id.url_row);
+        dateError = findViewById(R.id.dateError);
 
         createNotificationChannel();
         requestNotificationPermission();
@@ -171,14 +173,19 @@ public class OpenNewOrderActivity extends AppCompatActivity {
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
 
             @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {}
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                if (s.length() > 25) {
+                    titleErrorText.setVisibility(View.VISIBLE);
+                    titleEditText.setBackgroundResource(R.drawable.red_border);
+                } else {
+                    titleErrorText.setVisibility(View.GONE);
+                    titleEditText.setBackgroundResource(R.drawable.border);
+                }
+            }
 
             @Override
             public void afterTextChanged(Editable s) {
-                if (s.length() > 25) {
-                    s.delete(25, s.length());
-                    Toast.makeText(OpenNewOrderActivity.this, "Title cannot exceed 25 characters", Toast.LENGTH_SHORT).show();
-                }
+
             }
         });
 
@@ -218,7 +225,7 @@ public class OpenNewOrderActivity extends AppCompatActivity {
         searchRow.setOnClickListener(v -> {
             Intent intentLocation = new Intent(OpenNewOrderActivity.this, LocationWindow.class);
             intentLocation.putExtra("userType", globalUserType);
-            intentLocation.putExtra("hideDistanceLayout", true); // העברת פרמטר להסתרת ה-KM
+            intentLocation.putExtra("hideDistanceLayout", true);
             if (lastAddress != null && !lastAddress.isEmpty()) {
                 intentLocation.putExtra("address", lastAddress);
             }
@@ -228,7 +235,7 @@ public class OpenNewOrderActivity extends AppCompatActivity {
         editAddressButton.setOnClickListener(v -> {
             Intent intentLocation = new Intent(OpenNewOrderActivity.this, LocationWindow.class);
             intentLocation.putExtra("userType", globalUserType);
-            intentLocation.putExtra("hideDistanceLayout", true); // העברת פרמטר להסתרת ה-KM
+            intentLocation.putExtra("hideDistanceLayout", true);
             if (lastAddress != null && !lastAddress.isEmpty()) {
                 intentLocation.putExtra("address", lastAddress);
             }
@@ -262,17 +269,21 @@ public class OpenNewOrderActivity extends AppCompatActivity {
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
 
             @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {}
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+            }
 
             @Override
             public void afterTextChanged(Editable s) {
                 String url = s.toString().trim();
                 if (url.isEmpty() || isValidUrl(url)) {
-                    urlEditText.setError(null); // אין שגיאה
-                    findViewById(R.id.submit_button).setEnabled(true); // לאפשר לחיצה על כפתור השליחה
+                    urlError.setVisibility(View.GONE);
+                    urlLayout.setBackgroundResource(R.drawable.border);
+                    urlEditText.setError(null);
+                    findViewById(R.id.submit_button).setEnabled(true);
                 } else {
-                    urlEditText.setError("Invalid URL"); // הצגת שגיאה
-                    findViewById(R.id.submit_button).setEnabled(false); // לא לאפשר לחיצה על כפתור השליחה
+                    urlLayout.setBackgroundResource(R.drawable.red_border);
+                    urlError.setVisibility(View.VISIBLE);
+                    findViewById(R.id.submit_button).setEnabled(false);
                 }
             }
         });
@@ -284,7 +295,7 @@ public class OpenNewOrderActivity extends AppCompatActivity {
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
 
-        String apiKey = "YOUR_API_KEY"; // החלף במפתח ה-API שלך
+        String apiKey = "YOUR_API_KEY";
 
         // Initialize Places
         Places.initialize(getApplicationContext(), apiKey);
@@ -372,7 +383,7 @@ public class OpenNewOrderActivity extends AppCompatActivity {
             if (isGranted) {
                 Log.d("Permission", "Notification permission granted");
             } else {
-                Toast.makeText(this, "Notification permission is required for this app", Toast.LENGTH_SHORT).show();
+                Log.d("Permission", "Notification permission denied");
             }
         });
 
@@ -403,7 +414,6 @@ public class OpenNewOrderActivity extends AppCompatActivity {
     private Task<Void> sendNotification(String title, String message, String orderId) {
         TaskCompletionSource<Void> taskCompletionSource = new TaskCompletionSource<>();
 
-        // שמור את האימייל של המשתמש הנוכחי
         FirebaseAuth mAuth = FirebaseAuth.getInstance();
         FirebaseUser currentUser = mAuth.getCurrentUser();
         String currentUserEmail = (currentUser != null) ? currentUser.getEmail() : "";
@@ -424,7 +434,6 @@ public class OpenNewOrderActivity extends AppCompatActivity {
 
                     NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this);
 
-                    // שליחת ההתראה רק אם המכשיר הנוכחי אינו המשתמש הנוכחי שיצר את ההזמנה
                     db.collection("orders").document(orderId).get().addOnSuccessListener(documentSnapshot -> {
                         if (documentSnapshot.exists()) {
                             String orderUserEmail = documentSnapshot.getString("user_email");
@@ -435,20 +444,17 @@ public class OpenNewOrderActivity extends AppCompatActivity {
                         }
                         taskCompletionSource.setResult(null);
                     }).addOnFailureListener(e -> {
-                        Toast.makeText(this, "Failed to get order details", Toast.LENGTH_SHORT).show();
+                        Log.w("Firestore", "Error getting order details", e);
                         taskCompletionSource.setException(e);
                     });
 
-                    // שמירת הקישור במסמך ההודעה בפיירבייס
                     saveNotificationToFirestore(orderId, shortLink, title, message);
                 } else {
-                    Toast.makeText(this, "Failed to create notification link", Toast.LENGTH_SHORT).show();
                     Log.d("Notification", "Failed to create notification link");
                     taskCompletionSource.setException(new Exception("Failed to create notification link"));
                 }
             });
         } else {
-            Toast.makeText(this, "Notification permission is required to send notifications", Toast.LENGTH_SHORT).show();
             Log.d("Notification Permission", "Notification permission is not granted");
             taskCompletionSource.setException(new Exception("Notification permission is not granted"));
         }
@@ -496,11 +502,9 @@ public class OpenNewOrderActivity extends AppCompatActivity {
 
     public void goToMyOrders(View v) {
         if (isSubmitting) {
-            // אם הכפתור כבר נלחץ וההזמנה בעיצומה, לא נעשה כלום
             return;
         }
 
-        // ננעל את הכפתור ונציג הודעת טעינה
         isSubmitting = true;
         ProgressDialog progressDialog = new ProgressDialog(this);
         progressDialog.setMessage("Loading...");
@@ -511,73 +515,85 @@ public class OpenNewOrderActivity extends AppCompatActivity {
         String description = descriptionEditText.getText().toString().trim();
         String title = titleEditText.getText().toString().trim();
         int maxPeople = maxPeople();
+        boolean isTitleEmpty = false, isCategoryEmpty = false, isLocationEmpty = false,
+                isDescriptionEmpty = false, isDateEmpty = false, isTimeEmpty = false,
+                isMaxPeopleNotValid = false, isUrlNotValid = false;
+
 
         if (url.isEmpty()) {
             url = "";
         } else if (!url.contains("://")) {
-            Toast.makeText(this, "Invalid URL. Please enter a valid URL", Toast.LENGTH_SHORT).show();
-            isSubmitting = false; // שחרור הכפתור אם יש שגיאה
-            progressDialog.dismiss();
-            return;
+            isUrlNotValid = true;
         }
 
         if (title.isEmpty()) {
-            Toast.makeText(this, "Title is required", Toast.LENGTH_SHORT).show();
-            isSubmitting = false; // שחרור הכפתור אם יש שגיאה
-            progressDialog.dismiss();
-            return;
+            isTitleEmpty = true;
         }
 
         if (saveNewCategorieName.isEmpty() || saveNewCategorieName.equals("Choose Categorie")) {
-            Toast.makeText(this, "Category is required", Toast.LENGTH_SHORT).show();
-            isSubmitting = false; // שחרור הכפתור אם יש שגיאה
-            progressDialog.dismiss();
-            return;
+            isCategoryEmpty = true;
+
         }
 
         if (lastLatitude == 0.0 && lastLongitude == 0.0) {
-            Toast.makeText(this, "Location is required", Toast.LENGTH_SHORT).show();
-            isSubmitting = false; // שחרור הכפתור אם יש שגיאה
-            progressDialog.dismiss();
-            return;
+            isLocationEmpty = true;
         }
 
         if (description.isEmpty()) {
-            Toast.makeText(this, "Description is required", Toast.LENGTH_SHORT).show();
-            isSubmitting = false; // שחרור הכפתור אם יש שגיאה
-            progressDialog.dismiss();
-            return;
+            isDescriptionEmpty = true;
         }
 
         if (selectedDate == null) {
-            Toast.makeText(this, "Date is required", Toast.LENGTH_SHORT).show();
-            isSubmitting = false; // שחרור הכפתור אם יש שגיאה
-            progressDialog.dismiss();
-            return;
+            isDateEmpty = true;
         }
 
         if (selectedTime == null) {
-            Toast.makeText(this, "Time is required", Toast.LENGTH_SHORT).show();
-            isSubmitting = false; // שחרור הכפתור אם יש שגיאה
-            progressDialog.dismiss();
-            return;
+            isTimeEmpty = true;
         }
 
         if (maxPeople == 0) {
-            Toast.makeText(this, "Maximum people is required it's can't be zero", Toast.LENGTH_SHORT).show();
-            isSubmitting = false; // שחרור הכפתור אם יש שגיאה
-            progressDialog.dismiss();
-            return;
+            isMaxPeopleNotValid = true;
         }
         if (maxPeople == 1) {
-            Toast.makeText(this, "Choose minimum two participants", Toast.LENGTH_SHORT).show();
-            isSubmitting = false; // שחרור הכפתור אם יש שגיאה
-            progressDialog.dismiss();
-            return;
+            isMaxPeopleNotValid = true;
         }
         if (maxPeople < 0) {
-            Toast.makeText(this, "You cannot choose a negative number", Toast.LENGTH_SHORT).show();
-            isSubmitting = false; // שחרור הכפתור אם יש שגיאה
+            isMaxPeopleNotValid = true;
+        }
+
+        if (isTitleEmpty || isCategoryEmpty || isLocationEmpty || isDescriptionEmpty
+                || isDateEmpty || isTimeEmpty || isMaxPeopleNotValid || isUrlNotValid)
+        {
+            allFieldsErrorText.setVisibility(View.VISIBLE);
+            if (isTitleEmpty) { titleEditText.setBackgroundResource(R.drawable.red_border); }
+            else { titleEditText.setBackgroundResource(R.drawable.border); }
+            if (isCategoryEmpty) { categorySpinner.setBackgroundResource(R.drawable.red_border); }
+            else { categorySpinner.setBackgroundResource(R.drawable.border); }
+            if (isLocationEmpty) { searchLayout.setBackgroundResource(R.drawable.red_border); }
+            else { searchLayout.setBackgroundResource(R.drawable.border); }
+            if (isDescriptionEmpty) { descriptionEditText.setBackgroundResource(R.drawable.red_border); }
+            else { descriptionEditText.setBackgroundResource(R.drawable.border); }
+            if (isDateEmpty) { dateLayout.setBackgroundResource(R.drawable.red_border); }
+            else { dateLayout.setBackgroundResource(R.drawable.border); }
+            if (isTimeEmpty) { timeLayout.setBackgroundResource(R.drawable.red_border); }
+            else { timeLayout.setBackgroundResource(R.drawable.border); }
+            if (isMaxPeopleNotValid) {
+                maxPeopleError.setVisibility(View.VISIBLE);
+                maxPeopleEditText.setBackgroundResource(R.drawable.red_border);
+            }
+            else {
+                maxPeopleError.setVisibility(View.GONE);
+                maxPeopleEditText.setBackgroundResource(R.drawable.border);
+            }
+            if (isUrlNotValid) {
+                urlError.setVisibility(View.VISIBLE);
+                urlLayout.setBackgroundResource(R.drawable.red_border);
+            }
+            else {
+                urlError.setVisibility(View.GONE);
+                urlLayout.setBackgroundResource(R.drawable.border);
+            }
+            isSubmitting = false;
             progressDialog.dismiss();
             return;
         }
@@ -595,22 +611,22 @@ public class OpenNewOrderActivity extends AppCompatActivity {
                                         Intent intent = new Intent(OpenNewOrderActivity.this, MyOrdersActivity.class);
                                         intent.putExtra("userType", globalUserType);
                                         startActivity(intent);
-                                        finish(); // סיום הפעילות הנוכחית כדי למנוע חזרה
+                                        finish();
                                     } else {
-                                        Toast.makeText(this, "Error in notification process", Toast.LENGTH_SHORT).show();
-                                        isSubmitting = false; // שחרור הכפתור אם יש שגיאה
+                                        Log.w("Notification", "Error sending notification", notificationSendTask.getException());
+                                        isSubmitting = false;
                                         progressDialog.dismiss();
                                     }
                                 });
                             } else {
-                                Toast.makeText(this, "Error in notification process", Toast.LENGTH_SHORT).show();
-                                isSubmitting = false; // שחרור הכפתור אם יש שגיאה
+                                Log.w("Notification", "Error checking and notifying users", notificationTask.getException());
+                                isSubmitting = false;
                                 progressDialog.dismiss();
                             }
                         });
             } else {
-                Toast.makeText(this, "Failed to save order", Toast.LENGTH_SHORT).show();
-                isSubmitting = false; // שחרור הכפתור אם יש שגיאה
+                Log.w("Firestore", "Error saving order", task.getException());
+                isSubmitting = false;
                 progressDialog.dismiss();
             }
         });
@@ -637,7 +653,7 @@ public class OpenNewOrderActivity extends AppCompatActivity {
         try {
             return Integer.parseInt(maxPeopleStr);
         } catch (NumberFormatException e) {
-            return 0; // Return 0 אם הטקסט שהוזן אינו מספר חוקי
+            return 0;
         }
     }
 
@@ -704,13 +720,11 @@ public class OpenNewOrderActivity extends AppCompatActivity {
                             String userEmail = userDocument.getString("email");
                             String userType = userDocument.getString("type of user");
 
-                            // בדיקה אם המשתמש הוא מסוג "Supplier"
                             if ("Supplier".equalsIgnoreCase(userType)) {
                                 continue;
                             }
 
                             if (userEmail.equals(getUserEmail)) {
-                                // אם זה המשתמש שיצר את ההזמנה, לא שולחים לו התראה
                                 continue;
                             }
                             String notificationMessage = "There is a new order in the field that interests you!";
@@ -785,11 +799,10 @@ public class OpenNewOrderActivity extends AppCompatActivity {
                             db.collection("categories").document("jQ4hXL6kr1AbKwPvEdXl")
                                     .update("categories", FieldValue.arrayUnion(saveNewCategorieName))
                                     .addOnSuccessListener(aVoid -> {
-                                        Toast.makeText(OpenNewOrderActivity.this, "New category added successfully", Toast.LENGTH_SHORT).show();
+                                        Log.d("Firestore", "Category added successfully");
                                     })
                                     .addOnFailureListener(e -> {
-                                        Log.e("Firestore", "Error adding category: " + e.getMessage());
-                                        Toast.makeText(OpenNewOrderActivity.this, "Failed to add category", Toast.LENGTH_SHORT).show();
+                                        Log.w("Firestore", "Error adding category", e);
                                     });
                         }
                     }
@@ -806,7 +819,7 @@ public class OpenNewOrderActivity extends AppCompatActivity {
         if (currentUser != null) {
             userEmail = currentUser.getEmail();
         } else {
-            Toast.makeText(this, "User not logged in", Toast.LENGTH_SHORT).show();
+            Log.d("OpenNewOrderActivity", "User not logged in");
             return Tasks.forException(new Exception("User not logged in"));
         }
 
@@ -818,7 +831,6 @@ public class OpenNewOrderActivity extends AppCompatActivity {
 
         TaskCompletionSource<String> taskCompletionSource = new TaskCompletionSource<>();
 
-        // תחילה מקבלים את ה-type_of_order מפיירבייס
         db.collection("users").document(finalUserEmail)
                 .get()
                 .addOnCompleteListener(task -> {
@@ -833,7 +845,7 @@ public class OpenNewOrderActivity extends AppCompatActivity {
                             order.put("categorie", saveNewCategorieName);
                             order.put("user_email", finalUserEmail);
                             order.put("max_people", max_people_in_order);
-                            order.put("type_of_order", userType); // שימוש ב-type_of_order מהפיירבייס
+                            order.put("type_of_order", userType);
                             order.put("titleOfOrder", finalTitle);
                             order.put("time", new Timestamp(selectedTime.getTime()));
                             order.put("openOrderTime", new Timestamp(new Date()));
@@ -850,11 +862,11 @@ public class OpenNewOrderActivity extends AppCompatActivity {
                                     .add(order)
                                     .addOnSuccessListener(documentReference -> {
                                         taskCompletionSource.setResult(documentReference.getId());
-                                        Toast.makeText(OpenNewOrderActivity.this, "Order added successfully", Toast.LENGTH_SHORT).show();
+                                        Log.d("Firestore", "Order added successfully");
                                     })
                                     .addOnFailureListener(e -> {
+                                        Log.w("Firestore", "Error adding order", e);
                                         taskCompletionSource.setException(e);
-                                        Toast.makeText(OpenNewOrderActivity.this, "Failed to add order: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                                     });
                         } else {
                             Log.d("Firestore", "No such document");
@@ -870,27 +882,28 @@ public class OpenNewOrderActivity extends AppCompatActivity {
     }
 
     public void showDatePickerDialog(View view) {
-        if (isDatePickerDialogOpen) return; // בדיקה אם הדיאלוג פתוח כבר
-        isDatePickerDialogOpen = true; // עדכון למצב פתוח
+        if (isDatePickerDialogOpen) return;
+        isDatePickerDialogOpen = true;
 
         Locale.setDefault(Locale.ENGLISH);
         Calendar calendar = Calendar.getInstance();
         DatePickerDialog datePickerDialog = new DatePickerDialog(
                 OpenNewOrderActivity.this,
-                android.R.style.Theme_Holo_Light_Dialog_MinWidth, // ערכת נושא שתבטיח שהדיאלוג יהיה רחב מספיק
-                (view1, year, month, dayOfMonth) -> {
+                android.R.style.Theme_Holo_Light_Dialog_MinWidth, (view1, year, month, dayOfMonth) -> {
                     Calendar selectedDate = Calendar.getInstance();
                     selectedDate.set(year, month, dayOfMonth);
 
-                    // אם כבר נבחרה שעה, מוודאים שהשעה לא בעבר
                     if (this.selectedTime != null) {
                         selectedDate.set(Calendar.HOUR_OF_DAY, this.selectedTime.get(Calendar.HOUR_OF_DAY));
                         selectedDate.set(Calendar.MINUTE, this.selectedTime.get(Calendar.MINUTE));
                     }
 
                     if (selectedDate.before(Calendar.getInstance())) {
-                        Toast.makeText(OpenNewOrderActivity.this, "You can't choose a past date", Toast.LENGTH_SHORT).show();
+                        dateLayout.setBackgroundResource(R.drawable.red_border);
+                        dateError.setVisibility(View.VISIBLE);
                     } else {
+                        dateLayout.setBackgroundResource(R.drawable.border);
+                        dateError.setVisibility(View.GONE);
                         this.selectedDate = selectedDate;
                         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
                         String dateString = sdf.format(selectedDate.getTime());
@@ -901,32 +914,30 @@ public class OpenNewOrderActivity extends AppCompatActivity {
                         ImageButton dateIcon = findViewById(R.id.date_icon);
                         dateIcon.setImageResource(R.drawable.baseline_calendar_month_24);
                     }
-                    isDatePickerDialogOpen = false; // עדכון למצב סגור לאחר סגירת הדיאלוג
+                    isDatePickerDialogOpen = false;
                 },
                 calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH)
         );
         // Make the dialog non-cancelable
         datePickerDialog.setCancelable(false);
-        datePickerDialog.setOnDismissListener(dialog -> isDatePickerDialogOpen = false); // עדכון למצב סגור אם הדיאלוג נסגר
+        datePickerDialog.setOnDismissListener(dialog -> isDatePickerDialogOpen = false);
         datePickerDialog.show();
     }
 
     public void showTimePickerDialog(View view) {
-        if (isTimePickerDialogOpen) return; // בדיקה אם הדיאלוג פתוח כבר
-        isTimePickerDialogOpen = true; // עדכון למצב פתוח
+        if (isTimePickerDialogOpen) return;
+        isTimePickerDialogOpen = true;
 
         Locale.setDefault(Locale.ENGLISH);
         Calendar calendar = Calendar.getInstance();
 
         TimePickerDialog timePickerDialog = new TimePickerDialog(
                 OpenNewOrderActivity.this,
-                android.R.style.Theme_Holo_Light_Dialog_MinWidth, // ערכת נושא שתבטיח שהדיאלוג יהיה רחב מספיק
-                (view1, hourOfDay, minute) -> {
+                android.R.style.Theme_Holo_Light_Dialog_MinWidth, (view1, hourOfDay, minute) -> {
                     Calendar selectedTime = Calendar.getInstance();
                     selectedTime.set(Calendar.HOUR_OF_DAY, hourOfDay);
                     selectedTime.set(Calendar.MINUTE, minute);
 
-                    // אם כבר נבחר תאריך, מוודאים שהתאריך והשעה לא בעבר
                     if (this.selectedDate != null) {
                         selectedTime.set(Calendar.YEAR, this.selectedDate.get(Calendar.YEAR));
                         selectedTime.set(Calendar.MONTH, this.selectedDate.get(Calendar.MONTH));
@@ -934,8 +945,11 @@ public class OpenNewOrderActivity extends AppCompatActivity {
                     }
 
                     if (selectedTime.before(Calendar.getInstance())) {
-                        Toast.makeText(OpenNewOrderActivity.this, "You cannot select a past time", Toast.LENGTH_SHORT).show();
+                        timeLayout.setBackgroundResource(R.drawable.red_border);
+                        dateError.setVisibility(View.VISIBLE);
                     } else {
+                        timeLayout.setBackgroundResource(R.drawable.border);
+                        dateError.setVisibility(View.GONE);
                         this.selectedTime = selectedTime;
                         SimpleDateFormat sdf = new SimpleDateFormat("HH:mm", Locale.getDefault());
                         String timeString = sdf.format(selectedTime.getTime());
@@ -946,12 +960,12 @@ public class OpenNewOrderActivity extends AppCompatActivity {
                         ImageButton timeIcon = findViewById(R.id.time_icon);
                         timeIcon.setImageResource(R.drawable.ic_baseline_access_time_24);
                     }
-                    isTimePickerDialogOpen = false; // עדכון למצב סגור לאחר סגירת הדיאלוג
+                    isTimePickerDialogOpen = false;
                 },
                 calendar.get(Calendar.HOUR_OF_DAY), calendar.get(Calendar.MINUTE), true
         );
         timePickerDialog.setCancelable(false);
-        timePickerDialog.setOnDismissListener(dialog -> isTimePickerDialogOpen = false); // עדכון למצב סגור אם הדיאלוג נסגר
+        timePickerDialog.setOnDismissListener(dialog -> isTimePickerDialogOpen = false);
         timePickerDialog.show();
     }
 
