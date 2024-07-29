@@ -11,15 +11,12 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.SimpleAdapter;
 import android.widget.ListView;
-import android.widget.Toast;
-
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
-
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -30,7 +27,6 @@ public class notificationActivity extends AppCompatActivity {
 
     private MenuUtils menuUtils;
     private ListView notificationsListView;
-
     private SimpleAdapter adapter;
     private List<Map<String, Object>> notificationsList;
     private String globalUserType;
@@ -55,7 +51,7 @@ public class notificationActivity extends AppCompatActivity {
         setContentView(R.layout.activity_notification);
 
         // Initialize MenuUtils
-         menuUtils = new MenuUtils(this,globalUserType);
+        menuUtils = new MenuUtils(this,globalUserType);
 
         // Initialize ListView
         notificationsListView = findViewById(R.id.notificationsListView);
@@ -82,10 +78,11 @@ public class notificationActivity extends AppCompatActivity {
         if (currentUser != null) {
             fetchNotifications(currentUser.getEmail());
         } else {
-            Toast.makeText(this, "User not logged in", Toast.LENGTH_SHORT).show();
+            Log.d("notificationActivity", "User not logged in");
         }
     }
 
+    // Fetches notifications for the current user
     private void fetchNotifications(String userEmail) {
         CollectionReference notificationsRef = db.collection("users").document(userEmail).collection("notifications");
         notificationsRef.orderBy("timestamp", Query.Direction.DESCENDING)
@@ -113,6 +110,7 @@ public class notificationActivity extends AppCompatActivity {
                 });
     }
 
+    // Opens the link associated with a notification
     public void openLink(View view) {
         String link = (String) view.getTag();
         Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(link));

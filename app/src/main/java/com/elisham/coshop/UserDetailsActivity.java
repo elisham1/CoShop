@@ -26,7 +26,6 @@ import android.widget.LinearLayout;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
@@ -93,10 +92,10 @@ public class UserDetailsActivity extends AppCompatActivity {
     private String userType;
     ProgressDialog progressDialog;
 
-
     // Error views
     private TextView fullNameError, emailError, addressError, userTypeError;
 
+    @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Intent intent = getIntent();
@@ -211,11 +210,11 @@ public class UserDetailsActivity extends AppCompatActivity {
         searchRow = findViewById(R.id.search_row);
         searchRow.setOnClickListener(v -> {
             Intent intent = new Intent(UserDetailsActivity.this, LocationWindow.class);
-            intent.putExtra("hideDistanceLayout", true); // העברת פרמטר להסתרת ה-KM
-                if (lastAddress != null && !lastAddress.isEmpty()) {
-                    intent.putExtra("address", lastAddress);
-                }
-                locationWindowLauncher.launch(intent);
+            intent.putExtra("hideDistanceLayout", true);
+            if (lastAddress != null && !lastAddress.isEmpty()) {
+                intent.putExtra("address", lastAddress);
+            }
+            locationWindowLauncher.launch(intent);
         });
 
         searchAddressButton.setOnClickListener(v -> {
@@ -255,7 +254,7 @@ public class UserDetailsActivity extends AppCompatActivity {
 
         editAddressButton.setOnClickListener(v -> {
             Intent intent = new Intent(UserDetailsActivity.this, LocationWindow.class);
-            intent.putExtra("hideDistanceLayout", true); // העברת פרמטר להסתרת ה-KM
+            intent.putExtra("hideDistanceLayout", true);
             if (lastAddress != null && !lastAddress.isEmpty()) {
                 intent.putExtra("address", lastAddress);
             }
@@ -329,7 +328,7 @@ public class UserDetailsActivity extends AppCompatActivity {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 takePhoto();
             } else {
-                Toast.makeText(this, "Permission denied", Toast.LENGTH_SHORT).show();
+                Log.d("UserDetailsActivity", "Permission denied");
             }
         }
     }
@@ -461,7 +460,7 @@ public class UserDetailsActivity extends AppCompatActivity {
                 });
     }
 
-    public void editUserDetails() {
+    public void editUserDetails() { // Collects and updates user details
         Map<String, Object> userDetails = new HashMap<>();
 
         choiceRadioGroup.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
@@ -469,7 +468,7 @@ public class UserDetailsActivity extends AppCompatActivity {
             public void onCheckedChanged(RadioGroup group, int checkedId) {
                 RadioButton checkedRadioButton = findViewById(checkedId);
                 if (checkedRadioButton != null) {
-                    Toast.makeText(UserDetailsActivity.this, "Selected: " + checkedRadioButton.getText(), Toast.LENGTH_SHORT).show();
+                    Log.d("UserDetailsActivity", "Selected: " + checkedRadioButton.getText());
                 }
             }
         });
@@ -534,7 +533,7 @@ public class UserDetailsActivity extends AppCompatActivity {
                         saveUserDetailsToFirestore(userDetails);
                     }
                 }, e -> {
-                    Toast.makeText(UserDetailsActivity.this, "2: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    Log.d("UserDetailsActivity", "Error: " + e.getMessage());
                 });
             } else {
                 if (imageUri != null) {
@@ -561,12 +560,12 @@ public class UserDetailsActivity extends AppCompatActivity {
         });
     }
 
-    private void saveUserDetailsToFirestore(Map<String, Object> userDetails) {;
+    private void saveUserDetailsToFirestore(Map<String, Object> userDetails) { // Saves user details to Firestore
         db.collection("users").document(email)
                 .set(userDetails)
                 .addOnSuccessListener(documentReference -> {
                     progressDialog.dismiss();
-                    Toast.makeText(UserDetailsActivity.this, "User details updated successfully", Toast.LENGTH_SHORT).show();
+                    Log.d("UserDetailsActivity", "User details updated successfully");
                     home();
                     finish();
                 })
@@ -577,7 +576,7 @@ public class UserDetailsActivity extends AppCompatActivity {
                 });
     }
 
-    private void showNameEditDialog() {
+    private void showNameEditDialog() { // Shows dialog for editing the user's name
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         View dialogView = getLayoutInflater().inflate(R.layout.dialog_edit_name, null);
         EditText firstNameEditText = dialogView.findViewById(R.id.firstNameEditText);
@@ -686,7 +685,7 @@ public class UserDetailsActivity extends AppCompatActivity {
         });
     }
 
-    private void showImageSourceDialog(String profileImageUrl) {
+    private void showImageSourceDialog(String profileImageUrl) { // Shows dialog for choosing the image source
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("Change Profile Picture");
         List<CharSequence> options = new ArrayList<>();
@@ -730,19 +729,19 @@ public class UserDetailsActivity extends AppCompatActivity {
         builder.show();
     }
 
-    private void viewPhoto(String url) {
+    private void viewPhoto(String url) { // Displays the photo in a dialog
         ImageDialogFragment dialogFragment = ImageDialogFragment.newInstance(url);
         dialogFragment.show(getSupportFragmentManager(), "image_dialog");
     }
 
-    private void takePhoto() {
+    private void takePhoto() { // Opens the camera to take a photo
         Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
         if (intent.resolveActivity(getPackageManager()) != null) {
             startActivityForResult(intent, TAKE_PHOTO_REQUEST);
         }
     }
 
-    private void showAlertDialog(String message) {
+    private void showAlertDialog(String message) { // Displays an alert dialog with a message
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
 
         builder.setMessage(message)
@@ -756,7 +755,7 @@ public class UserDetailsActivity extends AppCompatActivity {
         alert.show();
     }
 
-    public void home() {
+    public void home() { // Navigates to the home screen
         setResult(RESULT_OK);
 
         Intent homeIntent;

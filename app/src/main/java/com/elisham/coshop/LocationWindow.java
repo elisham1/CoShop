@@ -27,7 +27,6 @@ import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.NumberPicker;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.core.app.ActivityCompat;
@@ -65,6 +64,7 @@ public class LocationWindow extends AppCompatActivity {
     private String globalUserType;
 
     private MenuUtils menuUtils;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -73,16 +73,14 @@ public class LocationWindow extends AppCompatActivity {
         Intent intent = getIntent();
         globalUserType = intent.getStringExtra("userType");
 
-
         if (globalUserType != null && globalUserType.equals("Supplier")) {
             setTheme(R.style.SupplierTheme);
-        }
-        else {
+        } else {
             setTheme(R.style.ConsumerTheme);
         }
 
         setContentView(R.layout.location_window);
-        menuUtils = new MenuUtils(this,globalUserType);
+        menuUtils = new MenuUtils(this, globalUserType);
 
         // Hide the title in the action bar
         ActionBar actionBar = getSupportActionBar();
@@ -100,20 +98,19 @@ public class LocationWindow extends AppCompatActivity {
                     if (locationFunctions.isLocationEnabled()) {
                         locationFunctions.checkLocationAndFetch();
                     } else {
-                        Toast.makeText(this, "Please enable location services", Toast.LENGTH_SHORT).show();
+                        Log.d("LocationWindow", "Please enable location services");
                     }
                 }
         );
 
         locationFunctions = new LocationFunctions(this, addressEditText, locationSettingsLauncher);
-
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
 
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
             locationFunctions.checkLocationAndFetch();
         }
 
-        String apiKey = "AIzaSyCCEZAKwn0TCA-XvVpDKTOVrdiM__RfwCI"; // החלף במפתח ה-API שלך
+        String apiKey = "AIzaSyCCEZAKwn0TCA-XvVpDKTOVrdiM__RfwCI"; // Replace with your API key
 
         // Initialize Places
         Places.initialize(getApplicationContext(), apiKey);
@@ -176,7 +173,7 @@ public class LocationWindow extends AppCompatActivity {
         closeButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                finish(); // סגירת הדיאלוג
+                finish(); // Close the dialog
             }
         });
 
@@ -279,37 +276,37 @@ public class LocationWindow extends AppCompatActivity {
                     findViewById(R.id.address_layout).setBackgroundResource(R.drawable.red_border);
                     findViewById(R.id.addressError).setVisibility(View.VISIBLE);
                     ((TextView) (findViewById(R.id.addressError))).setText("Please enter a valid address");
-                    Toast.makeText(LocationWindow.this, "Please enter a valid address" + (hideDistanceLayout ? "" : " and distance"), Toast.LENGTH_SHORT).show();
+                    Log.d("LocationWindow", "Please enter a valid address" + (hideDistanceLayout ? "" : " and distance"));
                 }
             }
         });
 
-            boolean hideDistanceLayout = intent.getBooleanExtra("hideDistanceLayout", false);
-            String address = intent.getStringExtra("address");
-            int distance = intent.getIntExtra("distance", 0);
+        boolean hideDistanceLayout = intent.getBooleanExtra("hideDistanceLayout", false);
+        String address = intent.getStringExtra("address");
+        int distance = intent.getIntExtra("distance", 0);
 
-            if (hideDistanceLayout) {
-                distanceEditText.setVisibility(View.INVISIBLE);
-                numberPicker.setVisibility(View.INVISIBLE);
-                distanceLayout.setVisibility(View.INVISIBLE);
-            }
+        if (hideDistanceLayout) {
+            distanceEditText.setVisibility(View.INVISIBLE);
+            numberPicker.setVisibility(View.INVISIBLE);
+            distanceLayout.setVisibility(View.INVISIBLE);
+        }
 
-            if (address != null && !address.isEmpty()) {
-                addressEditText.setText(address);
-                lastValidAddress = address;
-            } else {
-                addressEditText.setText(""); // איפוס השדה
-            }
-            if (distance > 0) {
-                distanceEditText.setText(distance + " KM");
-                numberPicker.setValue(distance);
-            } else {
-                distanceEditText.setText(""); // איפוס השדה
-                numberPicker.setValue(0);
-            }
-//        }
+        if (address != null && !address.isEmpty()) {
+            addressEditText.setText(address);
+            lastValidAddress = address;
+        } else {
+            addressEditText.setText(""); // Reset the field
+        }
+        if (distance > 0) {
+            distanceEditText.setText(distance + " KM");
+            numberPicker.setValue(distance);
+        } else {
+            distanceEditText.setText(""); // Reset the field
+            numberPicker.setValue(0);
+        }
     }
 
+    // Fetches autocomplete predictions for the entered query.
     private void getAutocompletePredictions(String query) {
         FindAutocompletePredictionsRequest request = FindAutocompletePredictionsRequest.builder()
                 .setQuery(query)
@@ -334,28 +331,30 @@ public class LocationWindow extends AppCompatActivity {
                 findViewById(R.id.address_layout).setBackgroundResource(R.drawable.red_border);
                 findViewById(R.id.addressError).setVisibility(View.VISIBLE);
                 ((TextView) (findViewById(R.id.addressError))).setText("Address not found");
-            }
-            else {
+            } else {
                 findViewById(R.id.distance_layout).setBackgroundResource(R.drawable.border);
                 findViewById(R.id.distanceError).setVisibility(View.GONE);
                 findViewById(R.id.address_layout).setBackgroundResource(R.drawable.border);
                 findViewById(R.id.addressError).setVisibility(View.GONE);
             }
         }).addOnFailureListener(exception -> {
-            Toast.makeText(LocationWindow.this, "Error fetching predictions", Toast.LENGTH_LONG).show();
+            Log.d("LocationWindow", "Error fetching predictions");
         });
     }
 
-    public void setError () {
+    // Sets the error state for distance layout.
+    public void setError() {
         findViewById(R.id.distance_layout).setBackgroundResource(R.drawable.red_border);
         findViewById(R.id.distanceError).setVisibility(View.VISIBLE);
     }
 
+    // Clears the error state for distance layout.
     public void setNotError() {
         findViewById(R.id.distance_layout).setBackgroundResource(R.drawable.border);
         findViewById(R.id.distanceError).setVisibility(View.GONE);
     }
 
+    // Fetches the place details using placeId.
     private void fetchPlace(String placeId) {
         List<Place.Field> placeFields = Arrays.asList(Place.Field.LAT_LNG);
         FetchPlaceRequest request = FetchPlaceRequest.builder(placeId, placeFields).build();
@@ -367,16 +366,16 @@ public class LocationWindow extends AppCompatActivity {
                 findViewById(R.id.distanceError).setVisibility(View.GONE);
                 double lat = place.getLatLng().latitude;
                 double lon = place.getLatLng().longitude;
-                Toast.makeText(LocationWindow.this, "Latitude: " + lat + ", Longitude: " + lon, Toast.LENGTH_LONG).show();
+                Log.d("LocationWindow", "Latitude: " + lat + ", Longitude: " + lon);
 
                 lastValidAddress = place.getAddress();
             } else {
                 findViewById(R.id.distance_layout).setBackgroundResource(R.drawable.red_border);
                 findViewById(R.id.distanceError).setVisibility(View.VISIBLE);
-                Toast.makeText(LocationWindow.this, "Address not found in Google API", Toast.LENGTH_LONG).show();
+                Log.d("LocationWindow", "Address not found in Google API");
             }
         }).addOnFailureListener((exception) -> {
-            Toast.makeText(LocationWindow.this, "Error fetching place details", Toast.LENGTH_LONG).show();
+            Log.d("LocationWindow", "Error fetching place details");
         });
     }
 
@@ -402,9 +401,10 @@ public class LocationWindow extends AppCompatActivity {
         }
     }
 
+    // Adjusts the dialog size.
     private void adjustDialogSize() {
-        int width = (int) (getResources().getDisplayMetrics().density * 370); // גודל קבוע ב-DP
-        int height = (int) (getResources().getDisplayMetrics().density * 350); // גודל קבוע ב-DP
+        int width = (int) (getResources().getDisplayMetrics().density * 370); // Fixed size in DP
+        int height = (int) (getResources().getDisplayMetrics().density * 350); // Fixed size in DP
         getWindow().setLayout(width, height);
     }
 
@@ -441,7 +441,7 @@ public class LocationWindow extends AppCompatActivity {
             case R.id.home:
                 menuUtils.home();
                 return true;
-            case R.id.chat_icon: // הוספת המקרה עבור אייקון ה-chat
+            case R.id.chat_icon:
                 menuUtils.allChats();
                 return true;
             case R.id.chat_notification:
@@ -451,5 +451,4 @@ public class LocationWindow extends AppCompatActivity {
                 return super.onOptionsItemSelected(item);
         }
     }
-
 }

@@ -9,6 +9,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -45,6 +46,7 @@ import java.util.Map;
 
 import javax.annotation.Nullable;
 
+// Handles chat functionality for the app
 public class ChatActivity extends AppCompatActivity {
     private FirebaseFirestore db;
     private RecyclerView chatRecyclerView;
@@ -62,10 +64,10 @@ public class ChatActivity extends AppCompatActivity {
     private MenuUtils menuUtils;
     private ListenerRegistration chatListener;
 
+    // Initializes the activity and sets the theme based on user type
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        // Set the theme based on the user type
         Intent intent = getIntent();
         globalUserType = intent.getStringExtra("userType");
 
@@ -97,13 +99,13 @@ public class ChatActivity extends AppCompatActivity {
 
         // Get the orderId from the intent
         orderId = intent.getStringExtra("orderId");
-        Toast.makeText(this, "Order ID: " + orderId, Toast.LENGTH_SHORT).show();
+        Log.d("ChatActivity", "Order ID: " + orderId);
         loadChatMessages(orderId);
 
         orderDetailsLayout.setOnClickListener(v -> {
             Intent orderDetailsIntent = new Intent(ChatActivity.this, OrderDetailsActivity.class);
             orderDetailsIntent.putExtra("userType", globalUserType);
-            orderDetailsIntent.putExtra("orderId", orderId); // תחליף ב-ID של ההזמנה שלך
+            orderDetailsIntent.putExtra("orderId", orderId);
             startActivity(orderDetailsIntent);
         });
 
@@ -124,8 +126,7 @@ public class ChatActivity extends AppCompatActivity {
 
         messageInput.addTextChangedListener(new TextWatcher() {
             @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-            }
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
@@ -137,18 +138,18 @@ public class ChatActivity extends AppCompatActivity {
             }
 
             @Override
-            public void afterTextChanged(Editable s) {
-            }
+            public void afterTextChanged(Editable s) {}
         });
 
         sendIcon.setOnClickListener(v -> sendMessage());
     }
 
+    // Loads chat messages from Firestore for the given order ID
     private void loadChatMessages(String orderId) {
         CollectionReference chatRef = db.collection("orders").document(orderId).collection("chat");
         chatRef.orderBy("timestamp").addSnapshotListener((snapshots, e) -> {
             if (e != null) {
-                Toast.makeText(this, "Error loading chat messages", Toast.LENGTH_SHORT).show();
+                Log.d("ChatActivity", "Error loading chat messages");
                 return;
             }
 
@@ -170,24 +171,26 @@ public class ChatActivity extends AppCompatActivity {
                 chatAdapter.notifyDataSetChanged();
                 chatRecyclerView.scrollToPosition(chatMessages.size() - 1);
             } else {
-                Toast.makeText(this, "No chat messages found", Toast.LENGTH_SHORT).show();
+                Log.d("ChatActivity", "No chat messages found");
             }
         });
     }
 
+    // Checks if two timestamps are on the same day
     private boolean isSameDay(Timestamp t1, Timestamp t2) {
         SimpleDateFormat fmt = new SimpleDateFormat("yyyyMMdd");
         return fmt.format(t1.toDate()).equals(fmt.format(t2.toDate()));
     }
 
+    // Sends a chat message and updates Firestore
     private void sendMessage() {
         String messageText = messageInput.getText().toString();
         if (messageText.isEmpty()) {
-            Toast.makeText(this, "Message text is empty", Toast.LENGTH_SHORT).show();
+            Log.d("ChatActivity", "Message text is empty");
             return;
         }
         if (currentUser == null) {
-            Toast.makeText(this, "Current user is null", Toast.LENGTH_SHORT).show();
+            Log.d("ChatActivity", "Current user is null");
             return;
         }
         String userEmail = currentUser.getEmail();
@@ -224,18 +227,19 @@ public class ChatActivity extends AppCompatActivity {
                 chatRef.add(chatMessage).addOnSuccessListener(documentReference -> {
                     messageInput.setText("");
                     chatRecyclerView.scrollToPosition(chatMessages.size() - 1);
-                }).addOnFailureListener(e -> Toast.makeText(this, "Failed to send message", Toast.LENGTH_SHORT).show());
+                }).addOnFailureListener(e -> Log.d("ChatActivity", "Failed to send message"));
             }
         });
     }
 
+    // Updates the read status of chat messages in real-time
     private void updateReadStatusInRealtime() {
         CollectionReference chatRef = db.collection("orders").document(orderId).collection("chat");
         chatListener = chatRef.addSnapshotListener(new EventListener<QuerySnapshot>() {
             @Override
             public void onEvent(@Nullable QuerySnapshot snapshots, @Nullable FirebaseFirestoreException e) {
                 if (e != null) {
-                    Toast.makeText(ChatActivity.this, "Error updating read status", Toast.LENGTH_SHORT).show();
+                    Log.d("ChatActivity", "Error updating read status");
                     return;
                 }
 
@@ -253,7 +257,7 @@ public class ChatActivity extends AppCompatActivity {
                     }
                     batch.commit().addOnCompleteListener(batchTask -> {
                         if (!batchTask.isSuccessful()) {
-                            Toast.makeText(ChatActivity.this, "Failed to update read status", Toast.LENGTH_SHORT).show();
+                            Log.d("ChatActivity", "Failed to update read status");
                         }
                     });
                 }
@@ -261,12 +265,14 @@ public class ChatActivity extends AppCompatActivity {
         });
     }
 
+    // Starts the activity and updates the read status for all messages
     @Override
     protected void onStart() {
         super.onStart();
         updateReadStatusForAllMessages();
     }
 
+    // Updates the read status for all chat messages
     private void updateReadStatusForAllMessages() {
         CollectionReference chatRef = db.collection("orders").document(orderId).collection("chat");
         chatRef.get().addOnCompleteListener(task -> {
@@ -286,19 +292,21 @@ public class ChatActivity extends AppCompatActivity {
                 }
                 batch.commit().addOnCompleteListener(batchTask -> {
                     if (!batchTask.isSuccessful()) {
-                        Toast.makeText(ChatActivity.this, "Failed to update read status", Toast.LENGTH_SHORT).show();
+                        Log.d("ChatActivity", "Failed to update read status");
                     }
                 });
             }
         });
     }
 
+    // Resumes the activity and updates the read status in real-time
     @Override
     protected void onResume() {
         super.onResume();
         updateReadStatusInRealtime();
     }
 
+    // Pauses the activity and removes the chat listener
     @Override
     protected void onPause() {
         super.onPause();
@@ -307,6 +315,7 @@ public class ChatActivity extends AppCompatActivity {
         }
     }
 
+    // Gets the profile image URL for a given sender email
     private void getProfileImageUrl(String senderEmail, ProfileImageCallback callback) {
         DocumentReference userRef = db.collection("users").document(senderEmail);
         userRef.get().addOnSuccessListener(documentSnapshot -> {
@@ -319,42 +328,45 @@ public class ChatActivity extends AppCompatActivity {
         }).addOnFailureListener(e -> callback.onCallback(null));
     }
 
+    // Callback interface for profile image URL
     private interface ProfileImageCallback {
         void onCallback(String imageUrl);
     }
 
+    // Inflates the options menu
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_items, menu);
         return true;
     }
 
+    // Handles item selections in the options menu
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.Personal_info:
-                menuUtils.personalInfo();
+                menuUtils.personalInfo(); // Navigate to Personal Info
                 return true;
             case R.id.My_Orders:
-                menuUtils.myOrders();
+                menuUtils.myOrders(); // Navigate to My Orders
                 return true;
             case R.id.About_Us:
-                menuUtils.aboutUs();
+                menuUtils.aboutUs(); // Navigate to About Us
                 return true;
             case R.id.Contact_Us:
-                menuUtils.contactUs();
+                menuUtils.contactUs(); // Navigate to Contact Us
                 return true;
             case R.id.Log_Out:
-                menuUtils.logOut();
+                menuUtils.logOut(); // Log out user
                 return true;
             case R.id.home:
-                menuUtils.home();
+                menuUtils.home(); // Navigate to Home
                 return true;
-            case R.id.chat_icon: // הוספת המקרה עבור אייקון ה-chat
-                menuUtils.allChats();
+            case R.id.chat_icon:
+                menuUtils.allChats(); // Navigate to All Chats
                 return true;
             case R.id.chat_notification:
-                menuUtils.chat_notification();
+                menuUtils.chat_notification(); // Navigate to Chat Notification
                 return true;
             default:
                 return super.onOptionsItemSelected(item);

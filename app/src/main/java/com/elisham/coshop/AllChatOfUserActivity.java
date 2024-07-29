@@ -2,6 +2,7 @@ package com.elisham.coshop;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -28,6 +29,7 @@ import java.util.List;
 
 import javax.annotation.Nullable;
 
+// Displays all chat orders of the user
 public class AllChatOfUserActivity extends AppCompatActivity {
     private MenuUtils menuUtils;
     private FirebaseFirestore db;
@@ -38,10 +40,10 @@ public class AllChatOfUserActivity extends AppCompatActivity {
     private List<ChatOrder> chatOrders;
     private String globalUserType;
 
+    // Initializes the activity, sets the theme based on user type, and loads user chats
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        // Set the theme based on the user type
         Intent intent = getIntent();
         globalUserType = intent.getStringExtra("userType");
 
@@ -65,12 +67,13 @@ public class AllChatOfUserActivity extends AppCompatActivity {
         chatRecyclerView.setAdapter(chatListAdapter);
 
         loadUserChats();
-        invalidateOptionsMenu(); // עדכון התפריט
+        invalidateOptionsMenu(); // Update the menu
     }
 
+    // Loads the user's chat orders from Firestore
     private void loadUserChats() {
         if (currentUser == null) {
-            Toast.makeText(this, "User not logged in", Toast.LENGTH_SHORT).show();
+            Log.d("AllChatOfUserActivity", "User not logged in");
             return;
         }
 
@@ -80,12 +83,12 @@ public class AllChatOfUserActivity extends AppCompatActivity {
             @Override
             public void onEvent(@Nullable QuerySnapshot snapshots, @Nullable FirebaseFirestoreException e) {
                 if (e != null) {
-                    Toast.makeText(AllChatOfUserActivity.this, "Error getting orders", Toast.LENGTH_SHORT).show();
+                    Log.d("AllChatOfUserActivity", "Error getting orders");
                     return;
                 }
 
                 if (snapshots != null) {
-                    chatOrders.clear(); // ננקה את הרשימה כדי להימנע מהוספה כפולה
+                    chatOrders.clear(); // Clear the list to avoid duplicate additions
                     for (DocumentSnapshot doc : snapshots) {
                         List<String> peopleInOrder = (List<String>) doc.get("listPeopleInOrder");
                         if (peopleInOrder != null && peopleInOrder.contains(userEmail)) {
@@ -98,6 +101,7 @@ public class AllChatOfUserActivity extends AppCompatActivity {
         });
     }
 
+    // Loads the last message time for a specific order
     private void loadLastMessageTime(String orderId) {
         db.collection("orders").document(orderId).collection("chat")
                 .orderBy("timestamp", com.google.firebase.firestore.Query.Direction.DESCENDING)
@@ -109,7 +113,7 @@ public class AllChatOfUserActivity extends AppCompatActivity {
                             return;
                         }
 
-                        // הסרת ההזמנה הקיימת עם אותו orderId
+                        // Remove the existing order with the same orderId
                         for (int i = 0; i < chatOrders.size(); i++) {
                             if (chatOrders.get(i).getOrderId().equals(orderId)) {
                                 chatOrders.remove(i);
@@ -129,6 +133,7 @@ public class AllChatOfUserActivity extends AppCompatActivity {
                 });
     }
 
+    // Sorts chat orders by last message time and notifies the adapter
     private void sortAndNotifyAdapter() {
         Collections.sort(chatOrders, new Comparator<ChatOrder>() {
             @Override
@@ -139,6 +144,7 @@ public class AllChatOfUserActivity extends AppCompatActivity {
         chatListAdapter.notifyDataSetChanged();
     }
 
+    // Handles the chat selection and navigates to ChatActivity
     private void onChatSelected(String orderId) {
         Intent intent = new Intent(this, ChatActivity.class);
         intent.putExtra("userType", globalUserType);
@@ -146,6 +152,7 @@ public class AllChatOfUserActivity extends AppCompatActivity {
         startActivity(intent);
     }
 
+    // Inflates the options menu
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         MenuInflater inflater = getMenuInflater();
@@ -159,32 +166,33 @@ public class AllChatOfUserActivity extends AppCompatActivity {
         return true;
     }
 
+    // Handles item selections in the options menu
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.Personal_info:
-                menuUtils.personalInfo();
+                menuUtils.personalInfo(); // Navigate to Personal Info
                 return true;
             case R.id.My_Orders:
-                menuUtils.myOrders();
+                menuUtils.myOrders(); // Navigate to My Orders
                 return true;
             case R.id.About_Us:
-                menuUtils.aboutUs();
+                menuUtils.aboutUs(); // Navigate to About Us
                 return true;
             case R.id.Contact_Us:
-                menuUtils.contactUs();
+                menuUtils.contactUs(); // Navigate to Contact Us
                 return true;
             case R.id.Log_Out:
-                menuUtils.logOut();
+                menuUtils.logOut(); // Log out user
                 return true;
             case R.id.home:
-                menuUtils.home();
+                menuUtils.home(); // Navigate to Home
                 return true;
             case R.id.chat_icon:
-                menuUtils.allChats();
+                menuUtils.allChats(); // Navigate to All Chats
                 return true;
             case R.id.chat_notification:
-                menuUtils.chat_notification();
+                menuUtils.chat_notification(); // Navigate to Chat Notification
                 return true;
             default:
                 return super.onOptionsItemSelected(item);

@@ -7,7 +7,6 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -17,7 +16,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.TextView;
-import android.widget.Toast;
+import android.util.Log;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -26,6 +25,7 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import java.util.HashMap;
 import java.util.Map;
 
+// Activity for the Contact Us page
 public class ContactUsActivity extends AppCompatActivity {
 
     private FirebaseAuth mAuth;
@@ -38,10 +38,10 @@ public class ContactUsActivity extends AppCompatActivity {
     private Button saveButton;
     private TextView feedbackSent;
 
+    // Initializes the activity and sets up the UI elements
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        // Set the theme based on the user type
         Intent intent = getIntent();
         globalUserType = intent.getStringExtra("userType");
 
@@ -70,6 +70,7 @@ public class ContactUsActivity extends AppCompatActivity {
         spinnerFeedbackTitle.setAdapter(adapter);
 
         inputFeedback.addTextChangedListener(new TextWatcher() {
+            // Sets the cancel button when text changes
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
                 if (globalUserType.equals("Supplier")) {
@@ -81,11 +82,12 @@ public class ContactUsActivity extends AppCompatActivity {
                 saveButton.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                       finish();
+                        finish();
                     }
                 });
             }
 
+            // Sets the send feedback button when text changes
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
                 if (s.length() > 0) {
@@ -107,34 +109,35 @@ public class ContactUsActivity extends AppCompatActivity {
         retrieveUserInformation();
     }
 
+    // Retrieves user information from Firestore
     private void retrieveUserInformation() {
         if (currentUser != null) {
             email = currentUser.getEmail();
         }
         if (email != null) {
             db.collection("users").document(email).get()
-                .addOnSuccessListener(documentSnapshot -> {
-                    if (documentSnapshot.exists()) {
-                        name = documentSnapshot.getString("first name");
-                    } else {
-                        Toast.makeText(ContactUsActivity.this, "User details not found.", Toast.LENGTH_SHORT).show();
-                    }
+                    .addOnSuccessListener(documentSnapshot -> {
+                        if (documentSnapshot.exists()) {
+                            name = documentSnapshot.getString("first name");
+                        } else {
+                            Log.d("ContactUsActivity", "User details not found.");
+                        }
 
-            })
-                .addOnFailureListener(e -> Toast.makeText(ContactUsActivity.this, "Failed to fetch user details.", Toast.LENGTH_SHORT).show());
+                    })
+                    .addOnFailureListener(e -> Log.d("ContactUsActivity", "Failed to fetch user details.", e));
         }
     }
 
+    // Sends feedback to Firestore
     private void sendFeedback() {
-
         String feedbackTitle = spinnerFeedbackTitle.getSelectedItem().toString();
         if (feedbackTitle.equals("Select Feedback Title")) {
-            Toast.makeText(this, "Please select a feedback title.", Toast.LENGTH_SHORT).show();
+            Log.d("ContactUsActivity", "Please select a feedback title.");
             return;
         }
         String feedbackContent = inputFeedback.getText().toString();
         if (feedbackContent.isEmpty()) {
-            Toast.makeText(this, "Please enter your feedback.", Toast.LENGTH_SHORT).show();
+            Log.d("ContactUsActivity", "Please enter your feedback.");
             return;
         }
         String feedbackTime = java.text.DateFormat.getDateTimeInstance().format(new java.util.Date());
@@ -154,10 +157,11 @@ public class ContactUsActivity extends AppCompatActivity {
                 })
                 .addOnFailureListener(e -> {
                     // Failed to add feedback
-                    Toast.makeText(ContactUsActivity.this, "Failed to send feedback. Please try again.", Toast.LENGTH_SHORT).show();
+                    Log.d("ContactUsActivity", "Failed to send feedback. Please try again.", e);
                 });
     }
 
+    // Displays a message indicating feedback was received
     private void showFeedbackReceivedMessage() {
         spinnerFeedbackTitle.setVisibility(View.GONE);
         saveButton.setVisibility(View.GONE);
@@ -180,6 +184,7 @@ public class ContactUsActivity extends AppCompatActivity {
         });
     }
 
+    // Hides the keyboard
     private void hideKeyboard() {
         View view = this.getCurrentFocus();
         if (view != null) {
@@ -188,6 +193,7 @@ public class ContactUsActivity extends AppCompatActivity {
         }
     }
 
+    // Inflates the options menu
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_items, menu);
@@ -200,32 +206,33 @@ public class ContactUsActivity extends AppCompatActivity {
         return true;
     }
 
+    // Handles item selections in the options menu
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.Personal_info:
-                menuUtils.personalInfo();
+                menuUtils.personalInfo(); // Navigate to Personal Info
                 return true;
             case R.id.My_Orders:
-                menuUtils.myOrders();
+                menuUtils.myOrders(); // Navigate to My Orders
                 return true;
             case R.id.About_Us:
-                menuUtils.aboutUs();
+                menuUtils.aboutUs(); // Navigate to About Us
                 return true;
             case R.id.Contact_Us:
-                menuUtils.contactUs();
+                menuUtils.contactUs(); // Navigate to Contact Us
                 return true;
             case R.id.Log_Out:
-                menuUtils.logOut();
+                menuUtils.logOut(); // Log out user
                 return true;
             case R.id.home:
-                menuUtils.home();
+                menuUtils.home(); // Navigate to Home
                 return true;
             case R.id.chat_icon:
-                menuUtils.allChats();
+                menuUtils.allChats(); // Navigate to All Chats
                 return true;
             case R.id.chat_notification:
-                menuUtils.chat_notification();
+                menuUtils.chat_notification(); // Navigate to Chat Notification
                 return true;
             default:
                 return super.onOptionsItemSelected(item);

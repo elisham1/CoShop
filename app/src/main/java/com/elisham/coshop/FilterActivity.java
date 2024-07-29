@@ -25,7 +25,6 @@ import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.TimePicker;
-import android.widget.Toast;
 
 import com.google.android.material.slider.RangeSlider;
 import com.google.firebase.Timestamp;
@@ -44,6 +43,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.regex.Pattern;
 
+// Handles filtering functionality for orders
 public class FilterActivity extends AppCompatActivity {
     private ActivityResultLauncher<Intent> locationWindowLauncher;
     private TextView searchAddressText;
@@ -71,7 +71,7 @@ public class FilterActivity extends AppCompatActivity {
 
     private boolean isCategoryListVisible = false;
 
-
+    // Initializes the activity and its components
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -87,7 +87,7 @@ public class FilterActivity extends AppCompatActivity {
         }
 
         setContentView(R.layout.activity_filter);
-        menuUtils = new MenuUtils(this,globalUserType);
+        menuUtils = new MenuUtils(this, globalUserType);
 
         searchAddressText = findViewById(R.id.search_address_text);
         searchAddressButton = findViewById(R.id.search_address_button);
@@ -134,7 +134,7 @@ public class FilterActivity extends AppCompatActivity {
                     searchAddressButton.setImageResource(R.drawable.baseline_search_24);
                     editAddressButton.setVisibility(View.GONE);
 
-                    // איפוס הערכים האחרונים
+                    // Reset last values
                     lastAddress = null;
                     lastDistance = 0;
                     lastLatitude = 0;
@@ -243,9 +243,10 @@ public class FilterActivity extends AppCompatActivity {
         TextView timeText = findViewById(R.id.time_text);
         timeIcon.setOnClickListener(this::showTimePickerDialog);
         timeText.setOnClickListener(this::showTimePickerDialog);
-        
+
     }
 
+    // Toggles the search/clear icon for the address input
     private void toggleSearchClearIcon() {
         String address = searchAddressText.getText().toString();
         if (!address.isEmpty() && lastDistance > 0) {
@@ -259,7 +260,7 @@ public class FilterActivity extends AppCompatActivity {
         }
     }
 
-
+    // Reads categories from Firestore and sets them in the ListView
     private void readCategoriesFromFireStore() {
         db.collection("categories").document("jQ4hXL6kr1AbKwPvEdXl")
                 .get()
@@ -279,6 +280,8 @@ public class FilterActivity extends AppCompatActivity {
                     }
                 });
     }
+
+    // Toggles the visibility of the category list
     public void toggleCategoryVisibility(View view) {
         ListView categoryListView = findViewById(R.id.category_list);
         ImageButton plusIcon = (ImageButton) view;
@@ -292,9 +295,10 @@ public class FilterActivity extends AppCompatActivity {
         }
         isCategoryListVisible = !isCategoryListVisible;
 
-        updateCategoryTextView(); // עדכון ה־TextView לאחר שינוי ברשימת הקטגוריות
+        updateCategoryTextView(); // Update the TextView after changes in the category list
     }
 
+    // Handles the order filtering logic
     public void OrderFiltering(View v) {
         String address = searchAddressText.getText().toString();
         String urlOrString = editTextURL.getText().toString();
@@ -312,12 +316,12 @@ public class FilterActivity extends AppCompatActivity {
         int peopleLimit = 0;
 
         if (selectedDate != null && selectedTime == null) {
-            Toast.makeText(this, "You need to select a time", Toast.LENGTH_SHORT).show();
+            Log.d(this.getLocalClassName(), "You need to select a time");
             return;
         }
 
         if (selectedTime != null && selectedDate == null) {
-            Toast.makeText(this, "You need to select a date", Toast.LENGTH_SHORT).show();
+            Log.d(this.getLocalClassName(), "You need to select a date");
             return;
         }
 
@@ -331,7 +335,7 @@ public class FilterActivity extends AppCompatActivity {
         }
 
         if (!filterByLocation && !filterByURLOrString && !filterByCategory && !filterByConsumer && !filterBySupplied && !filterByPeopleLimit && !filterByUnlimitedPeople && !filterByTime) {
-            Toast.makeText(this, "Select minimum in one filter", Toast.LENGTH_SHORT).show();
+            Log.d(this.getLocalClassName(), "Select minimum in one filter");
             return;
         }
 
@@ -344,7 +348,7 @@ public class FilterActivity extends AppCompatActivity {
             selectedDateTime.set(Calendar.MINUTE, selectedTime.get(Calendar.MINUTE));
 
             if (selectedDateTime.before(Calendar.getInstance())) {
-                Toast.makeText(this, "The selected date and time have already passed", Toast.LENGTH_SHORT).show();
+                Log.d(this.getLocalClassName(), "The selected date and time have already passed");
                 return;
             }
         }
@@ -355,7 +359,7 @@ public class FilterActivity extends AppCompatActivity {
             } else if (isValidString(urlOrString)) {
                 fetchOrdersByString(urlOrString, address, selectedCategories, filterByCategory, filterByConsumer, filterBySupplied, filterByPeopleLimit, peopleLimit, filterByUnlimitedPeople, filterByTime, selectedDate, selectedTime);
             } else {
-                Toast.makeText(this, "Invalid URL or String", Toast.LENGTH_SHORT).show();
+                Log.d(this.getLocalClassName(), "Invalid URL or String");
             }
         } else {
             if (filterByLocation) {
@@ -373,6 +377,7 @@ public class FilterActivity extends AppCompatActivity {
         }
     }
 
+    // Resets all filters to their default state
     public void resetFilters(View v) {
         // Reset address field
         searchAddressText.setText(""); // Reset the TextView to its initial state
@@ -422,15 +427,18 @@ public class FilterActivity extends AppCompatActivity {
         selectedTime = null;
     }
 
+    // Validates if a string is a valid URL
     private boolean isValidURL(String url) {
         Pattern pattern = Patterns.WEB_URL;
         return pattern.matcher(url).matches();
     }
 
+    // Validates if a string is a valid text string
     private boolean isValidString(String str) {
         return str.matches("[a-zA-Z ]+");
     }
 
+    // Retrieves the domain name from a URL
     private String getDomainName(String url) {
         try {
             java.net.URL netUrl = new java.net.URL(url);
@@ -440,7 +448,7 @@ public class FilterActivity extends AppCompatActivity {
         }
     }
 
-    // שינוי בפונקציה fetchOrders
+    // Fetches orders based on various filters
     private void fetchOrders(double userLat, double userLon, int distance, List<String> selectedCategories, boolean filterByCategory, boolean filterByConsumer, boolean filterBySupplied, boolean filterByPeopleLimit, int peopleLimit, boolean filterByUnlimitedPeople, boolean filterByTime, Calendar selectedDate, Calendar selectedTime) {
         CollectionReference ordersRef = db.collection("orders");
         ordersRef.get().addOnCompleteListener(task -> {
@@ -453,25 +461,25 @@ public class FilterActivity extends AppCompatActivity {
                 }
 
                 StringBuilder results = new StringBuilder();
-                StringBuilder orderIds = new StringBuilder();  // אוסף את ה-IDs של ההזמנות
+                StringBuilder orderIds = new StringBuilder();  // Collects order IDs
 
                 long currentTimeMillis = System.currentTimeMillis();
                 for (QueryDocumentSnapshot documentSnapshot : task.getResult()) {
                     Timestamp timestamp = documentSnapshot.getTimestamp("time");
                     long timeRemaining = timestamp.toDate().getTime() - currentTimeMillis;
 
-                    if (timeRemaining <= 0) continue; // דילוג על הזמנות שזמן ההזמנה שלהן נגמר
+                    if (timeRemaining <= 0) continue; // Skip orders that have expired
 
                     String orderOwner = documentSnapshot.getString("ownerEmail");
                     List<String> joinedUsers = (List<String>) documentSnapshot.get("listPeopleInOrder");
 
-                    if (orderOwner != null && orderOwner.equals(userEmail)) continue; // דילוג על הזמנות שפתחתי
-                    if (joinedUsers != null && joinedUsers.contains(userEmail)) continue; // דילוג על הזמנות שהצטרפתי אליהן
+                    if (orderOwner != null && orderOwner.equals(userEmail)) continue; // Skip orders created by the user
+                    if (joinedUsers != null && joinedUsers.contains(userEmail)) continue; // Skip orders joined by the user
 
                     long numberOfPeopleInOrder = documentSnapshot.getLong("NumberOfPeopleInOrder");
                     long maxPeople = documentSnapshot.getLong("max_people");
 
-                    if (numberOfPeopleInOrder == maxPeople) continue; // דילוג על הזמנות מלאות
+                    if (numberOfPeopleInOrder == maxPeople) continue; // Skip full orders
 
                     boolean matchesCategory = true;
                     if (filterByCategory) {
@@ -529,7 +537,7 @@ public class FilterActivity extends AppCompatActivity {
                         matchesTime = orderTimeInMillis <= selectedDateTime.getTimeInMillis() && orderTimeInMillis > currentTimeMillis;
                     } else {
                         long orderTimeInMillis = documentSnapshot.getTimestamp("time").toDate().getTime();
-                        matchesTime = orderTimeInMillis > currentTimeMillis; // בדיקה האם הזמן עבר
+                        matchesTime = orderTimeInMillis > currentTimeMillis; // Check if the time has passed
                     }
 
                     if (matchesCategory && matchesLocation && matchesTypeOfOrder && matchesPeopleLimit && matchesTime) {
@@ -550,7 +558,7 @@ public class FilterActivity extends AppCompatActivity {
 
                 Intent intent = new Intent(FilterActivity.this, HomePageActivity.class);
                 intent.putExtra("userType", globalUserType);
-                intent.putExtra("filterActive", true); // תמיד מציינים שסינון פעיל
+                intent.putExtra("filterActive", true); // Always indicate that filtering is active
 
                 if (distance > 0) {
                     if (results.length() == 0) {
@@ -569,6 +577,8 @@ public class FilterActivity extends AppCompatActivity {
             }
         });
     }
+
+    // Updates the category TextView with the selected categories
     private void updateCategoryTextView() {
         TextView categoryTextView = findViewById(R.id.category_text);
         List<String> selectedCategories = getSelectedCategories();
@@ -580,10 +590,11 @@ public class FilterActivity extends AppCompatActivity {
         }
     }
 
+    // Fetches orders by URL
     private void fetchOrdersByUrl(String url, String address, List<String> selectedCategories, boolean filterByCategory, boolean filterByConsumer, boolean filterBySupplied, boolean filterByPeopleLimit, int peopleLimit, boolean filterByUnlimitedPeople, boolean filterByTime, Calendar selectedDate, Calendar selectedTime) {
         String domainName = getDomainName(url);
         if (domainName == null) {
-            Toast.makeText(this, "Invalid URL", Toast.LENGTH_SHORT).show();
+            Log.d(this.getLocalClassName(), "Invalid URL");
             return;
         }
 
@@ -591,12 +602,12 @@ public class FilterActivity extends AppCompatActivity {
         ordersRef.whereEqualTo("URL", domainName).get().addOnCompleteListener(task -> {
             if (task.isSuccessful()) {
                 StringBuilder results = new StringBuilder();
-                long currentTimeMillis = System.currentTimeMillis(); // זמן נוכחי במילישניות
+                long currentTimeMillis = System.currentTimeMillis(); // Current time in milliseconds
                 for (QueryDocumentSnapshot documentSnapshot : task.getResult()) {
                     long numberOfPeopleInOrder = documentSnapshot.getLong("NumberOfPeopleInOrder");
                     long maxPeople = documentSnapshot.getLong("max_people");
 
-                    if (numberOfPeopleInOrder == maxPeople) continue; // דילוג על הזמנות מלאות
+                    if (numberOfPeopleInOrder == maxPeople) continue; // Skip full orders
 
                     boolean matchesCategory = true;
                     if (filterByCategory) {
@@ -654,7 +665,7 @@ public class FilterActivity extends AppCompatActivity {
                         matchesTime = orderTimeInMillis <= selectedDateTime.getTimeInMillis() && orderTimeInMillis > currentTimeMillis;
                     } else {
                         long orderTimeInMillis = documentSnapshot.getTimestamp("time").toDate().getTime();
-                        matchesTime = orderTimeInMillis > currentTimeMillis; // בדיקה האם הזמן עבר
+                        matchesTime = orderTimeInMillis > currentTimeMillis; // Check if the time has passed
                     }
 
                     if (matchesCategory && matchesLocation && matchesTypeOfOrder && matchesPeopleLimit && matchesTime) {
@@ -682,17 +693,18 @@ public class FilterActivity extends AppCompatActivity {
         });
     }
 
+    // Fetches orders by string
     private void fetchOrdersByString(String str, String address, List<String> selectedCategories, boolean filterByCategory, boolean filterByConsumer, boolean filterBySupplied, boolean filterByPeopleLimit, int peopleLimit, boolean filterByUnlimitedPeople, boolean filterByTime, Calendar selectedDate, Calendar selectedTime) {
         CollectionReference ordersRef = db.collection("orders");
         ordersRef.whereEqualTo("URL", str).get().addOnCompleteListener(task -> {
             if (task.isSuccessful()) {
                 StringBuilder results = new StringBuilder();
-                long currentTimeMillis = System.currentTimeMillis(); // זמן נוכחי במילישניות
+                long currentTimeMillis = System.currentTimeMillis(); // Current time in milliseconds
                 for (QueryDocumentSnapshot documentSnapshot : task.getResult()) {
                     long numberOfPeopleInOrder = documentSnapshot.getLong("NumberOfPeopleInOrder");
                     long maxPeople = documentSnapshot.getLong("max_people");
 
-                    if (numberOfPeopleInOrder == maxPeople) continue; // דילוג על הזמנות מלאות
+                    if (numberOfPeopleInOrder == maxPeople) continue; // Skip full orders
 
                     boolean matchesCategory = true;
                     if (filterByCategory) {
@@ -750,7 +762,7 @@ public class FilterActivity extends AppCompatActivity {
                         matchesTime = orderTimeInMillis <= selectedDateTime.getTimeInMillis() && orderTimeInMillis > currentTimeMillis;
                     } else {
                         long orderTimeInMillis = documentSnapshot.getTimestamp("time").toDate().getTime();
-                        matchesTime = orderTimeInMillis > currentTimeMillis; // בדיקה האם הזמן עבר
+                        matchesTime = orderTimeInMillis > currentTimeMillis; // Check if the time has passed
                     }
 
                     if (matchesCategory && matchesLocation && matchesTypeOfOrder && matchesPeopleLimit && matchesTime) {
@@ -778,6 +790,7 @@ public class FilterActivity extends AppCompatActivity {
         });
     }
 
+    // Gets the selected categories from the ListView
     private List<String> getSelectedCategories() {
         SparseBooleanArray checkedItems = categoryListView.getCheckedItemPositions();
         List<String> selectedCategories = new ArrayList<>();
@@ -790,9 +803,10 @@ public class FilterActivity extends AppCompatActivity {
         return selectedCategories;
     }
 
+    // Shows the date picker dialog
     public void showDatePickerDialog(View view) {
         if (isDatePickerDialogOpen) {
-            return; // לא נפתח דיאלוג חדש אם כבר קיים אחד פתוח
+            return; // Do not open a new dialog if one is already open
         }
 
         isDatePickerDialogOpen = true;
@@ -800,9 +814,9 @@ public class FilterActivity extends AppCompatActivity {
         Calendar calendar = Calendar.getInstance();
         DatePickerDialog datePickerDialog = new DatePickerDialog(
                 FilterActivity.this,
-                android.R.style.Theme_Holo_Light_Dialog_MinWidth, // ערכת נושא שתבטיח שהדיאלוג יהיה רחב מספיק
+                android.R.style.Theme_Holo_Light_Dialog_MinWidth, // Ensures the dialog is wide enough
                 (view1, year, month, dayOfMonth) -> {
-                    isDatePickerDialogOpen = false; // עדכון מצב לאחר סגירת הדיאלוג
+                    isDatePickerDialogOpen = false; // Update status after closing the dialog
                     Calendar selectedDate = Calendar.getInstance();
                     selectedDate.set(year, month, dayOfMonth);
 
@@ -812,7 +826,7 @@ public class FilterActivity extends AppCompatActivity {
                     }
 
                     if (selectedDate.before(Calendar.getInstance())) {
-                        Toast.makeText(FilterActivity.this, "You can't choose a past date", Toast.LENGTH_SHORT).show();
+                        Log.d(this.getLocalClassName(), "You can't choose a past date");
                     } else {
                         this.selectedDate = selectedDate;
                         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
@@ -832,9 +846,10 @@ public class FilterActivity extends AppCompatActivity {
         datePickerDialog.show();
     }
 
+    // Shows the time picker dialog
     public void showTimePickerDialog(View view) {
         if (isTimePickerDialogOpen) {
-            return; // לא נפתח דיאלוג חדש אם כבר קיים אחד פתוח
+            return; // Do not open a new dialog if one is already open
         }
 
         isTimePickerDialogOpen = true;
@@ -843,9 +858,9 @@ public class FilterActivity extends AppCompatActivity {
 
         TimePickerDialog timePickerDialog = new TimePickerDialog(
                 FilterActivity.this,
-                android.R.style.Theme_Holo_Light_Dialog_MinWidth, // ערכת נושא שתבטיח שהדיאלוג יהיה רחב מספיק
+                android.R.style.Theme_Holo_Light_Dialog_MinWidth, // Ensures the dialog is wide enough
                 (view1, hourOfDay, minute) -> {
-                    isTimePickerDialogOpen = false; // עדכון מצב לאחר סגירת הדיאלוג
+                    isTimePickerDialogOpen = false; // Update status after closing the dialog
                     Calendar selectedTime = Calendar.getInstance();
                     selectedTime.set(Calendar.HOUR_OF_DAY, hourOfDay);
                     selectedTime.set(Calendar.MINUTE, minute);
@@ -857,7 +872,7 @@ public class FilterActivity extends AppCompatActivity {
                     }
 
                     if (selectedTime.before(Calendar.getInstance())) {
-                        Toast.makeText(FilterActivity.this, "You cannot select a past time", Toast.LENGTH_SHORT).show();
+                        Log.d(this.getLocalClassName(), "You cannot select a past time");
                     } else {
                         this.selectedTime = selectedTime;
                         SimpleDateFormat sdf = new SimpleDateFormat("HH:mm", Locale.getDefault());
@@ -877,12 +892,14 @@ public class FilterActivity extends AppCompatActivity {
         timePickerDialog.show();
     }
 
+    // Creates the options menu
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_items, menu);
         return true;
     }
 
+    // Handles menu item selections
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {

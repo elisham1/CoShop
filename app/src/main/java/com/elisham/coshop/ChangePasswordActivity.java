@@ -18,7 +18,6 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.app.ProgressDialog;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -32,6 +31,7 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
 
+// Handles changing user password functionality
 public class ChangePasswordActivity extends AppCompatActivity {
 
     private EditText oldPasswordEditText, newPasswordEditText, confirmNewPasswordEditText;
@@ -39,7 +39,7 @@ public class ChangePasswordActivity extends AppCompatActivity {
     private boolean isNewPasswordVisible = false;
     private boolean isConfirmNewPasswordVisible = false;
     private ImageView toggleOldPassword, toggleNewPassword, toggleConfirmNewPassword;
-    private TextView oldPasswordError, newPasswordError, confirmNewPasswordError,forgotPasswordTextView;
+    private TextView oldPasswordError, newPasswordError, confirmNewPasswordError, forgotPasswordTextView;
     private LinearLayout oldPasswordLayout, newPasswordLayout, confirmNewPasswordLayout;
     private FirebaseAuth mAuth;
     private FirebaseUser user;
@@ -49,10 +49,10 @@ public class ChangePasswordActivity extends AppCompatActivity {
     private ProgressDialog progressDialog;
     private TextView passwordRules;
 
+    // Initializes the activity and sets the theme based on user type
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        // Set the theme based on the user type
         Intent intent = getIntent();
         globalUserType = intent.getStringExtra("userType");
 
@@ -93,8 +93,7 @@ public class ChangePasswordActivity extends AppCompatActivity {
         addTextWatchers();
         setupForgotPassword();
 
-        if (globalUserType.equals("Supplier"))
-        {
+        if (globalUserType.equals("Supplier")) {
             doneButton.setBackgroundResource(R.drawable.bg_selected_supplier);
         }
         doneButton.setOnClickListener(new View.OnClickListener() {
@@ -106,6 +105,7 @@ public class ChangePasswordActivity extends AppCompatActivity {
         });
     }
 
+    // Adds text watchers for input validation
     private void addTextWatchers() {
         oldPasswordEditText.addTextChangedListener(new TextWatcher() {
             @Override
@@ -169,6 +169,7 @@ public class ChangePasswordActivity extends AppCompatActivity {
         });
     }
 
+    // Toggles password visibility for old, new, and confirm password fields
     private void togglePasswordVisibility() {
         toggleOldPassword.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -216,6 +217,7 @@ public class ChangePasswordActivity extends AppCompatActivity {
         });
     }
 
+    // Sets up forgot password functionality
     private void setupForgotPassword() {
         forgotPasswordTextView.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -225,6 +227,7 @@ public class ChangePasswordActivity extends AppCompatActivity {
         });
     }
 
+    // Displays forgot password dialog
     private void showForgotPasswordDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         View dialogView = getLayoutInflater().inflate(R.layout.dialog_forgot_password, null);
@@ -304,9 +307,9 @@ public class ChangePasswordActivity extends AppCompatActivity {
                                 @Override
                                 public void onComplete(@NonNull Task<Void> task) {
                                     if (task.isSuccessful()) {
-                                        Toast.makeText(ChangePasswordActivity.this, "Password reset email sent", Toast.LENGTH_SHORT).show();
+                                        Log.d("ChangePasswordActivity", "Password reset email sent");
                                     } else {
-                                        Toast.makeText(ChangePasswordActivity.this, "Failed to send password reset email: " + task.getException().getMessage(), Toast.LENGTH_SHORT).show();
+                                        Log.d("ChangePasswordActivity", "Failed to send password reset email: " + task.getException().getMessage());
                                     }
                                     dialog.dismiss();
                                 }
@@ -316,7 +319,7 @@ public class ChangePasswordActivity extends AppCompatActivity {
         });
     }
 
-
+    // Changes the user's password
     private void changePassword() {
         String oldPassword = oldPasswordEditText.getText().toString().trim();
         String newPassword = newPasswordEditText.getText().toString().trim();
@@ -405,6 +408,7 @@ public class ChangePasswordActivity extends AppCompatActivity {
         }
     }
 
+    // Inflates the options menu
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_items, menu);
@@ -417,32 +421,33 @@ public class ChangePasswordActivity extends AppCompatActivity {
         return true;
     }
 
+    // Handles item selections in the options menu
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.Personal_info:
-                menuUtils.personalInfo();
+                menuUtils.personalInfo(); // Navigate to Personal Info
                 return true;
             case R.id.My_Orders:
-                menuUtils.myOrders();
+                menuUtils.myOrders(); // Navigate to My Orders
                 return true;
             case R.id.About_Us:
-                menuUtils.aboutUs();
+                menuUtils.aboutUs(); // Navigate to About Us
                 return true;
             case R.id.Contact_Us:
-                menuUtils.contactUs();
+                menuUtils.contactUs(); // Navigate to Contact Us
                 return true;
             case R.id.Log_Out:
-                menuUtils.logOut();
+                menuUtils.logOut(); // Log out user
                 return true;
             case R.id.home:
-                menuUtils.home();
+                menuUtils.home(); // Navigate to Home
                 return true;
             case R.id.chat_icon:
-                menuUtils.allChats();
+                menuUtils.allChats(); // Navigate to All Chats
                 return true;
             case R.id.chat_notification:
-                menuUtils.chat_notification();
+                menuUtils.chat_notification(); // Navigate to Chat Notification
                 return true;
             default:
                 return super.onOptionsItemSelected(item);

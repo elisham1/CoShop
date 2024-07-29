@@ -17,6 +17,7 @@ public class OrderDeletedActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        // Get the user type from the intent and set the appropriate theme
         Intent intent = getIntent();
         globalUserType = intent.getStringExtra("userType");
 
@@ -30,9 +31,9 @@ public class OrderDeletedActivity extends AppCompatActivity {
         setContentView(R.layout.activity_order_deleted);
         menuUtils = new MenuUtils(this, globalUserType);
 
+        // Set up the back button with appropriate background and click listener
         Button backButton = findViewById(R.id.back_button);
-        if (globalUserType.equals("Supplier"))
-        {
+        if (globalUserType.equals("Supplier")) {
             backButton.setBackgroundResource(R.drawable.bg_selected_supplier);
         }
         backButton.setOnClickListener(new View.OnClickListener() {
@@ -43,6 +44,7 @@ public class OrderDeletedActivity extends AppCompatActivity {
         });
     }
 
+    // Navigate back to the appropriate activity based on user type
     private void navigateBack() {
         Intent intent;
         if ("Consumer".equals(globalUserType)) {
@@ -73,28 +75,28 @@ public class OrderDeletedActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.Personal_info:
-                menuUtils.personalInfo();
+                menuUtils.personalInfo(); // Navigate to personal info activity
                 return true;
             case R.id.My_Orders:
-                menuUtils.myOrders();
+                menuUtils.myOrders(); // Navigate to my orders activity
                 return true;
             case R.id.About_Us:
-                menuUtils.aboutUs();
+                menuUtils.aboutUs(); // Navigate to about us activity
                 return true;
             case R.id.Contact_Us:
-                menuUtils.contactUs();
+                menuUtils.contactUs(); // Navigate to contact us activity
                 return true;
             case R.id.Log_Out:
-                menuUtils.logOut();
+                menuUtils.logOut(); // Log out the user
                 return true;
             case R.id.home:
-                menuUtils.home();
+                menuUtils.home(); // Navigate to home activity
                 return true;
             case R.id.chat_icon:
-                menuUtils.allChats();
+                menuUtils.allChats(); // Navigate to all chats activity
                 return true;
             case R.id.chat_notification:
-                menuUtils.chat_notification();
+                menuUtils.chat_notification(); // Navigate to chat notification activity
                 return true;
             default:
                 return super.onOptionsItemSelected(item);

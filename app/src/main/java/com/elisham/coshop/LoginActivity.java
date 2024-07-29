@@ -9,7 +9,6 @@ import androidx.appcompat.app.ActionBar;
 import android.view.MenuItem;
 import android.view.View;
 import android.util.Log;
-import android.widget.Toast;
 import androidx.annotation.Nullable;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
@@ -30,6 +29,7 @@ public class LoginActivity extends AppCompatActivity {
     private FirebaseAuth mAuth;
     private FirebaseFirestore db;
     String webClientId;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -44,8 +44,9 @@ public class LoginActivity extends AppCompatActivity {
         // Call signIn method when the Google Sign-In button is clicked
         findViewById(R.id.button3).setOnClickListener(view -> signIn());
         findViewById(R.id.button1).setOnClickListener(view -> emailLogin());
-
     }
+
+    // Initiates Google Sign-In process
     private void signIn() {
         GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                 .requestIdToken(webClientId)
@@ -60,7 +61,7 @@ public class LoginActivity extends AppCompatActivity {
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
-        if ( requestCode == 1 && resultCode == RESULT_OK) {
+        if (requestCode == 1 && resultCode == RESULT_OK) {
             setResult(RESULT_OK);
             finish(); // Finish EmailSignupActivity if result is OK
         }
@@ -76,6 +77,7 @@ public class LoginActivity extends AppCompatActivity {
         }
     }
 
+    // Authenticates with Firebase using Google Sign-In account
     private void firebaseAuthWithGoogle(GoogleSignInAccount acct) {
         AuthCredential credential = GoogleAuthProvider.getCredential(acct.getIdToken(), null);
         mAuth.signInWithCredential(credential)
@@ -84,28 +86,22 @@ public class LoginActivity extends AppCompatActivity {
                         boolean isNewUser = task.getResult().getAdditionalUserInfo().isNewUser();
 
                         if (isNewUser) {
-                            // If user is new, navigate to MainActivity for sign-up
-                            Toast.makeText(LoginActivity.this, "You need to sign up.", Toast.LENGTH_SHORT).show();
+                            Log.d("Firebase Auth", "New user needs to sign up.");
                             Intent intent = new Intent(LoginActivity.this, SignupActivity.class);
                             startActivity(intent);
                             finish(); // Close this activity to prevent returning to it on back press
                         } else {
-                            // If user is not new, proceed with normal sign-in flow
                             Log.d("Firebase Auth", "signInWithCredential:success - Existing User");
                             checkIfBlocked();
-//                            Toast.makeText(LoginActivity.this, "Sign in successful.", Toast.LENGTH_SHORT).show();
-//                            Intent intent = new Intent(LoginActivity.this, HomePageActivity.class);
-//                            startActivity(intent);
-//                            finish(); // Close this activity to prevent returning to it on back press
                         }
                     } else {
-                        // If sign in fails, display a message to the user.
                         Log.w("Firebase Auth", "signInWithCredential:failure", task.getException());
-                        Toast.makeText(LoginActivity.this, "Authentication failed.", Toast.LENGTH_SHORT).show();
+                        Log.d("LoginActivity", "Authentication failed.");
                     }
                 });
     }
 
+    // Checks if the user is blocked
     private void checkIfBlocked() {
         String userEmail = mAuth.getCurrentUser().getEmail();
         DocumentReference userRef = db.collection("users").document(userEmail);
@@ -131,16 +127,13 @@ public class LoginActivity extends AppCompatActivity {
                     // Signed in with Google
                     GoogleSignIn.getClient(this, GoogleSignInOptions.DEFAULT_SIGN_IN).signOut().addOnCompleteListener(task -> {
                         if (task.isSuccessful()) {
-                            // Sign out from Firebase
                             Log.d("Logout", "Google sign-out successful");
                         } else {
-                            // Handle sign-out failure
                             Log.e("Logout", "Google sign-out failed");
                         }
                     });
                     mAuth.signOut();
                 } else {
-                    // User is not blocked, proceed to HomePageActivity
                     Intent intent = new Intent(LoginActivity.this, HomePageActivity.class);
                     intent.putExtra("userType", userType);
                     startActivity(intent);
@@ -148,10 +141,11 @@ public class LoginActivity extends AppCompatActivity {
                 }
             }
         }).addOnFailureListener(e -> {
-            Toast.makeText(this, "Failed to check block status", Toast.LENGTH_SHORT).show();
+            Log.d("LoginActivity", "Failed to check block status");
         });
     }
 
+    // Shows an alert dialog with a message
     private void showAlertDialog(String message) {
         new androidx.appcompat.app.AlertDialog.Builder(this)
                 .setMessage(message)
@@ -163,9 +157,9 @@ public class LoginActivity extends AppCompatActivity {
                 .show();
     }
 
+    // Initiates email login process
     public void emailLogin() {
         Intent intent = new Intent(LoginActivity.this, EmailLoginActivity.class);
         startActivityForResult(intent, 1);
     }
-
 }

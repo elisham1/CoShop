@@ -18,7 +18,6 @@
         android:textColor="@color/black"
         android:layout_marginBottom="16dp"/>
 
-    <!-- שורה של שדה טקסט וכפתור -->
     <RelativeLayout
         android:id="@+id/address_layout"
         android:layout_width="match_parent"
@@ -65,7 +64,6 @@
         android:visibility="gone"
         android:layout_marginTop="1dp"/>
 
-    <!-- מיקום נוכחי -->
     <LinearLayout
         android:id="@+id/get_location_button"
         android:layout_width="match_parent"
@@ -99,7 +97,6 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical">
-    <!-- שורה של שדה המרחק -->
     <LinearLayout
         android:id="@+id/distance_layout"
         android:layout_width="match_parent"
@@ -147,7 +144,6 @@
         android:visibility="gone"
         android:layout_marginTop="1dp"/>
 
-    <!-- שורה של 2 כפתורים: OK ו-Cancel -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
