@@ -16,6 +16,7 @@
         android:textSize="30sp"
         android:gravity="center"
         android:text="Contact Us"
+        android:textStyle="bold"
         android:textColor="#333333" />
 
     <Spinner

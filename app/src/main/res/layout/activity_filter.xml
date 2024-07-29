@@ -7,26 +7,45 @@
     tools:context=".FilterActivity"
     android:layoutDirection="ltr">
 
-    <TextView
-        android:id="@+id/additional_filters_title"
-        android:layout_width="wrap_content"
+    <LinearLayout
+        android:id="@+id/titleLayout"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="8dp"
-        android:text="Additional Filters"
-        android:textSize="25sp"
-        android:textStyle="bold"
-        android:textColor="@color/black"
-        android:layoutDirection="ltr"
+        android:orientation="vertical"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintBottom_toTopOf="@+id/filters_container"/>
+        app:layout_constraintBottom_toTopOf="@+id/filters_container">
+
+        <TextView
+            android:id="@+id/additional_filters_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Additional Filters"
+            android:textSize="25sp"
+            android:textStyle="bold"
+            android:layout_gravity="center"
+            android:textColor="@color/black"
+            android:layoutDirection="ltr" />
+
+        <TextView
+            android:id="@+id/noFiltersError"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Please select at least one filter"
+            android:textColor="@android:color/holo_red_dark"
+            android:textSize="14sp"
+            android:visibility="gone"
+            android:layout_marginTop="1dp"/>
+
+    </LinearLayout>
 
     <ScrollView
         android:id="@+id/filters_container"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        app:layout_constraintTop_toBottomOf="@+id/additional_filters_title"
+        android:layout_marginTop="4dp"
+        app:layout_constraintTop_toBottomOf="@+id/titleLayout"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintBottom_toTopOf="@+id/button_container">
@@ -138,6 +157,7 @@
                 android:orientation="horizontal"
                 android:layoutDirection="ltr">
                 <LinearLayout
+                    android:id="@+id/date_container"
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
                     android:layout_weight="1"
@@ -168,6 +188,7 @@
                         android:layoutDirection="ltr" />
                 </LinearLayout>
                 <LinearLayout
+                    android:id="@+id/time_container"
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
                     android:layout_weight="1"
@@ -197,7 +218,17 @@
                         android:onClick="showTimePickerDialog"
                         android:layoutDirection="ltr" />
                 </LinearLayout>
+
             </LinearLayout>
+
+            <TextView
+                android:id="@+id/dateError"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="If date is selected, time is required"
+                android:textColor="@android:color/holo_red_dark"
+                android:textSize="12sp"
+                android:visibility="gone"/>
 
             <!-- Category toggle row -->
             <TextView

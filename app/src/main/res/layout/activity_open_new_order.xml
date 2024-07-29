@@ -13,12 +13,22 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
-        android:layout_marginBottom="8dp"
+        android:layout_marginBottom="4dp"
         android:text="Open New Order"
         android:textSize="25sp"
         android:textStyle="bold"
         android:textColor="@color/black"
         android:layoutDirection="ltr" />
+
+    <TextView
+        android:id="@+id/allFieldsErrorText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Missing required fields"
+        android:textColor="@android:color/holo_red_dark"
+        android:textSize="14sp"
+        android:layout_marginBottom="4dp"
+        android:visibility="gone"/>
 
     <ScrollView
         android:layout_width="match_parent"
@@ -56,6 +66,15 @@
                 android:padding="12dp"
                 android:maxLength="30"
                 android:layoutDirection="ltr" />
+
+            <TextView
+                android:id="@+id/titleErrorText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Title can't be longer than 25 characters"
+                android:textColor="@android:color/holo_red_dark"
+                android:textSize="12sp"
+                android:visibility="gone"/>
 
             <!-- URL Input -->
             <TextView
@@ -95,6 +114,14 @@
                     android:src="@drawable/tap"
                     android:layoutDirection="ltr" />
             </LinearLayout>
+            <TextView
+                android:id="@+id/urlErrorText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Invalid URL"
+                android:textColor="@android:color/holo_red_dark"
+                android:textSize="12sp"
+                android:visibility="gone"/>
 
             <!-- Category Selection -->
             <TextView
@@ -172,7 +199,7 @@
             <EditText
                 android:id="@+id/description"
                 android:layout_width="match_parent"
-                android:layout_height="50dp"
+                android:layout_height="wrap_content"
                 android:inputType="textMultiLine"
                 android:hint="Describe your order"
                 android:textSize="15sp"
@@ -193,11 +220,12 @@
             <!-- Date and Time Selection -->
             <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="50dp"
+                android:layout_height="wrap_content"
                 android:orientation="horizontal"
                 android:layoutDirection="ltr">
 
                 <LinearLayout
+                    android:id="@+id/date_layout"
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
                     android:layout_weight="1"
@@ -230,8 +258,9 @@
                 </LinearLayout>
 
                 <LinearLayout
+                    android:id="@+id/time_layout"
                     android:layout_width="0dp"
-                    android:layout_height="50dp"
+                    android:layout_height="match_parent"
                     android:layout_weight="1"
                     android:orientation="horizontal"
                     android:background="@drawable/border"
@@ -262,6 +291,15 @@
                 </LinearLayout>
             </LinearLayout>
 
+            <TextView
+                android:id="@+id/dateError"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Invalid date or time"
+                android:textColor="@android:color/holo_red_dark"
+                android:textSize="12sp"
+                android:visibility="gone"/>
+
             <!-- Max People Input -->
             <TextView
                 android:layout_width="match_parent"
@@ -282,6 +320,15 @@
                 android:background="@drawable/border"
                 android:padding="12dp"
                 android:layoutDirection="ltr" />
+
+            <TextView
+                android:id="@+id/maxPeopleErrorText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Choose minimum two participants"
+                android:textColor="@android:color/holo_red_dark"
+                android:textSize="12sp"
+                android:visibility="gone"/>
         </LinearLayout>
     </ScrollView>
 

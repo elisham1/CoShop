@@ -124,8 +124,6 @@ public class HomePageActivity extends AppCompatActivity implements OnMapReadyCal
             setTheme(R.style.SupplierTheme);
         }
         setContentView(R.layout.activity_home_page);
-        initializeUI();
-
 
         ImageButton locationButton = findViewById(R.id.locationButton);
 
@@ -165,6 +163,7 @@ public class HomePageActivity extends AppCompatActivity implements OnMapReadyCal
         if (mapFragment != null) {
             mapFragment.getMapAsync(this);
         }
+
     }
 
 
@@ -538,6 +537,11 @@ public class HomePageActivity extends AppCompatActivity implements OnMapReadyCal
         }
         // Initialize the orders container
         ordersContainer = findViewById(R.id.ordersContainer);
+        // Clear the orders container at the start
+        if (ordersContainer != null) {
+            ordersContainer.removeAllViews();
+        }
+
         ImageButton plus = findViewById(R.id.newOrderButton);
         if (globalUserType.equals("Supplier")) {
             plus.setImageResource(R.drawable.ic_plus_supplier);
@@ -1394,5 +1398,11 @@ public class HomePageActivity extends AppCompatActivity implements OnMapReadyCal
             star.setLayoutParams(params);
             layout.addView(star);
         }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        initializeUI();
     }
 }

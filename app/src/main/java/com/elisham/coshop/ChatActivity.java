@@ -78,6 +78,13 @@ public class ChatActivity extends AppCompatActivity {
             setTheme(R.style.SupplierTheme);
         }
         setContentView(R.layout.activity_chat);
+        // Get the orderId from the intent
+        orderId = intent.getStringExtra("orderId");
+        Log.d("ChatActivity", "Order ID: " + orderId);
+        initializeUI();
+    }
+
+    private void initializeUI() {
         menuUtils = new MenuUtils(this, globalUserType);
 
         db = FirebaseFirestore.getInstance();
@@ -97,9 +104,6 @@ public class ChatActivity extends AppCompatActivity {
         chatRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         chatRecyclerView.setAdapter(chatAdapter);
 
-        // Get the orderId from the intent
-        orderId = intent.getStringExtra("orderId");
-        Log.d("ChatActivity", "Order ID: " + orderId);
         loadChatMessages(orderId);
 
         orderDetailsLayout.setOnClickListener(v -> {
@@ -246,6 +250,11 @@ public class ChatActivity extends AppCompatActivity {
                 if (snapshots != null) {
                     WriteBatch batch = db.batch();
                     for (DocumentSnapshot document : snapshots.getDocuments()) {
+                        String type = document.getString("type");
+                        if (type != null && type.equals("dateHeader")) {
+                            continue; // Skip date headers
+                        }
+
                         List<String> readBy = (List<String>) document.get("readBy");
                         if (readBy == null) {
                             readBy = new ArrayList<>();
@@ -280,6 +289,11 @@ public class ChatActivity extends AppCompatActivity {
                 WriteBatch batch = db.batch();
                 for (DocumentSnapshot document : task.getResult()) {
                     if (document.exists()) {
+                        String type = document.getString("type");
+                        if (type != null && type.equals("dateHeader")) {
+                            continue; // Skip date headers
+                        }
+
                         List<String> readBy = (List<String>) document.get("readBy");
                         if (readBy == null) {
                             readBy = new ArrayList<>();
