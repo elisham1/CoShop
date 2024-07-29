@@ -557,6 +557,8 @@ public class OrderDetailsActivity extends AppCompatActivity {
                         waitingListText.setVisibility(View.GONE);
                         leaveButton.setVisibility(View.GONE);
                         leaveText.setVisibility(View.GONE);
+                        cartIcon.setVisibility(View.GONE);
+                        cartText.setVisibility(View.GONE);
                     } else {
                         // Existing logic to check if the user is in the order or waiting list
                         if (listPeopleInOrder.contains(email)) {
@@ -587,6 +589,8 @@ public class OrderDetailsActivity extends AppCompatActivity {
                             }
                             waitingListButton.setVisibility(View.VISIBLE);
                             waitingListText.setVisibility(View.VISIBLE);
+                            cartIcon.setVisibility(View.GONE);
+                            cartText.setVisibility(View.GONE);
                         } else {
                             joinIcon.setVisibility(View.VISIBLE);
                             joinText.setVisibility(View.VISIBLE);
@@ -596,6 +600,8 @@ public class OrderDetailsActivity extends AppCompatActivity {
                             chatText.setVisibility(View.GONE);
                             leaveButton.setVisibility(View.GONE);
                             leaveText.setVisibility(View.GONE);
+                            cartIcon.setVisibility(View.GONE);
+                            cartText.setVisibility(View.GONE);
                         }
                     }
                 }
@@ -920,6 +926,14 @@ public class OrderDetailsActivity extends AppCompatActivity {
         removeUserFromOrderList(orderId, userEmail)
                 .continueWithTask(task -> {
                     if (task.isSuccessful()) {
+                        // Remove items added by the user from the cart
+                        return removeItemsFromCartByUser(orderId, userEmail);
+                    } else {
+                        throw task.getException();
+                    }
+                })
+                .continueWithTask(task -> {
+                    if (task.isSuccessful()) {
                         return updateOrderInfoAfterRemoval(orderId, userEmail);
                     } else {
                         throw task.getException();
@@ -947,6 +961,31 @@ public class OrderDetailsActivity extends AppCompatActivity {
                     }
                     progressDialog.dismiss();
                 });
+    }
+
+    // Remove items from cart added by the user
+    private Task<Void> removeItemsFromCartByUser(String orderId, String userEmail) {
+        DocumentReference orderRef = db.collection("orders").document(orderId);
+        return orderRef.get().continueWithTask(task -> {
+            if (task.isSuccessful()) {
+                DocumentSnapshot snapshot = task.getResult();
+                List<Map<String, Object>> cartItems = (List<Map<String, Object>>) snapshot.get("cartItems");
+
+                if (cartItems != null) {
+                    List<Map<String, Object>> updatedCartItems = new ArrayList<>();
+                    for (Map<String, Object> item : cartItems) {
+                        if (!userEmail.equals(item.get("userEmail"))) {
+                            updatedCartItems.add(item);
+                        }
+                    }
+                    return orderRef.update("cartItems", updatedCartItems);
+                } else {
+                    return Tasks.forResult(null);
+                }
+            } else {
+                return Tasks.forException(task.getException());
+            }
+        });
     }
 
     // Show users in order
