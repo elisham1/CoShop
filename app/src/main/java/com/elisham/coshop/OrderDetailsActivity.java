@@ -8,8 +8,10 @@ import androidx.core.content.ContextCompat;
 import androidx.core.view.ViewCompat;
 import androidx.viewpager2.widget.ViewPager2;
 
+import android.content.ClipData;
+import android.content.ClipboardManager;
+import android.content.Context;
 import android.view.WindowManager;
-import android.widget.Toast;
 import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
@@ -71,6 +73,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class OrderDetailsActivity extends AppCompatActivity {
 
@@ -350,6 +354,7 @@ public class OrderDetailsActivity extends AppCompatActivity {
             tapIcon.setVisibility(View.VISIBLE);
         }
     }
+
     private void showImageAlertDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
 
@@ -400,6 +405,7 @@ public class OrderDetailsActivity extends AppCompatActivity {
 
         alertDialog.show();
     }
+
     private void addDots(LinearLayout dotsLayout, int size, int currentPosition) {
         dotsLayout.removeAllViews();
         TextView[] dots = new TextView[size];
@@ -592,62 +598,6 @@ public class OrderDetailsActivity extends AppCompatActivity {
             Log.e("OrderDetailsActivity", "Error fetching order details", e);
             progressDialog.dismiss();
         });
-    }
-
-    private void showCartDialog() {
-        Dialog dialog = new Dialog(this);
-        dialog.setContentView(R.layout.dialog_cart);
-
-        LinearLayout cartLayout = dialog.findViewById(R.id.cartLayout);
-        Button closeButton = dialog.findViewById(R.id.closeButton);
-
-        db.collection("orders").document(orderId).get()
-                .addOnSuccessListener(documentSnapshot -> {
-                    if (documentSnapshot.exists()) {
-                        List<Map<String, Object>> cartItems = (List<Map<String, Object>>) documentSnapshot.get("cartItems");
-
-                        if (cartItems != null) {
-                            Map<String, List<Map<String, Object>>> userItemsMap = new HashMap<>();
-
-                            // Group items by user
-                            for (Map<String, Object> item : cartItems) {
-                                String userEmail = (String) item.get("userEmail");
-                                if (!userItemsMap.containsKey(userEmail)) {
-                                    userItemsMap.put(userEmail, new ArrayList<>());
-                                }
-                                userItemsMap.get(userEmail).add(item);
-                            }
-
-                            // Display grouped items
-                            for (Map.Entry<String, List<Map<String, Object>>> entry : userItemsMap.entrySet()) {
-                                String userEmail = entry.getKey();
-                                List<Map<String, Object>> items = entry.getValue();
-
-                                TextView userNameTextView = new TextView(this);
-                                userNameTextView.setText(userEmail); // Display email or fetch and display user's name
-                                userNameTextView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 18);
-                                userNameTextView.setTypeface(null, Typeface.BOLD);
-                                userNameTextView.setPadding(0, 16, 0, 8);
-                                cartLayout.addView(userNameTextView);
-
-                                for (Map<String, Object> item : items) {
-                                    String url = (String) item.get("url");
-                                    String price = (String) item.get("price");
-
-                                    TextView itemTextView = new TextView(this);
-                                    itemTextView.setText("URL: " + url + "\nPrice: $" + price);
-                                    itemTextView.setPadding(0, 8, 0, 8);
-                                    cartLayout.addView(itemTextView);
-                                }
-                            }
-                        }
-                    }
-                })
-                .addOnFailureListener(e -> Log.e("OrderDetailsActivity", "Error fetching cart items", e));
-
-        closeButton.setOnClickListener(v -> dialog.dismiss());
-
-        dialog.show();
     }
 
     private void shareOrderDetails() {
@@ -1063,7 +1013,7 @@ public class OrderDetailsActivity extends AppCompatActivity {
                 userNameTextView.setText("You");
                 addToCartImageView.setVisibility(View.VISIBLE);
                 addToCartImageView.setOnClickListener(v -> {
-                    showAddToCartDialog(displayedEmail);
+                    showAddToCartDialog(displayedEmail, userName);
                 });
             } else {
                 addToCartImageView.setVisibility(View.GONE);
@@ -1083,11 +1033,126 @@ public class OrderDetailsActivity extends AppCompatActivity {
         userListLayout.addView(userItemView);
     }
 
-    private void showAddToCartDialog(String userEmail) {
+    private void showCartDialog() {
+        Dialog dialog = new Dialog(this);
+        dialog.setContentView(R.layout.dialog_cart);
+
+        WindowManager.LayoutParams layoutParams = new WindowManager.LayoutParams();
+        layoutParams.copyFrom(dialog.getWindow().getAttributes());
+        layoutParams.width = (int) (getResources().getDisplayMetrics().widthPixels * 0.9);
+        dialog.getWindow().setAttributes(layoutParams);
+
+        LinearLayout cartLayout = dialog.findViewById(R.id.cartLayout);
+        Button closeButton = dialog.findViewById(R.id.closeButton);
+
+        db.collection("orders").document(orderId).get()
+                .addOnSuccessListener(documentSnapshot -> {
+                    if (documentSnapshot.exists()) {
+                        List<Map<String, Object>> cartItems = (List<Map<String, Object>>) documentSnapshot.get("cartItems");
+
+                        if (cartItems == null || cartItems.isEmpty()) {
+                            // Display message if there are no items in the cart
+                            TextView noItemsTextView = new TextView(this);
+                            noItemsTextView.setText("There are no items in the cart");
+                            noItemsTextView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 18);
+                            noItemsTextView.setTypeface(null, Typeface.BOLD);
+                            noItemsTextView.setPadding(0, 16, 0, 8);
+                            noItemsTextView.setGravity(Gravity.CENTER);
+                            cartLayout.addView(noItemsTextView);
+                        } else {
+                            Map<String, List<Map<String, Object>>> userItemsMap = new HashMap<>();
+
+                            // Group items by user
+                            for (Map<String, Object> item : cartItems) {
+                                String userEmail = (String) item.get("userEmail");
+                                if (!userItemsMap.containsKey(userEmail)) {
+                                    userItemsMap.put(userEmail, new ArrayList<>());
+                                }
+                                userItemsMap.get(userEmail).add(item);
+                            }
+
+                            // Display grouped items
+                            for (Map.Entry<String, List<Map<String, Object>>> entry : userItemsMap.entrySet()) {
+                                String userEmail = entry.getKey();
+                                List<Map<String, Object>> items = entry.getValue();
+
+                                String userName = items.get(0).get("userName").toString();
+
+                                TextView userNameTextView = new TextView(this);
+                                userNameTextView.setText(userName); // Display user name instead of email
+                                userNameTextView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 18);
+                                userNameTextView.setTypeface(null, Typeface.BOLD);
+                                userNameTextView.setPadding(0, 16, 0, 8);
+                                cartLayout.addView(userNameTextView);
+
+                                for (Map<String, Object> item : items) {
+                                    View itemLayout = getLayoutInflater().inflate(R.layout.item_cart_add, cartLayout, false);
+                                    EditText itemUrlEditText = itemLayout.findViewById(R.id.itemUrlEditText);
+                                    EditText itemPriceEditText = itemLayout.findViewById(R.id.itemPriceEditText);
+                                    ImageView deleteItemIcon = itemLayout.findViewById(R.id.deleteItemIcon);
+                                    ImageView copyUrlIcon = itemLayout.findViewById(R.id.copyUrlIcon);
+
+                                    String url = (String) item.get("url");
+                                    String price = (String) item.get("price");
+
+                                    itemUrlEditText.setText(url);
+                                    if (price.isEmpty()) {
+                                        itemPriceEditText.setVisibility(View.GONE);
+                                    } else {
+                                        itemPriceEditText.setText(price);
+                                        itemPriceEditText.setVisibility(View.VISIBLE);
+                                    }
+
+                                    // Check if URL is valid and set the copy icon visibility
+                                    if (isValidURL(url)) {
+                                        copyUrlIcon.setVisibility(View.VISIBLE);
+                                        itemUrlEditText.setTextColor(ContextCompat.getColor(this, R.color.hyperlink_blue));
+                                        copyUrlIcon.setOnClickListener(v -> {
+                                            ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+                                            ClipData clip = ClipData.newPlainText("Copied URL", url);
+                                            clipboard.setPrimaryClip(clip);
+                                            Log.d("OrderDetailsActivity", "URL copied to clipboard");
+                                        });
+                                    } else {
+                                        copyUrlIcon.setVisibility(View.GONE);
+                                        itemUrlEditText.setTextColor(ContextCompat.getColor(this, R.color.black));
+                                    }
+
+                                    // Show the delete icon only if the current user is the one who added the item
+                                    if (userEmail.equals(currentUser.getEmail())) {
+                                        deleteItemIcon.setVisibility(View.VISIBLE);
+                                        deleteItemIcon.setOnClickListener(v -> {
+                                            cartLayout.removeView(itemLayout);
+                                            removeItemFromCart(item); // Remove item from Firestore
+                                        });
+                                    } else {
+                                        deleteItemIcon.setVisibility(View.GONE);
+                                    }
+
+                                    cartLayout.addView(itemLayout);
+                                }
+                            }
+                        }
+                    }
+                })
+                .addOnFailureListener(e -> Log.e("OrderDetailsActivity", "Error fetching cart items", e));
+
+        closeButton.setOnClickListener(v -> dialog.dismiss());
+
+        dialog.show();
+    }
+
+    private void removeItemFromCart(Map<String, Object> item) {
+        db.collection("orders").document(orderId)
+                .update("cartItems", FieldValue.arrayRemove(item))
+                .addOnSuccessListener(aVoid -> Log.d("OrderDetailsActivity", "Item removed from cart"))
+                .addOnFailureListener(e -> Log.e("OrderDetailsActivity", "Error removing item from cart", e));
+    }
+
+    private void showAddToCartDialog(String userEmail, String userName) {
         Dialog dialog = new Dialog(this);
         dialog.setContentView(R.layout.dialog_add_to_cart);
 
-        // Set dialog width to 90% of the screen width
         WindowManager.LayoutParams layoutParams = new WindowManager.LayoutParams();
         layoutParams.copyFrom(dialog.getWindow().getAttributes());
         layoutParams.width = (int) (getResources().getDisplayMetrics().widthPixels);
@@ -1096,26 +1161,46 @@ public class OrderDetailsActivity extends AppCompatActivity {
         LinearLayout itemsContainer = dialog.findViewById(R.id.itemsContainer);
         Button addItemButton = dialog.findViewById(R.id.addItemButton);
         ImageView addItemIcon = dialog.findViewById(R.id.addItemIcon);
+        TextView addItemText = dialog.findViewById(R.id.addItemText);
 
         // Add initial item layout
         addItemLayout(itemsContainer);
 
-        addItemIcon.setOnClickListener(v ->
-        {
-            View itemView = itemsContainer.getChildAt((itemsContainer.getChildCount()-1));
+        addItemIcon.setOnClickListener(v -> {
+            View itemView = itemsContainer.getChildAt(itemsContainer.getChildCount() - 1);
             EditText itemUrlEditText = itemView.findViewById(R.id.itemUrlEditText);
             TextView urlError = itemView.findViewById(R.id.urlError);
+            LinearLayout itemUrlLayout = itemView.findViewById(R.id.itemUrlLayout);
 
             String itemUrl = itemUrlEditText.getText().toString().trim();
 
             if (itemUrl.isEmpty()) {
                 urlError.setVisibility(View.VISIBLE);
-                itemUrlEditText.setBackgroundResource(R.drawable.red_border);
+                itemUrlLayout.setBackgroundResource(R.drawable.red_border);
                 return;
-            }
-            else {
+            } else {
                 urlError.setVisibility(View.GONE);
-                itemUrlEditText.setBackgroundResource(R.drawable.border);
+                itemUrlLayout.setBackgroundResource(R.drawable.border);
+            }
+
+            addItemLayout(itemsContainer);
+        });
+
+        addItemText.setOnClickListener(v -> {
+            View itemView = itemsContainer.getChildAt(itemsContainer.getChildCount() - 1);
+            EditText itemUrlEditText = itemView.findViewById(R.id.itemUrlEditText);
+            TextView urlError = itemView.findViewById(R.id.urlError);
+            LinearLayout itemUrlLayout = itemView.findViewById(R.id.itemUrlLayout);
+
+            String itemUrl = itemUrlEditText.getText().toString().trim();
+
+            if (itemUrl.isEmpty()) {
+                urlError.setVisibility(View.VISIBLE);
+                itemUrlLayout.setBackgroundResource(R.drawable.red_border);
+                return;
+            } else {
+                urlError.setVisibility(View.GONE);
+                itemUrlLayout.setBackgroundResource(R.drawable.border);
             }
 
             addItemLayout(itemsContainer);
@@ -1129,14 +1214,18 @@ public class OrderDetailsActivity extends AppCompatActivity {
                 EditText itemUrlEditText = itemView.findViewById(R.id.itemUrlEditText);
                 EditText itemPriceEditText = itemView.findViewById(R.id.itemPriceEditText);
                 TextView urlError = itemView.findViewById(R.id.urlError);
+                LinearLayout itemUrlLayout = itemView.findViewById(R.id.itemUrlLayout);
 
                 String itemUrl = itemUrlEditText.getText().toString().trim();
                 String itemPrice = itemPriceEditText.getText().toString().trim();
 
                 if (itemUrl.isEmpty()) {
                     urlError.setVisibility(View.VISIBLE);
-                    itemUrlEditText.setBackgroundResource(R.drawable.red_border);
+                    itemUrlLayout.setBackgroundResource(R.drawable.red_border);
                     return;
+                } else {
+                    urlError.setVisibility(View.GONE);
+                    itemUrlLayout.setBackgroundResource(R.drawable.border);
                 }
 
                 Map<String, String> item = new HashMap<>();
@@ -1146,7 +1235,7 @@ public class OrderDetailsActivity extends AppCompatActivity {
             }
 
             for (Map<String, String> item : items) {
-                addItemToCart(userEmail, item.get("url"), item.get("price"));
+                addItemToCart(userEmail, userName, item.get("url"), item.get("price"));
             }
 
             dialog.dismiss();
@@ -1169,16 +1258,28 @@ public class OrderDetailsActivity extends AppCompatActivity {
         container.addView(itemLayout);
     }
 
-    private void addItemToCart(String userEmail, String itemUrl, String itemPrice) {
+    private void addItemToCart(String userEmail, String userName, String itemText, String itemPrice) {
         DocumentReference orderRef = db.collection("orders").document(orderId);
 
+        String extractedUrl = extractUrl(itemText);
+        if (extractedUrl != null && isValidURL(extractedUrl)) {
+            itemText = extractedUrl;  // Save only the URL if it's valid
+        }
+
+        // Create a unique identifier for each cart item
+        String uniqueId = orderRef.collection("cartItems").document().getId();
+
         Map<String, Object> cartItem = new HashMap<>();
+        cartItem.put("id", uniqueId);  // Add the unique identifier to the cart item
         cartItem.put("userEmail", userEmail);
-        cartItem.put("url", itemUrl);
-        cartItem.put("price", itemPrice);
+        cartItem.put("userName", userName);
+        cartItem.put("url", itemText);  // Save the itemText which might be a URL or the full text
+        cartItem.put("price", itemPrice); // Optional: Include price if necessary
 
         orderRef.update("cartItems", FieldValue.arrayUnion(cartItem))
-                .addOnSuccessListener(aVoid -> Toast.makeText(this, "Item added to cart", Toast.LENGTH_SHORT).show())
+                .addOnSuccessListener(aVoid -> {
+                    Log.d("OrderDetailsActivity", "Item added to cart");
+                })
                 .addOnFailureListener(e -> Log.e("OrderDetailsActivity", "Error adding item to cart", e));
     }
 
@@ -1606,6 +1707,17 @@ public class OrderDetailsActivity extends AppCompatActivity {
             progressDialog.dismiss();
         });
     }
+
+    private String extractUrl(String text) {
+        Pattern urlPattern = Pattern.compile(
+                "(https?://\\S+\\b)", Pattern.CASE_INSENSITIVE);
+        Matcher matcher = urlPattern.matcher(text);
+        if (matcher.find()) {
+            return matcher.group(1);
+        }
+        return null;
+    }
+
     private boolean isValidURL(String url) {
         try {
             new URL(url).toURI();
