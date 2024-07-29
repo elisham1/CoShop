@@ -27,5 +27,6 @@
     <color name="active_dot">#105F86</color>
     <color name="inactive_dot">#CCCCCC</color>
     <color name="unsaved_red">@android:color/holo_green_light</color>
+    <color name="hyperlink_blue">#0000EE</color> <!-- This is a typical hyperlink blue color -->
 
 </resources>
