@@ -13,7 +13,7 @@ import android.provider.Settings;
 import android.view.View;
 import android.widget.AutoCompleteTextView;
 import android.widget.TextView;
-import android.widget.Toast;
+import android.util.Log;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.appcompat.app.AlertDialog;
@@ -46,6 +46,7 @@ public class LocationFunctions {
     private LocationCallback locationCallback;
     private CancellationTokenSource cancellationTokenSource;
 
+    // Constructor to initialize LocationFunctions.
     public LocationFunctions(Context context, AutoCompleteTextView addressEditText, ActivityResultLauncher<Intent> locationSettingsLauncher) {
         this.context = context;
         this.addressEditText = addressEditText;
@@ -54,6 +55,7 @@ public class LocationFunctions {
         initializeLocationCallback();
     }
 
+    // Initializes the location callback for location updates.
     private void initializeLocationCallback() {
         locationCallback = new LocationCallback() {
             @Override
@@ -71,12 +73,13 @@ public class LocationFunctions {
         };
     }
 
+    // Checks if location permission is granted, otherwise requests it.
     public void checkLocationPermission() {
         if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions((AppCompatActivity) context, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, LOCATION_PERMISSION_REQUEST_CODE);
         } else {
             if (!isLocationEnabled()) {
-                Toast.makeText(context, "Please enable location services", Toast.LENGTH_SHORT).show();
+                Log.d("LocationFunctions", "Please enable location services");
                 Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
                 locationSettingsLauncher.launch(intent);
             } else {
@@ -85,18 +88,18 @@ public class LocationFunctions {
         }
     }
 
+    // Handles the result of the location permission request.
     public void handleLocationPermissionResult(int requestCode, int[] grantResults) {
         if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 showLocationDialog();
             } else {
-                Toast.makeText(context, "Location permission denied", Toast.LENGTH_SHORT).show();
-//                Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
-//                context.startActivity(intent);
+                Log.d("LocationFunctions", "Location permission denied");
             }
         }
     }
 
+    // Shows a dialog to ask the user if they want to use their current location.
     private void showLocationDialog() {
         new AlertDialog.Builder(context)
                 .setTitle("Use Current Location")
@@ -113,31 +116,35 @@ public class LocationFunctions {
                 .show();
     }
 
+    // Resets the location fields.
     private void resetLocationFields() {
         addressEditText.setText("");
         lastValidAddress = null;
     }
 
+    // Checks if location is enabled and fetches the location.
     public void checkLocationAndFetch() {
         if (isLocationEnabled()) {
             getLocationAndSetAddress();
         } else {
-            Toast.makeText(context, "Please enable location services", Toast.LENGTH_SHORT).show();
+            Log.d("LocationFunctions", "Please enable location services");
             Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
             locationSettingsLauncher.launch(intent);
         }
     }
 
+    // Checks if location services are enabled.
     public boolean isLocationEnabled() {
         LocationManager locationManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
         return locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER) || locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
     }
 
+    // Gets the current location and sets the address field.
     @SuppressLint("MissingPermission")
     private void getLocationAndSetAddress() {
         if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
             if (!isLocationEnabled()) {
-                Toast.makeText(context, "Please enable location services", Toast.LENGTH_SHORT).show();
+                Log.d("LocationFunctions", "Please enable location services");
                 Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
                 locationSettingsLauncher.launch(intent);
             } else {
@@ -161,6 +168,7 @@ public class LocationFunctions {
         }
     }
 
+    // Starts location updates.
     private void startLocationUpdates() {
         if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
             LocationRequest locationRequest = LocationRequest.create()
@@ -174,6 +182,7 @@ public class LocationFunctions {
         }
     }
 
+    // Updates the address field based on the provided location.
     private void updateAddressField(Location location) {
         if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
             double latitude = location.getLatitude();
@@ -189,7 +198,10 @@ public class LocationFunctions {
             } catch (Exception e) {
                 e.printStackTrace();
             }
-        }}
+        }
+    }
+
+    // Fetches address coordinates based on the provided address.
     public void fetchAddressCoordinates(String address, String distanceStr) {
         Geocoder geocoder = new Geocoder(context, Locale.ENGLISH);
         try {
@@ -198,19 +210,20 @@ public class LocationFunctions {
                 Address location = addresses.get(0);
                 double lat = location.getLatitude();
                 double lon = location.getLongitude();
-                lastValidAddress = location.getAddressLine(0); // Use the address in English
+                lastValidAddress = location.getAddressLine(0);
                 sendResult(lastValidAddress, distanceStr);
                 hideError();
             } else {
                 showError("Address not found");
-                Toast.makeText(context, "Address not found", Toast.LENGTH_SHORT).show();
+                Log.d("LocationFunctions", "Address not found");
             }
         } catch (Exception e) {
             e.printStackTrace();
-            Toast.makeText(context, "Geocoding failed", Toast.LENGTH_SHORT).show();
+            Log.d("LocationFunctions", "Geocoding failed");
         }
     }
 
+    // Sends the result (address and coordinates) to the calling activity.
     public void sendResult(String address, String distanceStr) {
         int distance = Integer.parseInt(distanceStr);
         Intent resultIntent = new Intent();
@@ -237,16 +250,17 @@ public class LocationFunctions {
         ((AppCompatActivity) context).finish();
     }
 
+    // Shows an error message.
     private void showError(String errorMessage) {
         ((AppCompatActivity) context).findViewById(R.id.address_layout).setBackgroundResource(R.drawable.red_border);
         ((AppCompatActivity) context).findViewById(R.id.addressError).setVisibility(View.VISIBLE);
-        Toast.makeText(context, errorMessage, Toast.LENGTH_SHORT).show();
+        Log.d("LocationFunctions", errorMessage);
         ((TextView) ((AppCompatActivity) context).findViewById(R.id.addressError)).setText(errorMessage);
     }
 
+    // Hides the error message.
     private void hideError() {
         ((AppCompatActivity) context).findViewById(R.id.address_layout).setBackgroundResource(R.drawable.border);
         ((AppCompatActivity) context).findViewById(R.id.addressError).setVisibility(View.GONE);
-
     }
 }

@@ -31,6 +31,7 @@ import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.Timestamp;
 
+// Handles email login functionality
 public class EmailLoginActivity extends AppCompatActivity {
 
     private EditText emailEditText, passwordEditText;
@@ -42,6 +43,7 @@ public class EmailLoginActivity extends AppCompatActivity {
     private FirebaseFirestore db;
     private boolean firstEntry = false;
 
+    // Initializes the activity and its components
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -93,6 +95,7 @@ public class EmailLoginActivity extends AppCompatActivity {
         });
     }
 
+    // Adds text watchers to email and password fields
     private void addTextWatchers() {
         emailEditText.addTextChangedListener(new TextWatcher() {
             @Override
@@ -144,6 +147,7 @@ public class EmailLoginActivity extends AppCompatActivity {
         });
     }
 
+    // Toggles password visibility in the password field
     private void togglePassword() {
         togglePasswordVisibility.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -161,6 +165,7 @@ public class EmailLoginActivity extends AppCompatActivity {
         });
     }
 
+    // Sets up the forgot password functionality
     private void setupForgotPassword() {
         forgotPasswordTextView.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -170,6 +175,7 @@ public class EmailLoginActivity extends AppCompatActivity {
         });
     }
 
+    // Shows a dialog for forgot password functionality
     private void showForgotPasswordDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         View dialogView = getLayoutInflater().inflate(R.layout.dialog_forgot_password, null);
@@ -241,9 +247,9 @@ public class EmailLoginActivity extends AppCompatActivity {
                                 @Override
                                 public void onComplete(@NonNull Task<Void> task) {
                                     if (task.isSuccessful()) {
-                                        Toast.makeText(EmailLoginActivity.this, "Password reset email sent", Toast.LENGTH_SHORT).show();
+                                        Log.d("EmailLoginActivity", "Password reset email sent");
                                     } else {
-                                        Toast.makeText(EmailLoginActivity.this, "Failed to send password reset email: " + task.getException().getMessage(), Toast.LENGTH_SHORT).show();
+                                        Log.d("EmailLoginActivity", "Failed to send password reset email: " + task.getException().getMessage());
                                     }
                                     dialog.dismiss();
                                 }
@@ -253,6 +259,7 @@ public class EmailLoginActivity extends AppCompatActivity {
         });
     }
 
+    // Logs in the user with email and password
     private void loginUser() {
         String email = emailEditText.getText().toString().trim();
         String password = passwordEditText.getText().toString().trim();
@@ -302,6 +309,7 @@ public class EmailLoginActivity extends AppCompatActivity {
                 });
     }
 
+    // Redirects the user to CategoriesActivity on first entry
     private void firstEntry() {
         Intent intent = new Intent(EmailLoginActivity.this, CategoriesActivity.class);
         intent.putExtra("email", emailEditText.getText().toString().trim());
@@ -309,6 +317,7 @@ public class EmailLoginActivity extends AppCompatActivity {
         finish();
     }
 
+    // Checks if the user is blocked and redirects accordingly
     private void checkIfBlocked() {
         FirebaseUser user = mAuth.getCurrentUser();
         if (user != null) {
@@ -350,12 +359,13 @@ public class EmailLoginActivity extends AppCompatActivity {
                         firstEntry();
                     }
                 }).addOnFailureListener(e -> {
-                    Toast.makeText(this, "Failed to check block status", Toast.LENGTH_SHORT).show();
+                    Log.d("EmailLoginActivity", "Failed to check block status");
                 });
             }
         }
     }
 
+    // Shows an alert dialog with the given message
     private void showAlertDialog(String message) {
         new AlertDialog.Builder(this)
                 .setMessage(message)

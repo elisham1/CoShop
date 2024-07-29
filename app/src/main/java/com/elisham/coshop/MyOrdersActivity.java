@@ -30,7 +30,6 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
@@ -250,6 +249,7 @@ public class MyOrdersActivity extends AppCompatActivity {
         }
     }
 
+    // Displays explanations if needed
     private void showExplanationsIfNeeded() {
         SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
         boolean firstTime = prefs.getBoolean(KEY_FIRST_TIME, true);
@@ -283,6 +283,7 @@ public class MyOrdersActivity extends AppCompatActivity {
         }
     }
 
+    // Shows the next explanation step
     private void showNextExplanationStep() {
         ImageView arrowToPlus = explanationLayout.findViewById(R.id.arrow_to_plus);
         TextView textPlus = explanationLayout.findViewById(R.id.text_plus);
@@ -322,6 +323,7 @@ public class MyOrdersActivity extends AppCompatActivity {
         }
     }
 
+    // Reads user orders based on selected options
     private void readUserOrders(List<String> options) {
         Log.d("MyOrdersActivity", "readUserOrders called with options: " + options);
 
@@ -347,7 +349,7 @@ public class MyOrdersActivity extends AppCompatActivity {
                 }
             }).addOnFailureListener(e -> {
                 Log.e("MyOrdersActivity", "Failed to retrieve waiting list orders", e);
-                Toast.makeText(MyOrdersActivity.this, "Failed to retrieve waiting list orders", Toast.LENGTH_SHORT).show();
+                Log.d("MyOrdersActivity", "Failed to retrieve waiting list orders");
             });
         } else {
             // Query orders where the user's email is in the listPeopleInOrder array
@@ -468,11 +470,12 @@ public class MyOrdersActivity extends AppCompatActivity {
                 }
             }).addOnFailureListener(e -> {
                 Log.e("MyOrdersActivity", "Failed to retrieve orders", e);
-                Toast.makeText(MyOrdersActivity.this, "Failed to retrieve orders", Toast.LENGTH_SHORT).show();
+                Log.d("MyOrdersActivity", "Failed to retrieve orders");
             });
         }
     }
 
+    // Displays orders in the layout
     private void displayOrders(List<DocumentSnapshot> orders) {
         Log.d("MyOrdersActivity", "displayOrders called with " + orders.size() + " orders");
 
@@ -505,6 +508,7 @@ public class MyOrdersActivity extends AppCompatActivity {
         }
     }
 
+    // Calculates and displays ratings for an order
     private void calculateAndDisplayRatings(String orderId, String titleOfOrder, String location,
                                             long numberOfPeopleInOrder, long maxPeople, String categorie,
                                             float distance, Timestamp timestamp) {
@@ -544,6 +548,7 @@ public class MyOrdersActivity extends AppCompatActivity {
         });
     }
 
+    // Updates the rating of an order in Firestore
     private void updateRatingOrderInFirestore(String orderId, double averageRating) {
         Log.d("MyOrdersActivity", "Updating ratingOrder in Firestore for order: " + orderId);
         db.collection("orders").document(orderId)
@@ -552,6 +557,7 @@ public class MyOrdersActivity extends AppCompatActivity {
                 .addOnFailureListener(e -> Log.w("Firestore", "Error updating ratingOrder", e));
     }
 
+    // Calculates the rating of a user
     private Double calculateUserRating(DocumentSnapshot userDoc) {
         Log.d("MyOrdersActivity", "Calculating user rating for user: " + userDoc.getId());
         List<Map<String, Object>> userRatings = (List<Map<String, Object>>) userDoc.get("ratings");
@@ -570,6 +576,7 @@ public class MyOrdersActivity extends AppCompatActivity {
         return totalRating / userRatings.size();
     }
 
+    // Adds an order to the layout
     private void addOrderToLayout(String orderId, String titleOfOrder, String location,
                                   long numberOfPeopleInOrder, long maxPeople, String categorie,
                                   double distance, Timestamp timestamp, double averageRating) {
@@ -669,7 +676,7 @@ public class MyOrdersActivity extends AppCompatActivity {
         ordersLayout.addView(orderLayout);
     }
 
-
+    // Adds stars to the rating layout
     private void addStarsToLayout(LinearLayout layout, double rating) {
         Log.d("MyOrdersActivityRating", "Rating: " + rating);
         int fullStars = (int) rating;
@@ -703,10 +710,12 @@ public class MyOrdersActivity extends AppCompatActivity {
         }
     }
 
+    // Converts dp to pixels
     private int dpToPx(int dp) {
         return (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, dp, getResources().getDisplayMetrics());
     }
 
+    // Gets address from latitude and longitude
     private String getAddressFromLatLng(double latitude, double longitude) {
         try {
             List<Address> addresses = geocoder.getFromLocation(latitude, longitude, 1);
@@ -722,15 +731,17 @@ public class MyOrdersActivity extends AppCompatActivity {
         return "N/A";
     }
 
+    // Calculates distance between two GeoPoints
     private float calculateDistance(GeoPoint userLocation, GeoPoint orderLocation) {
         if (userLocation == null || orderLocation == null) return 0;
 
         float[] results = new float[1];
         Location.distanceBetween(userLocation.getLatitude(), userLocation.getLongitude(),
                 orderLocation.getLatitude(), orderLocation.getLongitude(), results);
-        return Math.abs(results[0] / 1000); // המרחק בקילומטרים
+        return Math.abs(results[0] / 1000); // distance in kilometers
     }
 
+    // Updates timer text views
     private void updateTimerTextViews(View timerView, long millisUntilFinished) {
         TextView daysTextView = timerView.findViewById(R.id.daysTextView);
         TextView hoursTextView = timerView.findViewById(R.id.hoursTextView);
@@ -771,6 +782,7 @@ public class MyOrdersActivity extends AppCompatActivity {
         }
     }
 
+    // Updates button colors based on selected options
     private void updateButtonColors(List<String> selectedOptions) {
         Log.d("MyOrdersActivity", "Updating button colors for options: " + selectedOptions);
 
@@ -841,6 +853,7 @@ public class MyOrdersActivity extends AppCompatActivity {
         }
     }
 
+    // Shows a message when no orders are found
     private void showNoOrdersFoundMessage() {
         Log.d("MyOrdersActivity", "No orders found");
         ordersLayout.removeAllViews();

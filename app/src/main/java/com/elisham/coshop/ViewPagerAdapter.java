@@ -1,4 +1,5 @@
 package com.elisham.coshop;
+
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -19,6 +20,7 @@ public class ViewPagerAdapter extends RecyclerView.Adapter<ViewPagerAdapter.View
         this.captions = captions;
     }
 
+    // Creates and inflates the view holder //
     @NonNull
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
@@ -26,17 +28,20 @@ public class ViewPagerAdapter extends RecyclerView.Adapter<ViewPagerAdapter.View
         return new ViewHolder(view);
     }
 
+    // Binds data to the view holder //
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         holder.imageView.setImageResource(images[position]);
         holder.textView.setText(captions[position]);
     }
 
+    // Returns the total number of items //
     @Override
     public int getItemCount() {
         return images.length;
     }
 
+    // ViewHolder class to hold the views //
     public static class ViewHolder extends RecyclerView.ViewHolder {
         ImageView imageView;
         TextView textView;

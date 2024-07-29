@@ -10,13 +10,14 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 
+// Activity for joining an order.
 public class JoinOrderActivity extends AppCompatActivity {
 
     public Button ok_id;
     private MenuUtils menuUtils;
     private String globalUserType;
 
-
+    // Initializes the OK button and sets its click listener.
     public void init() {
         ok_id = (Button) findViewById(R.id.ok_id);
         ok_id.setOnClickListener(new View.OnClickListener() {
@@ -43,9 +44,8 @@ public class JoinOrderActivity extends AppCompatActivity {
         }
 
         setContentView(R.layout.activity_join_order);
-        menuUtils = new MenuUtils(this,globalUserType);
+        menuUtils = new MenuUtils(this, globalUserType);
         init();
-
     }
 
     @Override
@@ -81,7 +81,7 @@ public class JoinOrderActivity extends AppCompatActivity {
             case R.id.home:
                 menuUtils.home();
                 return true;
-            case R.id.chat_icon: // הוספת המקרה עבור אייקון ה-chat
+            case R.id.chat_icon:
                 menuUtils.allChats();
                 return true;
             case R.id.chat_notification:
@@ -91,5 +91,4 @@ public class JoinOrderActivity extends AppCompatActivity {
                 return super.onOptionsItemSelected(item);
         }
     }
-
 }

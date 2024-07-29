@@ -6,8 +6,6 @@ import android.content.res.Resources;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
-import android.widget.Toast;
-
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
@@ -77,7 +75,7 @@ public class MainActivity extends AppCompatActivity {
                             }
                         } else {
                             Log.d("MainActivity", "onCreate: Firebase failed", task.getException());
-                            Toast.makeText(MainActivity.this, "firebase failed", Toast.LENGTH_SHORT).show();
+                            Log.d("MainActivity", "Firebase failed.");
                         }
                     });
         } else {
@@ -85,22 +83,23 @@ public class MainActivity extends AppCompatActivity {
             setContentView(R.layout.activity_main);
             findViewById(R.id.googleButton).setOnClickListener(view -> signUp());
         }
-
-
     }
 
+    // Logs the click on login button and starts EmailLoginActivity
     public void loginclick(View v) {
         Log.d("MainActivity", "loginclick: Login button clicked");
         Intent intent = new Intent(MainActivity.this, EmailLoginActivity.class);
         startActivityForResult(intent, 1);
     }
 
+    // Logs the click on signup button and starts EmailSignupActivity
     public void signupclick(View v) {
         Log.d("MainActivity", "signupclick: Signup button clicked");
         Intent intent = new Intent(MainActivity.this, EmailSignupActivity.class);
         startActivityForResult(intent, 1);
     }
 
+    // Logs in using Google and checks if user document exists
     public void googleLogin() {
         currentUser = mAuth.getCurrentUser();
         userEmail = currentUser.getEmail();
@@ -116,8 +115,7 @@ public class MainActivity extends AppCompatActivity {
                             intent.putExtra("userType", globalUserType);
                             startActivity(intent);
                             finish();
-                        }
-                        else {
+                        } else {
                             Log.d("MainActivity", "googleLogin: User document does not exist");
                             Intent intent = new Intent(MainActivity.this, CategoriesActivity.class);
                             intent.putExtra("google_sign_up", true);
@@ -128,6 +126,7 @@ public class MainActivity extends AppCompatActivity {
                 });
     }
 
+    // Starts the Google sign-in intent
     private void signUp() {
         GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                 .requestIdToken(webClientId)
@@ -139,6 +138,7 @@ public class MainActivity extends AppCompatActivity {
         startActivityForResult(signInIntent, RC_SIGN_IN);
     }
 
+    // Authenticates with Firebase using Google Sign-In account
     private void firebaseAuthWithGoogle(GoogleSignInAccount acct) {
         Log.d("MainActivity", "firebaseAuthWithGoogle: Authenticating with Google for " + acct.getEmail());
         AuthCredential credential = GoogleAuthProvider.getCredential(acct.getIdToken(), null);
@@ -150,7 +150,7 @@ public class MainActivity extends AppCompatActivity {
                         boolean isNewUser = task.getResult().getAdditionalUserInfo().isNewUser();
                         Log.d("MainActivity", "firebaseAuthWithGoogle: Sign-in successful, new user: " + isNewUser);
                         if (isNewUser) {
-                            Toast.makeText(MainActivity.this, "Sign up successful.", Toast.LENGTH_SHORT).show();
+                            Log.d("MainActivity", "Sign up successful.");
                             Intent intent = new Intent(MainActivity.this, CategoriesActivity.class);
                             intent.putExtra("google_sign_up", true);
                             startActivity(intent);
@@ -159,18 +159,17 @@ public class MainActivity extends AppCompatActivity {
                         }
                     } else {
                         Log.w("MainActivity", "firebaseAuthWithGoogle: Authentication failed", task.getException());
-                        Toast.makeText(MainActivity.this, "Authentication failed.", Toast.LENGTH_SHORT).show();
+                        Log.d("MainActivity", "Authentication failed.");
                     }
                 }).addOnFailureListener(e -> {
                     Log.w("MainActivity", "firebaseAuthWithGoogle: Authentication failed", e);
-                    Toast.makeText(MainActivity.this, "Authentication failed.", Toast.LENGTH_SHORT).show();
+                    Log.d("MainActivity", "Authentication failed.");
                 });
     }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-
 
         if (requestCode == RC_SIGN_IN) {
             Task<GoogleSignInAccount> task = GoogleSignIn.getSignedInAccountFromIntent(data);

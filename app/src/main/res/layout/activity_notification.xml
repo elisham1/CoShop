@@ -10,7 +10,7 @@
     tools:context=".notificationActivity"
     android:gravity="left"> <!-- Align content to start -->
 
-    <!-- כותרת בראש העמוד -->
+
     <TextView
         android:id="@+id/pageTitle"
         android:layout_width="match_parent"
@@ -21,7 +21,7 @@
         android:textColor="#000000"
         android:gravity="center" /> <!-- Align to the center -->
 
-    <!-- תוכן הדף -->
+
     <ListView
         android:id="@+id/notificationsListView"
         android:layout_width="match_parent"

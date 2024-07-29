@@ -15,11 +15,13 @@ import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.Objects;
 
+// Handles incoming deep links and redirects to appropriate activities
 public class DeepLinkHandlerActivity extends AppCompatActivity {
     private static final String TAG = "DeepLinkHandlerActivity";
     private FirebaseUser currentUser;
     private FirebaseFirestore db;
 
+    // Initializes the activity, Firebase Auth, and Firestore
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -31,6 +33,7 @@ public class DeepLinkHandlerActivity extends AppCompatActivity {
         handleIncomingDeepLink();
     }
 
+    // Handles the incoming deep link and extracts order ID
     private void handleIncomingDeepLink() {
         FirebaseDynamicLinks.getInstance()
                 .getDynamicLink(getIntent())
@@ -55,6 +58,7 @@ public class DeepLinkHandlerActivity extends AppCompatActivity {
                 .addOnFailureListener(this, e -> Log.e(TAG, "handleIncomingDeepLink: getDynamicLink failed.", e));
     }
 
+    // Retrieves user information from Firestore and checks the order
     private void getUserInfoAndCheckOrder(String orderIdFromLink) {
         String userEmail = Objects.requireNonNull(currentUser.getEmail());
         Log.d(TAG, "getUserInfoAndCheckOrder: Fetching user info for email: " + userEmail);
@@ -77,6 +81,7 @@ public class DeepLinkHandlerActivity extends AppCompatActivity {
                 });
     }
 
+    // Checks if the order exists and redirects to the appropriate activity
     private void checkOrderExistence(String orderId, String userType) {
         Log.d(TAG, "checkOrderExistence: Checking existence of order with ID: " + orderId);
 
@@ -86,11 +91,9 @@ public class DeepLinkHandlerActivity extends AppCompatActivity {
                 Intent intent;
                 if (orderDocument.exists()) {
                     Log.d(TAG, "checkOrderExistence: Order exists. Navigating to OrderDetailsActivity.");
-                    // Order exists, navigate to OrderDetailsActivity
                     intent = new Intent(this, OrderDetailsActivity.class);
                 } else {
                     Log.d(TAG, "checkOrderExistence: Order does not exist. Navigating to OrderDeletedActivity.");
-                    // Order does not exist, navigate to OrderDeletedActivity
                     intent = new Intent(this, OrderDeletedActivity.class);
                 }
                 intent.putExtra("userType", userType);

@@ -30,6 +30,7 @@ import com.google.firebase.firestore.WriteBatch;
 
 import java.util.HashMap;
 import java.util.Map;
+
 public class NotificationService extends Service {
     private FirebaseFirestore db;
     private ListenerRegistration notificationListener;
@@ -58,6 +59,7 @@ public class NotificationService extends Service {
         return null;
     }
 
+    // Starts the notification listener
     private void startNotificationListener() {
         String userEmail = getUserEmail();
         if (userEmail != null) {
@@ -121,12 +123,14 @@ public class NotificationService extends Service {
         }
     }
 
+    // Stops the notification listener
     private void stopNotificationListener() {
         if (notificationListener != null) {
             notificationListener.remove();
         }
     }
 
+    // Updates a notification as sent
     private void updateNotificationAsSent(String notificationId, UpdateCallback callback) {
         String userEmail = getUserEmail();
         if (userEmail != null) {
@@ -158,6 +162,7 @@ public class NotificationService extends Service {
         }
     }
 
+    // Updates all notifications as sent
     private void updateAllNotificationsAsSent(String userEmail, UpdateCallback callback) {
         db.collection("users")
                 .document(userEmail)
@@ -186,6 +191,7 @@ public class NotificationService extends Service {
                 });
     }
 
+    // Sends a notification to the user
     private void sendNotification(String title, String message, String link, String notificationId) {
         if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) {
             Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(link));
@@ -209,6 +215,7 @@ public class NotificationService extends Service {
         }
     }
 
+    // Sends a general notification for multiple recommendations
     private void sendGeneralNotification() {
         if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) {
             Intent intent = new Intent(this, notificationActivity.class);
@@ -233,14 +240,17 @@ public class NotificationService extends Service {
         }
     }
 
+    // Generates a unique notification ID
     private int getUniqueNotificationId() {
         return (int) System.currentTimeMillis();
     }
 
+    // Callback interface for update operations
     interface UpdateCallback {
         void onComplete(boolean success);
     }
 
+    // Retrieves the current user's email
     private String getUserEmail() {
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         return user != null ? user.getEmail() : null;
