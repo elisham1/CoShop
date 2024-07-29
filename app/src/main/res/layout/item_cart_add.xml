@@ -7,36 +7,64 @@
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="50dp"
         android:orientation="horizontal">
-        <EditText
-            android:id="@+id/itemUrlEditText"
+
+        <LinearLayout
+            android:id="@+id/itemUrlLayout"
             android:layout_width="0dp"
-            android:layout_height="50dp"
+            android:layout_height="match_parent"
             android:layout_weight="1"
+            android:orientation="horizontal"
             android:paddingStart="8dp"
-            android:hint="Item URL"
-            android:background="@drawable/border"/>
+            android:paddingEnd="8dp"
+            android:background="@drawable/border">
+
+            <EditText
+                android:id="@+id/itemUrlEditText"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:hint="Item URL"
+                android:layout_gravity="center"
+                android:background="@android:color/transparent"
+                android:singleLine="true"
+                android:ellipsize="end"
+                android:maxLines="1"/>
+
+            <ImageView
+                android:id="@+id/copyUrlIcon"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@drawable/ic_copy"
+                android:contentDescription="Delete Item"
+                android:layout_marginStart="8dp"
+                android:layout_gravity="center_vertical"
+                android:visibility="gone"/>
+
+        </LinearLayout>
 
         <EditText
             android:id="@+id/itemPriceEditText"
             android:layout_width="0dp"
-            android:layout_height="50dp"
+            android:layout_height="match_parent"
             android:layout_weight="0.3"
             android:hint="Price"
             android:paddingStart="8dp"
+            android:paddingEnd="8dp"
             android:inputType="numberDecimal"
             android:background="@drawable/border"
             android:layout_marginStart="8dp"/>
 
         <ImageView
             android:id="@+id/deleteItemIcon"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
             android:src="@drawable/baseline_delete_24"
             android:contentDescription="Delete Item"
-            android:layout_marginStart="8dp"
+            android:layout_margin="8dp"
             android:layout_gravity="center_vertical"/>
+
     </LinearLayout>
 
     <TextView
