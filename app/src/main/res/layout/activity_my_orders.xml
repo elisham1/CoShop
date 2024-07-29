@@ -89,6 +89,19 @@
             </LinearLayout>
         </HorizontalScrollView>
 
+        <TextView
+            android:id="@+id/sharedLinkTextView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:text="Choose order to add item"
+            android:textSize="25sp"
+            android:textStyle="bold"
+            android:layout_gravity="center"
+            android:textColor="@color/black"
+            android:visibility="gone"
+            android:layoutDirection="ltr"/>
+
         <!-- Scroll view for orders -->
         <ScrollView
             android:layout_width="match_parent"
@@ -100,7 +113,7 @@
                 android:id="@+id/ordersLayout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"/>
+                android:orientation="vertical" />
         </ScrollView>
     </LinearLayout>
 

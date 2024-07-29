@@ -11,6 +11,7 @@ import androidx.viewpager2.widget.ViewPager2;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.view.WindowManager;
 import android.app.Dialog;
 import android.app.ProgressDialog;
@@ -177,6 +178,17 @@ public class OrderDetailsActivity extends AppCompatActivity {
             fetchOrderDetails(orderId, email);
         } else {
             Log.e("OrderDetailsActivity", "Order ID is null");
+        }
+
+        // Check if the activity was opened with a shared link
+        SharedPreferences prefs = getSharedPreferences(MyOrdersActivity.PREFS_NAME, MODE_PRIVATE);
+        String sharedLink = prefs.getString("sharedLink", null);
+
+        if (sharedLink != null) {
+            showAddToCartDialog(email, sharedLink);            // Clear the shared link from SharedPreferences after using it
+            SharedPreferences.Editor editor = prefs.edit();
+            editor.remove("sharedLink");
+            editor.apply();
         }
 
         joinIcon.setOnClickListener(v -> {
@@ -1033,7 +1045,7 @@ public class OrderDetailsActivity extends AppCompatActivity {
                 userNameTextView.setText("You");
                 addToCartImageView.setVisibility(View.VISIBLE);
                 addToCartImageView.setOnClickListener(v -> {
-                    showAddToCartDialog(displayedEmail, userName);
+                    showAddToCartDialog(displayedEmail, null);
                 });
             } else {
                 addToCartImageView.setVisibility(View.GONE);
@@ -1097,10 +1109,8 @@ public class OrderDetailsActivity extends AppCompatActivity {
                                 String userEmail = entry.getKey();
                                 List<Map<String, Object>> items = entry.getValue();
 
-                                String userName = items.get(0).get("userName").toString();
-
                                 TextView userNameTextView = new TextView(this);
-                                userNameTextView.setText(userName); // Display user name instead of email
+                                userNameTextView.setText(userEmail); // Display user name instead of email
                                 userNameTextView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 18);
                                 userNameTextView.setTypeface(null, Typeface.BOLD);
                                 userNameTextView.setPadding(0, 16, 0, 8);
@@ -1170,8 +1180,8 @@ public class OrderDetailsActivity extends AppCompatActivity {
                 .addOnFailureListener(e -> Log.e("OrderDetailsActivity", "Error removing item from cart", e));
     }
 
-      // Show add to cart dialog
-    private void showAddToCartDialog(String userEmail, String userName) {
+   // Show add to cart dialog
+    private void showAddToCartDialog(String userEmail, String sharedLink) {
         Dialog dialog = new Dialog(this);
         dialog.setContentView(R.layout.dialog_add_to_cart);
 
@@ -1186,7 +1196,7 @@ public class OrderDetailsActivity extends AppCompatActivity {
         TextView addItemText = dialog.findViewById(R.id.addItemText);
 
         // Add initial item layout
-        addItemLayout(itemsContainer);
+        addItemLayout(itemsContainer, sharedLink);
 
         addItemIcon.setOnClickListener(v -> {
             View itemView = itemsContainer.getChildAt(itemsContainer.getChildCount() - 1);
@@ -1205,7 +1215,7 @@ public class OrderDetailsActivity extends AppCompatActivity {
                 itemUrlLayout.setBackgroundResource(R.drawable.border);
             }
 
-            addItemLayout(itemsContainer);
+            addItemLayout(itemsContainer, null);
         });
 
         addItemText.setOnClickListener(v -> {
@@ -1225,7 +1235,7 @@ public class OrderDetailsActivity extends AppCompatActivity {
                 itemUrlLayout.setBackgroundResource(R.drawable.border);
             }
 
-            addItemLayout(itemsContainer);
+            addItemLayout(itemsContainer, null);
         });
 
         addItemButton.setOnClickListener(v -> {
@@ -1257,7 +1267,7 @@ public class OrderDetailsActivity extends AppCompatActivity {
             }
 
             for (Map<String, String> item : items) {
-                addItemToCart(userEmail, userName, item.get("url"), item.get("price"));
+                addItemToCart(userEmail, item.get("url"), item.get("price"));
             }
 
             dialog.dismiss();
@@ -1266,14 +1276,17 @@ public class OrderDetailsActivity extends AppCompatActivity {
         dialog.show();
     }
 
-    // Add item layout for cart
-    private void addItemLayout(LinearLayout container) {
+
+     // Add item layout for cart
+    private void addItemLayout(LinearLayout container, String sharedLink) {
         View itemLayout = getLayoutInflater().inflate(R.layout.item_cart_add, container, false);
         ImageView deleteItemIcon = itemLayout.findViewById(R.id.deleteItemIcon);
-        EditText urlEditText = itemLayout.findViewById(R.id.itemUrlEditText);
+        EditText addItemText = itemLayout.findViewById(R.id.itemUrlEditText);
 
-        String itemUrl = urlEditText.getText().toString().trim();
-
+        if (sharedLink != null) {
+            addItemText.setText(sharedLink);
+            addItemText.setTextColor(ContextCompat.getColor(this, R.color.hyperlink_blue));
+        }
         deleteItemIcon.setOnClickListener(v -> {
             container.removeView(itemLayout);
         });
@@ -1281,8 +1294,8 @@ public class OrderDetailsActivity extends AppCompatActivity {
         container.addView(itemLayout);
     }
 
-    // Add item to cart in Firestore
-    private void addItemToCart(String userEmail, String userName, String itemText, String itemPrice) {
+      // Add item to cart in Firestore
+    private void addItemToCart(String userEmail, String itemText, String itemPrice) {
         DocumentReference orderRef = db.collection("orders").document(orderId);
 
         String extractedUrl = extractUrl(itemText);
@@ -1296,7 +1309,6 @@ public class OrderDetailsActivity extends AppCompatActivity {
         Map<String, Object> cartItem = new HashMap<>();
         cartItem.put("id", uniqueId);  // Add the unique identifier to the cart item
         cartItem.put("userEmail", userEmail);
-        cartItem.put("userName", userName);
         cartItem.put("url", itemText);  // Save the itemText which might be a URL or the full text
         cartItem.put("price", itemPrice); // Optional: Include price if necessary
 
@@ -1836,5 +1848,6 @@ public class OrderDetailsActivity extends AppCompatActivity {
             default:
                 return super.onOptionsItemSelected(item);
         }
+
     }
 }
