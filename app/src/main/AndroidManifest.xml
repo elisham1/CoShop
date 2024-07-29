@@ -7,18 +7,16 @@
 
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
-    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
-
-    <uses-permission
-        android:name="android.permission.MANAGE_EXTERNAL_STORAGE"
+    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE"
         tools:ignore="ScopedStorage" />
+    <uses-permission android:name="com.google.android.providers.gsf.permission.READ_GSERVICES" />
+
 
     <application
         android:allowBackup="true"
@@ -30,6 +28,11 @@
         android:theme="@style/Theme.CoShop"
         android:windowSoftInputMode="adjustResize"
         tools:targetApi="31">
+
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="AIzaSyCCEZAKwn0TCA-XvVpDKTOVrdiM__RfwCI"/>
+
 
         <activity
             android:name=".UpdateUserDetailsActivity"
@@ -45,7 +48,6 @@
             android:exported="false"
             android:theme="@style/Theme.CoShop"
             android:windowSoftInputMode="adjustResize"/>
-
         <service
             android:name=".NotificationService"
             android:exported="true">
@@ -53,40 +55,31 @@
                 <action android:name="com.google.firebase.MESSAGING_EVENT"/>
             </intent-filter>
         </service>
-
         <activity
             android:name=".OrderDetailsActivity"
             android:exported="true"
             android:theme="@style/Theme.CoShop"/>
-
         <activity
             android:name=".OrderDeletedActivity"/>
-
         <activity
             android:name=".DeepLinkHandlerActivity"
             android:theme="@style/FullscreenTheme"
             android:exported="true">
-
             <intent-filter>
                 <action android:name="android.intent.action.SEND" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <data android:mimeType="text/plain" />
             </intent-filter>
-
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
-
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-
                 <data
                     android:host="coshopapp.page.link"
                     android:pathPrefix="/order"
                     android:scheme="https" />
             </intent-filter>
         </activity>
-
-
         <activity
             android:name=".MyOrdersActivity"
             android:exported="false"
@@ -109,7 +102,6 @@
             android:name=".FilterActivity"
             android:exported="false"
             android:theme="@style/Theme.CoShop" />
-
         <activity
             android:name=".HomePageActivity"
             android:exported="false"
@@ -123,7 +115,6 @@
             android:exported="false"
             android:theme="@style/Theme.CoShop"
             android:windowSoftInputMode="adjustResize" />
-
         <activity
             android:name=".AboutActivity"
             android:exported="false"
@@ -139,7 +130,6 @@
         <activity
             android:name=".LocationWindow"
             android:theme="@style/AppTheme.Dialog.NoTitle" />
-
         <activity
             android:name=".AllChatOfUserActivity"
             android:exported="false"
@@ -159,7 +149,6 @@
         </activity>
         <activity android:name=".LoginActivity" />
         <activity android:name=".SignupActivity" />
-
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.provider"
@@ -170,5 +159,4 @@
                 android:resource="@xml/file_paths" />
         </provider>
     </application>
-
 </manifest>

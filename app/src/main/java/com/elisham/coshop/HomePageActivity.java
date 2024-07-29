@@ -6,8 +6,13 @@ import android.app.NotificationManager;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.Path;
 import android.graphics.Typeface;
+import android.graphics.drawable.Drawable;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
@@ -25,6 +30,7 @@ import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
+import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -39,6 +45,10 @@ import androidx.core.content.ContextCompat;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.bumptech.glide.request.target.CustomTarget;
+import com.bumptech.glide.request.transition.Transition;
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationServices;
 import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -58,10 +68,27 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.CameraUpdateFactory;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
+import android.Manifest;
+import android.content.pm.PackageManager;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
-public class HomePageActivity extends AppCompatActivity {
+import org.checkerframework.checker.nullness.qual.NonNull;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
+public class HomePageActivity extends AppCompatActivity implements OnMapReadyCallback {
+
+    private GoogleMap mMap;
     private FirebaseUser currentUser;
+    private boolean isLocation = true;
+
     private ActivityResultLauncher<String> requestPermissionLauncher;
     private Boolean clickOnStar = false;
     private List<OrderData> orderDataList = new ArrayList<>();
@@ -97,8 +124,333 @@ public class HomePageActivity extends AppCompatActivity {
             setTheme(R.style.SupplierTheme);
         }
         setContentView(R.layout.activity_home_page);
-//        initializeUI();
+
+        ImageButton locationButton = findViewById(R.id.locationButton);
+
+        locationButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                ImageButton searchButton = findViewById(R.id.searchButton);
+                ImageButton filterOffButton = findViewById(R.id.filterOffButton);
+                ImageButton starButton = findViewById(R.id.starButton);
+                FrameLayout mapContainer = findViewById(R.id.mapContainer);
+
+                if (isLocation) {
+                    locationButton.setImageResource(R.drawable.baseline_clear_24);
+                    // הסתרת רשימת ההזמנות והצגת המפה
+                    ordersContainer.setVisibility(View.GONE);
+                    mapContainer.setVisibility(View.VISIBLE);
+
+                    // Hide other icons
+                    searchButton.setVisibility(View.GONE);
+                    filterOffButton.setVisibility(View.GONE);
+                    starButton.setVisibility(View.GONE);
+                } else {
+                    locationButton.setImageResource(R.drawable.location);
+                    // הצגת רשימת ההזמנות והסתרת המפה
+                    ordersContainer.setVisibility(View.VISIBLE);
+                    mapContainer.setVisibility(View.GONE);
+
+                    // Show other icons
+                    searchButton.setVisibility(View.VISIBLE);
+                    searchButton.setVisibility(View.VISIBLE);
+                    starButton.setVisibility(View.VISIBLE);
+                }
+                isLocation = !isLocation;
+            }
+        });
+        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.mapFragment);
+        if (mapFragment != null) {
+            mapFragment.getMapAsync(this);
+        }
+
     }
+
+
+    @Override
+    public void onMapReady(GoogleMap googleMap) {
+        mMap = googleMap;
+
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+            mMap.setMyLocationEnabled(true);
+
+            FusedLocationProviderClient fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
+            fusedLocationClient.getLastLocation()
+                    .addOnSuccessListener(this, location -> {
+                        if (location != null) {
+                            LatLng currentLocation = new LatLng(location.getLatitude(), location.getLongitude());
+                            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLocation, 15));
+
+                            mMap.addMarker(new MarkerOptions()
+                                    .position(currentLocation)
+                                    .title("You")
+                                    .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED)));
+                        }
+                    });
+
+            db.collection("orders").get().addOnCompleteListener(task -> {
+                if (task.isSuccessful()) {
+                    for (QueryDocumentSnapshot documentSnapshot : task.getResult()) {
+                        GeoPoint geoPoint = documentSnapshot.getGeoPoint("location");
+                        String categorie = documentSnapshot.getString("categorie");
+                        if (geoPoint != null && categorie != null) {
+                            LatLng orderLocation = new LatLng(geoPoint.getLatitude(), geoPoint.getLongitude());
+                            String titleOfOrder = documentSnapshot.getString("titleOfOrder");
+                            String iconUrl = "https://firebasestorage.googleapis.com/v0/b/coshop-6fecd.appspot.com/o/icons%2F" + categorie + ".png?alt=media";
+
+                            Glide.with(this)
+                                    .asBitmap()
+                                    .load(iconUrl)
+                                    .into(new CustomTarget<Bitmap>() {
+                                        @Override
+                                        public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
+                                            int markerSize = 150;
+                                            int innerCircleSize = 80;
+                                            int borderSize = 10;
+                                            int radius = (int) ((innerCircleSize / 2f) + borderSize);
+                                            Bitmap baseMarker = Bitmap.createBitmap(markerSize, markerSize, Bitmap.Config.ARGB_8888);
+                                            Canvas canvas = new Canvas(baseMarker);
+
+                                            Paint borderPaint = new Paint();
+                                            borderPaint.setColor(Color.RED);
+                                            borderPaint.setStyle(Paint.Style.FILL);
+                                            canvas.drawCircle(markerSize / 2f, markerSize / 3f, radius, borderPaint);
+
+                                            Paint whiteCirclePaint = new Paint();
+                                            whiteCirclePaint.setColor(Color.WHITE);
+                                            whiteCirclePaint.setStyle(Paint.Style.FILL);
+                                            canvas.drawCircle(markerSize / 2f, markerSize / 3f, innerCircleSize / 2f, whiteCirclePaint);
+
+                                            Paint trianglePaint = new Paint();
+                                            trianglePaint.setColor(Color.RED);
+                                            trianglePaint.setStyle(Paint.Style.FILL);
+                                            Path path = new Path();
+                                            path.moveTo(markerSize / 2f, markerSize);
+                                            path.lineTo((markerSize / 2f) - radius, markerSize / 3f);
+                                            path.lineTo((markerSize / 2f) + radius, markerSize / 3f);
+                                            path.close();
+                                            canvas.drawPath(path, trianglePaint);
+
+                                            Bitmap scaledResource = Bitmap.createScaledBitmap(resource, innerCircleSize, innerCircleSize, false);
+                                            canvas.drawBitmap(scaledResource, (markerSize - innerCircleSize) / 2f, (markerSize / 3f) - (innerCircleSize / 2f), null);
+
+                                            mMap.addMarker(new MarkerOptions()
+                                                    .position(orderLocation)
+                                                    .title(titleOfOrder)
+                                                    .icon(BitmapDescriptorFactory.fromBitmap(baseMarker))
+                                                    .snippet(documentSnapshot.getId()));
+                                        }
+
+                                        @Override
+                                        public void onLoadCleared(@Nullable Drawable placeholder) {}
+                                    });
+                        }
+                    }
+                }
+            });
+        } else {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 1);
+        }
+
+        mMap.setOnMarkerClickListener(marker -> {
+            String orderId = marker.getSnippet();
+            if (orderId != null) {
+                // מציאת ה-OrderData עבור orderId
+                OrderData orderData = findOrderDataById(orderId);
+                if (orderData != null) {
+                    // הצגת פרטי ההזמנה ב-FrameLayout
+                    FrameLayout orderDetailContainer = findViewById(R.id.orderDetailContainer);
+                    orderDetailContainer.removeAllViews();
+                    orderDetailContainer.setVisibility(View.VISIBLE);
+
+                    // Inflate order item layout and add it to the container
+                    View orderView = getLayoutInflater().inflate(R.layout.order_item, orderDetailContainer, false);
+                    orderDetailContainer.addView(orderView);
+
+                    // Populate the order view with existing method
+                    populateOrderDetail(orderView, orderData);
+                }
+            }
+            return true;
+        });
+
+        LatLng defaultLocation = new LatLng(-34, 151);
+        mMap.addMarker(new MarkerOptions().position(defaultLocation).title("Marker in Sydney"));
+        mMap.moveCamera(CameraUpdateFactory.newLatLng(defaultLocation));
+    }
+
+    // פונקציה מעודכנת להצגת פרטי ההזמנה באמצעות אובייקט OrderData
+    private void populateOrderDetail(View orderView, OrderData orderData) {
+        TextView titleTextView = orderView.findViewById(R.id.titleTextView);
+        TextView distanceTextView = orderView.findViewById(R.id.distanceTextView);
+        TextView peopleTextView = orderView.findViewById(R.id.peopleTextView);
+        ImageView leftSquare = orderView.findViewById(R.id.leftSquare);
+        TextView categoryTextView = orderView.findViewById(R.id.categoryTextView);
+        TextView locationTextView = orderView.findViewById(R.id.locationTextView);
+        TextView typeTextView = orderView.findViewById(R.id.typeTextView);
+        LinearLayout ratingLayout = orderView.findViewById(R.id.ratingLayout);
+        TextView statusTextView = orderView.findViewById(R.id.statusTextView);
+        View scoresLayout = orderView.findViewById(R.id.scoresLayout);
+
+        // Set values to the views
+        titleTextView.setText(orderData.titleOfOrder);
+        distanceTextView.setText(String.format("%.2f km", orderData.distance));
+        peopleTextView.setText(orderData.maxPeople == 0 ? orderData.numberOfPeopleInOrder + "/∞" : orderData.numberOfPeopleInOrder + "/" + orderData.maxPeople);
+        categoryTextView.setText(orderData.categorie);
+        locationTextView.setText(orderData.location);
+
+        // Load the icon from URL
+        String iconUrl = "https://firebasestorage.googleapis.com/v0/b/coshop-6fecd.appspot.com/o/icons%2F" + orderData.categorie + ".png?alt=media";
+        Glide.with(this)
+                .load(iconUrl)
+                .diskCacheStrategy(DiskCacheStrategy.ALL)
+                .placeholder(R.drawable.other)
+                .error(R.drawable.other)
+                .into(leftSquare);
+
+        // Calculate and set the timer
+        long currentTime = System.currentTimeMillis();
+        Date date = orderData.timestamp.toDate();
+        long timeRemaining = date.getTime() - currentTime;
+
+        if (timeRemaining > 0) {
+            new CountDownTimer(timeRemaining, 1000) {
+
+                public void onTick(long millisUntilFinished) {
+                    updateTimerTextViews(orderView, millisUntilFinished);
+                }
+
+                public void onFinish() {
+                    updateTimerTextViews(orderView, 0);
+                }
+            }.start();
+        } else {
+            updateTimerTextViews(orderView, 0);
+        }
+
+        // Check if the order is open or closed
+        boolean isOrderOpen = orderData.timestamp.toDate().getTime() > currentTime;
+        statusTextView.setText(isOrderOpen ? "Open" : "Closed");
+        statusTextView.setTextColor(isOrderOpen ? Color.GREEN : Color.RED);
+
+        // Set the star rating
+        addStarsToLayout(ratingLayout, orderData.averageRating);
+
+        // קבלת סוג ההזמנה והגדרת הצבעים בהתאם
+        typeTextView.setText(orderData.categorie);
+        if ("Consumer".equals(orderData.categorie)) {
+            orderView.setBackgroundResource(R.drawable.border_green);
+            typeTextView.setTextColor(getResources().getColor(R.color.consumerPrimary));
+        } else if ("Supplier".equals(orderData.categorie)) {
+            orderView.setBackgroundResource(R.drawable.border_blue);
+            typeTextView.setTextColor(getResources().getColor(R.color.supplierPrimary));
+        }
+
+        // If clickOnStar is true, add dynamic scores
+        if (clickOnStar) {
+            addScoresToLayout(scoresLayout, orderData.orderId);
+        }
+
+        // הוספת קוד להוספת OnClickListener ל-orderView כדי לפתוח את OrderDetailsActivity
+        orderView.setOnClickListener(v -> {
+            Intent intent = new Intent(HomePageActivity.this, OrderDetailsActivity.class);
+            intent.putExtra("userType", globalUserType);
+            intent.putExtra("orderId", orderData.orderId);
+            startActivity(intent);
+        });
+    }
+
+    private void populateOrderDetail(View orderView, String orderId, String titleOfOrder, String location,
+                                     long numberOfPeopleInOrder, long maxPeople, String categorie,
+                                     double distance, Timestamp timestamp, double averageRating) {
+        TextView titleTextView = orderView.findViewById(R.id.titleTextView);
+        TextView distanceTextView = orderView.findViewById(R.id.distanceTextView);
+        TextView peopleTextView = orderView.findViewById(R.id.peopleTextView);
+        ImageView leftSquare = orderView.findViewById(R.id.leftSquare);
+        TextView categoryTextView = orderView.findViewById(R.id.categoryTextView);
+        TextView locationTextView = orderView.findViewById(R.id.locationTextView);
+        TextView typeTextView = orderView.findViewById(R.id.typeTextView);
+        LinearLayout ratingLayout = orderView.findViewById(R.id.ratingLayout);
+        TextView statusTextView = orderView.findViewById(R.id.statusTextView);
+        View scoresLayout = orderView.findViewById(R.id.scoresLayout);
+
+        // Set values to the views
+        titleTextView.setText(titleOfOrder);
+        distanceTextView.setText(String.format("%.2f km", distance));
+        peopleTextView.setText(maxPeople == 0 ? numberOfPeopleInOrder + "/∞" : numberOfPeopleInOrder + "/" + maxPeople);
+        categoryTextView.setText(categorie);
+        locationTextView.setText(location);
+
+        // Load the icon from URL
+        String iconUrl = "https://firebasestorage.googleapis.com/v0/b/coshop-6fecd.appspot.com/o/icons%2F" + categorie + ".png?alt=media";
+        Glide.with(this)
+                .load(iconUrl)
+                .diskCacheStrategy(DiskCacheStrategy.ALL)
+                .placeholder(R.drawable.other)
+                .error(R.drawable.other)
+                .into(leftSquare);
+
+        // Calculate and set the timer
+        long currentTime = System.currentTimeMillis();
+        Date date = timestamp.toDate();
+        long timeRemaining = date.getTime() - currentTime;
+
+        if (timeRemaining > 0) {
+            new CountDownTimer(timeRemaining, 1000) {
+
+                public void onTick(long millisUntilFinished) {
+                    updateTimerTextViews(orderView, millisUntilFinished);
+                }
+
+                public void onFinish() {
+                    updateTimerTextViews(orderView, 0);
+                }
+            }.start();
+        } else {
+            updateTimerTextViews(orderView, 0);
+        }
+
+        // Check if the order is open or closed
+        boolean isOrderOpen = timestamp.toDate().getTime() > currentTime;
+        statusTextView.setText(isOrderOpen ? "Open" : "Closed");
+        statusTextView.setTextColor(isOrderOpen ? Color.GREEN : Color.RED);
+
+        // Set the star rating
+        addStarsToLayout(ratingLayout, averageRating);
+
+        //get type from db
+        db.collection("orders").document(orderId).get().addOnSuccessListener(documentSnapshot -> {
+            String typeOfOrder = documentSnapshot.getString("type_of_order");
+            if (typeOfOrder != null) {
+                typeTextView.setText(typeOfOrder);
+                if (typeOfOrder.equals("Consumer")) {
+                    orderView.setBackgroundResource(R.drawable.border_green);
+                    typeTextView.setTextColor(getResources().getColor(R.color.consumerPrimary));
+                } else if (typeOfOrder.equals("Supplier")) {
+                    orderView.setBackgroundResource(R.drawable.border_blue);
+                    typeTextView.setTextColor(getResources().getColor(R.color.supplierPrimary));
+                }
+            }
+        });
+
+        // If clickOnStar is true, add dynamic scores
+        if (clickOnStar) {
+            addScoresToLayout(scoresLayout, orderId);
+        }
+    }
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults); // קריאה לשיטה הבסיסית
+
+        if (requestCode == 1) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+                    mMap.setMyLocationEnabled(true);
+                }
+            }
+        }
+    }
+
 
     // Shows explanations if needed
     private void showExplanationsIfNeeded() {
