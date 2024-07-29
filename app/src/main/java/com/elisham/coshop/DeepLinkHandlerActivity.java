@@ -17,6 +17,7 @@ import java.util.Objects;
 
 public class DeepLinkHandlerActivity extends AppCompatActivity {
     private static final String TAG = "DeepLinkHandlerActivity";
+    private static final String APP_DOMAIN = "coshopapp.page.link";
     private FirebaseUser currentUser;
     private FirebaseFirestore db;
 
@@ -38,18 +39,39 @@ public class DeepLinkHandlerActivity extends AppCompatActivity {
                     if (pendingDynamicLinkData != null) {
                         Uri deepLink = pendingDynamicLinkData.getLink();
                         if (deepLink != null) {
-                            String orderIdFromLink = deepLink.getQueryParameter("orderId");
-                            Log.d(TAG, "handleIncomingDeepLink: Deep link received with orderId: " + orderIdFromLink);
-                            if (orderIdFromLink != null) {
-                                getUserInfoAndCheckOrder(orderIdFromLink);
+                            String host = deepLink.getHost();
+                            if (APP_DOMAIN.equals(host)) {
+                                String orderIdFromLink = deepLink.getQueryParameter("orderId");
+                                Log.d(TAG, "handleIncomingDeepLink: Deep link received with orderId: " + orderIdFromLink);
+                                if (orderIdFromLink != null) {
+                                    getUserInfoAndCheckOrder(orderIdFromLink);
+                                } else {
+                                    Log.w(TAG, "handleIncomingDeepLink: No orderId found in the deep link.");
+                                }
                             } else {
-                                Log.w(TAG, "handleIncomingDeepLink: No orderId found in the deep link.");
+                                Log.w(TAG, "handleIncomingDeepLink: Deep link is null.");
                             }
-                        } else {
+                        }
+                        else {
                             Log.w(TAG, "handleIncomingDeepLink: Deep link is null.");
                         }
                     } else {
                         Log.w(TAG, "handleIncomingDeepLink: No pending dynamic link data.");
+                        // Get the intent that started this activity
+                        Intent intent = getIntent();
+                        String action = intent.getAction();
+                        String type = intent.getType();
+                        if (Intent.ACTION_SEND.equals(action) && type != null) {
+                            Log.d(TAG, "handleIncomingDeepLink: Received intent with action: " + action + " and type: " + type);
+                            if ("text/plain".equals(type)) {
+                                Log.d(TAG, "handleIncomingDeepLink: Received text/plain intent.");
+                                String sharedText = intent.getStringExtra(Intent.EXTRA_TEXT);
+                                if (sharedText != null) {
+                                    Log.d(TAG, "handleIncomingDeepLink: Shared text: " + sharedText);
+                                    handleSharedLink(sharedText);
+                                }
+                            }
+                        }
                     }
                 })
                 .addOnFailureListener(this, e -> Log.e(TAG, "handleIncomingDeepLink: getDynamicLink failed.", e));
@@ -101,5 +123,35 @@ public class DeepLinkHandlerActivity extends AppCompatActivity {
                 Log.e(TAG, "checkOrderExistence: Failed to check order existence.", task.getException());
             }
         });
+    }
+
+    private void handleSharedLink(String sharedLink) {
+        String userEmail = Objects.requireNonNull(currentUser.getEmail());
+        Log.d(TAG, "handleSharedLink: Fetching user info for email: " + userEmail);
+
+        db.collection("users")
+                .document(userEmail)
+                .get().addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        DocumentSnapshot document = task.getResult();
+                        if (document.exists()) {
+                            String userType = document.getString("type of user");
+                            Log.d(TAG, "handleSharedLink: User type: " + userType);
+                            openMyOrdersActivityWithSharedLink(userType, sharedLink);
+                        } else {
+                            Log.w(TAG, "handleSharedLink: No document found for user.");
+                        }
+                    } else {
+                        Log.e(TAG, "handleSharedLink: Failed to fetch user info.", task.getException());
+                    }
+                });
+    }
+
+    private void openMyOrdersActivityWithSharedLink(String userType, String sharedLink) {
+        Intent intent = new Intent(this, MyOrdersActivity.class);
+        intent.putExtra("userType", userType);
+        intent.putExtra("sharedLink", sharedLink);
+        startActivity(intent);
+        finish();
     }
 }

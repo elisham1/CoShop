@@ -71,7 +71,7 @@ public class MyOrdersActivity extends AppCompatActivity {
     private static final String CONSUMER_ORDERS = "Customer Orders";
     private static final String WAIT_LIST = "Wait List";
     private List<String> selectedOptions = new ArrayList<>();
-    private static final String PREFS_NAME = "AppPrefs";
+    public static final String PREFS_NAME = "AppPrefs";
     private static final String KEY_FIRST_TIME = "firstTime";
     private RelativeLayout explanationLayout;
     private int currentStep = 0;
@@ -124,6 +124,18 @@ public class MyOrdersActivity extends AppCompatActivity {
             tvSupplierOrders.setVisibility(View.GONE);
             tvConsumerOrders.setVisibility(View.GONE);
             tvWaitList.setVisibility(View.GONE);
+        }
+
+        String sharedLink = intent.getStringExtra("sharedLink");
+
+        if (sharedLink != null) {
+            TextView sharedLinkTextView = findViewById(R.id.sharedLinkTextView);
+            sharedLinkTextView.setVisibility(View.VISIBLE);
+            // Save the shared link in SharedPreferences to pass it to OrderDetailsActivity
+            SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+            SharedPreferences.Editor editor = prefs.edit();
+            editor.putString("sharedLink", sharedLink);
+            editor.apply();
         }
 
         // Set default view to All Orders
@@ -248,6 +260,20 @@ public class MyOrdersActivity extends AppCompatActivity {
         if (globalUserType.equals("Supplier")) {
             showExplanationsIfNeeded();
         }
+    }
+
+    private void showAddItemMessage(String sharedLink) {
+        TextView addItemMessage = new TextView(this);
+        addItemMessage.setText("Choose order to add item");
+        addItemMessage.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
+        addItemMessage.setTextColor(Color.RED);
+        addItemMessage.setGravity(Gravity.CENTER);
+        addItemMessage.setPadding(0, 16, 0, 16);
+
+        LinearLayout ordersLayout = findViewById(R.id.ordersLayout);
+        ordersLayout.addView(addItemMessage, 0); // Add the message at the top
+
+
     }
 
     private void showExplanationsIfNeeded() {
