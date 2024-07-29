@@ -97,7 +97,7 @@ public class HomePageActivity extends AppCompatActivity {
             setTheme(R.style.SupplierTheme);
         }
         setContentView(R.layout.activity_home_page);
-        initializeUI();
+//        initializeUI();
     }
 
     // Shows explanations if needed
@@ -185,6 +185,11 @@ public class HomePageActivity extends AppCompatActivity {
         }
         // Initialize the orders container
         ordersContainer = findViewById(R.id.ordersContainer);
+        // Clear the orders container at the start
+        if (ordersContainer != null) {
+            ordersContainer.removeAllViews();
+        }
+
         ImageButton plus = findViewById(R.id.newOrderButton);
         if (globalUserType.equals("Supplier")) {
             plus.setImageResource(R.drawable.ic_plus_supplier);
@@ -1041,5 +1046,11 @@ public class HomePageActivity extends AppCompatActivity {
             star.setLayoutParams(params);
             layout.addView(star);
         }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        initializeUI();
     }
 }

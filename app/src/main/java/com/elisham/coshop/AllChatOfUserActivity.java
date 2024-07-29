@@ -1,5 +1,6 @@
 package com.elisham.coshop;
 
+import android.app.ProgressDialog;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
@@ -39,7 +40,7 @@ public class AllChatOfUserActivity extends AppCompatActivity {
     private ChatListAdapter chatListAdapter;
     private List<ChatOrder> chatOrders;
     private String globalUserType;
-
+    private ProgressDialog progressDialog;
     // Initializes the activity, sets the theme based on user type, and loads user chats
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -55,10 +56,18 @@ public class AllChatOfUserActivity extends AppCompatActivity {
         }
 
         setContentView(R.layout.activityallchats);
+        initializeUI();
+    }
+
+    private void initializeUI() {
         menuUtils = new MenuUtils(this, globalUserType);
         db = FirebaseFirestore.getInstance();
         mAuth = FirebaseAuth.getInstance();
         currentUser = mAuth.getCurrentUser();
+
+        progressDialog = new ProgressDialog(this);
+        progressDialog.setMessage("Loading...");
+        progressDialog.setCancelable(false);
 
         chatRecyclerView = findViewById(R.id.chatRecyclerView);
         chatRecyclerView.setLayoutManager(new LinearLayoutManager(this));
@@ -150,6 +159,12 @@ public class AllChatOfUserActivity extends AppCompatActivity {
         intent.putExtra("userType", globalUserType);
         intent.putExtra("orderId", orderId);
         startActivity(intent);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        initializeUI();
     }
 
     // Inflates the options menu

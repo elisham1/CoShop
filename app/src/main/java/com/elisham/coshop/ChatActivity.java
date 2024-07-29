@@ -78,6 +78,13 @@ public class ChatActivity extends AppCompatActivity {
             setTheme(R.style.SupplierTheme);
         }
         setContentView(R.layout.activity_chat);
+        // Get the orderId from the intent
+        orderId = intent.getStringExtra("orderId");
+        Log.d("ChatActivity", "Order ID: " + orderId);
+        initializeUI();
+    }
+
+    private void initializeUI() {
         menuUtils = new MenuUtils(this, globalUserType);
 
         db = FirebaseFirestore.getInstance();
@@ -97,9 +104,6 @@ public class ChatActivity extends AppCompatActivity {
         chatRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         chatRecyclerView.setAdapter(chatAdapter);
 
-        // Get the orderId from the intent
-        orderId = intent.getStringExtra("orderId");
-        Log.d("ChatActivity", "Order ID: " + orderId);
         loadChatMessages(orderId);
 
         orderDetailsLayout.setOnClickListener(v -> {
