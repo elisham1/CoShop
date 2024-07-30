@@ -151,6 +151,15 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"/>
     </FrameLayout>
+
+    <!-- Translucent background view to detect outside clicks -->
+    <View
+        android:id="@+id/translucentBackground"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#80000000"
+        android:visibility="gone" />
+
     <FrameLayout
         android:id="@+id/orderDetailContainer"
         android:layout_width="match_parent"
@@ -158,8 +167,9 @@
         android:layout_margin="8dp"
         android:layout_gravity="bottom"
         android:visibility="gone"
+        android:focusable="true"
         android:background="@android:color/white"
-        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/newOrderButton"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
 
