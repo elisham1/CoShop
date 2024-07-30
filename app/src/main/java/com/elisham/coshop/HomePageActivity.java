@@ -29,6 +29,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
@@ -136,7 +137,7 @@ public class HomePageActivity extends AppCompatActivity implements OnMapReadyCal
                 FrameLayout mapContainer = findViewById(R.id.mapContainer);
 
                 if (isLocation) {
-                    locationButton.setImageResource(R.drawable.baseline_clear_24);
+                    locationButton.setImageResource(R.drawable.ic_location_off);
                     // הסתרת רשימת ההזמנות והצגת המפה
                     ordersContainer.setVisibility(View.GONE);
                     mapContainer.setVisibility(View.VISIBLE);
@@ -188,9 +189,19 @@ public class HomePageActivity extends AppCompatActivity implements OnMapReadyCal
                         }
                     });
 
+            long currentTime = System.currentTimeMillis();
             db.collection("orders").get().addOnCompleteListener(task -> {
                 if (task.isSuccessful()) {
                     for (QueryDocumentSnapshot documentSnapshot : task.getResult()) {
+                        Timestamp timestamp = documentSnapshot.getTimestamp("time");
+                        long timeRemaining = timestamp.toDate().getTime() - currentTime;
+                        String orderOwner = documentSnapshot.getString("ownerEmail");
+                        List<String> joinedUsers = (List<String>) documentSnapshot.get("listPeopleInOrder");
+
+                        if (orderOwner != null && orderOwner.equals(userEmail)) continue; // Skip orders that I created
+                        if (joinedUsers != null && joinedUsers.contains(userEmail)) continue; // Skip orders that I joined
+                        if (timeRemaining <= 0) continue; // Skip orders that have expired
+
                         GeoPoint geoPoint = documentSnapshot.getGeoPoint("location");
                         String categorie = documentSnapshot.getString("categorie");
                         if (geoPoint != null && categorie != null) {
@@ -258,13 +269,23 @@ public class HomePageActivity extends AppCompatActivity implements OnMapReadyCal
                 // מציאת ה-OrderData עבור orderId
                 OrderData orderData = findOrderDataById(orderId);
                 if (orderData != null) {
+
+
                     // הצגת פרטי ההזמנה ב-FrameLayout
                     FrameLayout orderDetailContainer = findViewById(R.id.orderDetailContainer);
                     orderDetailContainer.removeAllViews();
                     orderDetailContainer.setVisibility(View.VISIBLE);
 
+                    View orderBackground = findViewById(R.id.translucentBackground);
+                    orderBackground.setVisibility(View.VISIBLE);
+                    orderBackground.setOnClickListener(v -> {
+                        orderBackground.setVisibility(View.GONE);
+                        orderDetailContainer.setVisibility(View.GONE);
+                    });
+
                     // Inflate order item layout and add it to the container
                     View orderView = getLayoutInflater().inflate(R.layout.order_item, orderDetailContainer, false);
+
                     orderDetailContainer.addView(orderView);
 
                     // Populate the order view with existing method
@@ -281,6 +302,8 @@ public class HomePageActivity extends AppCompatActivity implements OnMapReadyCal
 
     // פונקציה מעודכנת להצגת פרטי ההזמנה באמצעות אובייקט OrderData
     private void populateOrderDetail(View orderView, OrderData orderData) {
+        ViewGroup.MarginLayoutParams layoutParams = (ViewGroup.MarginLayoutParams) orderView.getLayoutParams();
+        layoutParams.bottomMargin = 0;
         TextView titleTextView = orderView.findViewById(R.id.titleTextView);
         TextView distanceTextView = orderView.findViewById(R.id.distanceTextView);
         TextView peopleTextView = orderView.findViewById(R.id.peopleTextView);
@@ -337,11 +360,11 @@ public class HomePageActivity extends AppCompatActivity implements OnMapReadyCal
         addStarsToLayout(ratingLayout, orderData.averageRating);
 
         // קבלת סוג ההזמנה והגדרת הצבעים בהתאם
-        typeTextView.setText(orderData.categorie);
-        if ("Consumer".equals(orderData.categorie)) {
+        typeTextView.setText(orderData.typeOfOrder);
+        if ("Consumer".equals(orderData.typeOfOrder)) {
             orderView.setBackgroundResource(R.drawable.border_green);
             typeTextView.setTextColor(getResources().getColor(R.color.consumerPrimary));
-        } else if ("Supplier".equals(orderData.categorie)) {
+        } else if ("Supplier".equals(orderData.typeOfOrder)) {
             orderView.setBackgroundResource(R.drawable.border_blue);
             typeTextView.setTextColor(getResources().getColor(R.color.supplierPrimary));
         }
@@ -450,7 +473,6 @@ public class HomePageActivity extends AppCompatActivity implements OnMapReadyCal
             }
         }
     }
-
 
     // Shows explanations if needed
     private void showExplanationsIfNeeded() {
@@ -738,6 +760,7 @@ public class HomePageActivity extends AppCompatActivity implements OnMapReadyCal
 
                 long currentTime = System.currentTimeMillis();
                 for (QueryDocumentSnapshot documentSnapshot : task.getResult()) {
+                    //todo
                     Timestamp timestamp = documentSnapshot.getTimestamp("time");
                     long timeRemaining = timestamp.toDate().getTime() - currentTime;
 
@@ -769,6 +792,7 @@ public class HomePageActivity extends AppCompatActivity implements OnMapReadyCal
         String orderId;
         String titleOfOrder;
         String location;
+        String typeOfOrder;
         long numberOfPeopleInOrder;
         long maxPeople;
         String categorie;
@@ -780,10 +804,13 @@ public class HomePageActivity extends AppCompatActivity implements OnMapReadyCal
         double ratingScore;
         double distanceScore;
 
-        public OrderData(String orderId, String titleOfOrder, String location, long numberOfPeopleInOrder, long maxPeople, String categorie, double distance, Timestamp timestamp, double averageRating) {
+        public OrderData(String orderId, String titleOfOrder, String location, String typeOfOrder,
+                         long numberOfPeopleInOrder, long maxPeople, String categorie,
+                         double distance, Timestamp timestamp, double averageRating) {
             this.orderId = orderId;
             this.titleOfOrder = titleOfOrder;
             this.location = location;
+            this.typeOfOrder = typeOfOrder;
             this.numberOfPeopleInOrder = numberOfPeopleInOrder;
             this.maxPeople = maxPeople;
             this.categorie = categorie;
@@ -828,7 +855,8 @@ public class HomePageActivity extends AppCompatActivity implements OnMapReadyCal
                     addOrderToLayout(orderId, titleOfOrder, location, numberOfPeopleInOrder, maxPeople,
                             categorie, distance, timestamp, averageRating);
 
-                    orderDataList.add(new OrderData(orderId, titleOfOrder, location, numberOfPeopleInOrder, maxPeople, categorie, distance, timestamp, averageRating));
+                    String typeOfOrder = documentSnapshot.getString("type_of_order");
+                    orderDataList.add(new OrderData(orderId, titleOfOrder, location, typeOfOrder, numberOfPeopleInOrder, maxPeople, categorie, distance, timestamp, averageRating));
 
                     // Add order ID to the displayed order list
                     displayedOrderIds.add(orderId);
