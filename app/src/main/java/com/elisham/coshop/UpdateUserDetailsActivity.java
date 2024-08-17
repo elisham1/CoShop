@@ -1002,6 +1002,25 @@ public class UpdateUserDetailsActivity extends AppCompatActivity {
                     Long numberOfPeopleInOrder = document.getLong("NumberOfPeopleInOrder");
                     Log.d("UpdateUserDetailsActivity", "Processing order document ID: " + document.getId());
 
+                    // Check and remove user's items from the cart
+                    List<Map<String, Object>> cartItems = (List<Map<String, Object>>) document.get("cartItems");
+                    if (cartItems != null) {
+                        List<Map<String, Object>> itemsToRemove = new ArrayList<>();
+                        for (Map<String, Object> item : cartItems) {
+                            String itemUserEmail = (String) item.get("userEmail");
+                            if (emailToRemove.equals(itemUserEmail)) {
+                                itemsToRemove.add(item);
+                            }
+                        }
+
+                        if (!itemsToRemove.isEmpty()) {
+                            cartItems.removeAll(itemsToRemove);
+                            Map<String, Object> updates = new HashMap<>();
+                            updates.put("cartItems", cartItems);
+                            updateTasks.add(document.getReference().update(updates));
+                        }
+                    }
+
                     // Delete chat collection if globalUserType is "Supplier" and user email matches
                     if (globalUserType.equals("Supplier") && userEmail != null && userEmail.equals(emailToRemove)) {
                         Log.d("UpdateUserDetailsActivity", "Deleting chat collection for order.");
